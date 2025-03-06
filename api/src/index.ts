@@ -9,14 +9,6 @@ const app: Express = express();
 app.use(express.json());
 const port = process.env.PORT || 3000;
 
-app.get("/api", (req: Request, res: Response) => {
-  res.send("Express + TypeScript Server");
-});
-
-app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
-});
-
 type UpdateData = {
   data: {
     id: string;
@@ -30,9 +22,19 @@ app.post("/api/:orgId/:roomId", (req: Request, res: Response) => {
 
   // append to a file
   const fileName = "update.log"
-  const log = data.data.map(d => `${orgId},${roomId},${d.id},${d.state}`).join("\n");
+  const log = data.data.map(d => `(${orgId}/${roomId}) ${d.id} changed to state ${d.state}`).join("\n");
   // add timestamp
-  fs.appendFileSync(fileName, `${new Date().toISOString()}\n${log}\n`);
+  fs.appendFileSync(fileName, `[${new Date().toISOString()}]${log}\n----------------\n`);
+
   res.send("OK");
 
 })
+
+app.get("/api", (req: Request, res: Response) => {
+  res.send("Express + TypeScript Server");
+});
+
+app.listen(port, () => {
+  console.log(`[server]: Server is running at http://localhost:${port}`);
+});
+
