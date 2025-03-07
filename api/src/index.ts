@@ -20,6 +20,8 @@ app.post("/api/:orgId/:roomId", (req: Request, res: Response) => {
   const orgId = req.params.orgId;
   const roomId = req.params.roomId;
 
+  console.log(`[post/api/:orgId/:roomId] ${orgId}/${roomId} received data:`, data);
+
   // append to a file
   const fileName = "update.log"
   const log = data.data.map(d => `(${orgId}/${roomId}) ${d.id} changed to state ${d.state}`).join("\n");
