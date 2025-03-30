@@ -11,7 +11,7 @@ const port = process.env.PORT || 3000;
 
 type UpdateData = {
   data: {
-    id: string;
+    id: number;
     state: number
   }[]
 };

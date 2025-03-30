@@ -15,7 +15,7 @@ WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
 HTTPClient http;
 
 #define ssid "espspot"
-#define pass "bvtx4675"
+#define pass "1234567890"
 const char *serverName = "https://resiwash.marcussoh.com/api/rvrc/block_e/";
 
 BLEScan *pBLEScan;
