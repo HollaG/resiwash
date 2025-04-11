@@ -1,12 +1,12 @@
 #include <bluefruit.h>
 
-#define LIGHT_SENSOR_PIN A0     // Light sensor input pin
+#define LIGHT_SENSOR_PIN D2     // Light sensor input pin
 #define COMPANY_ID 0xFFFE       // Custom Company ID (use 0xFFFF if unofficial)
 #define CUSTOM_IDENTIFIER 0xA5  // Unique identifier for our NRF52840 devices
 
 
 // indicator light output
-#define LED_PIN D7
+#define LED_PIN D14
 
 // bool machines[16] = { false };
 // machines[0] = true;
@@ -15,10 +15,10 @@
 // MAX MACHINE ID = 31
 
 int machine1_ID = 0;
-int machine1_PIN = A0;
+int machine1_PIN = D2;
 
 int machine2_ID = 24;
-int machine2_PIN = A0;
+int machine2_PIN = D2;
 
 struct Machine {
   int ID;
@@ -49,6 +49,7 @@ void setup() {
   Serial.begin(115200);
 
   pinMode(LED_PIN, OUTPUT);
+  pinMode(LIGHT_SENSOR_PIN, INPUT);
   digitalWrite(LED_PIN, LOW);
   delay(1000);
   digitalWrite(LED_PIN, HIGH);
@@ -91,29 +92,11 @@ void setup() {
 int threshold = 50;
 
 bool initialized = false;
+bool atLeastOneHigh = false;
+
 void loop() {
-  uint16_t lightValue = analogRead(LIGHT_SENSOR_PIN);
 
-  Serial.print("Light Sensor Value: ");
-  Serial.println(lightValue);
-
-  if (lightValue > threshold) {
-    digitalWrite(LED_PIN, HIGH);
-  } else {
-    digitalWrite(LED_PIN, LOW);
-  }
-
-
-
-  // ✅ Update sensor value in the advertisement packet
-  // uint8_t sensorData[6] = {
-  //   (COMPANY_ID & 0xFF), (COMPANY_ID >> 8) & 0xFF,  // Company ID = 0xFFFE
-  //   CUSTOM_IDENTIFIER,                              // Unique identifier
-  //   lightValue & 0xFF, (lightValue >> 8) & 0xFF     // Light sensor value (Little Endian)
-  // };
-
-  // pretend one above 50 = send all
-  // if (lightValue > 50 || !init) {
+  atLeastOneHigh = false;
   initialized = true;
 
   sensorData[3] = (sensorData[3] + 1) % 16;  // broadcast number
@@ -123,6 +106,7 @@ void loop() {
   // compare to threshold,
   // update sensorData bits
 
+
   for (int i = 0; i < machineCount; i++) {
     Machine m = machines[i];
     int result = 0b10000000;
@@ -131,30 +115,29 @@ void loop() {
     result = result | (m.ID << 1);
 
     // add state
-    int value = analogRead(m.PIN);
+    int value = digitalRead(m.PIN);
 
-    if (value > threshold) {
+    if (value == HIGH) {
       result = result | 1;
+      atLeastOneHigh = true;
     } else {
       result = result & 0b11111110;
     }
 
+
     // store in sensorData
     sensorData[3 + i] = result;
 
-    Serial.printf("Stored value %d in sensorData %d\n", result, 3 + i);
-    // }
+    Serial.printf("Stored value %d in sensorData %d. ID of %d was %d\n", result, 3 + i, m.ID, value);
 
-
-
-    // sensorData[4] = 0x81;  // 1001 1100
-    // sensorData[5] = 0xC0;
-    // sensorData[10] = 0xC1;
-
-
-
-    // delay(10000);
   }
+
+  if (atLeastOneHigh) {
+    digitalWrite(LED_PIN, HIGH);
+  } else { 
+    digitalWrite(LED_PIN, LOW);
+  }
+
 
 
   Bluefruit.Advertising.stop();  // Stop advertising before updating
@@ -165,10 +148,6 @@ void loop() {
   Bluefruit.ScanResponse.addName();
   Bluefruit.Advertising.start(0);  // Restart advertising
 
-  // Bluefruit.Advertising.stop();
 
-
-
-
-  delay(10000);  // Update sensor data every second
+  delay(5000);  // Update sensor data every second
 }
