@@ -1,5 +1,6 @@
-dist
-node_modules
-.env
-.env.*
-package-lock.json
+.idea/
+.vscode/
+node_modules/
+build/
+tmp/
+temp/
