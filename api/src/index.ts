@@ -1,4 +1,3 @@
-import { AppDataSource } from "./data-source";
 import { User } from "./models/User";
 
 // src/index.ts
@@ -7,6 +6,10 @@ import dotenv from "dotenv";
 import fs from "fs";
 import { errorHandler } from "./middleware/errorHandler";
 
+dotenv.config();
+
+
+import { AppDataSource } from "./data-source";
 AppDataSource.initialize()
   .then(async () => {
     console.log("Inserting a new user into the database...");
@@ -27,7 +30,6 @@ AppDataSource.initialize()
   })
   .catch((error) => console.log(error));
 
-dotenv.config();
 
 const app: Express = express();
 app.use(express.json());
@@ -41,16 +43,21 @@ app.get("/", (req: Request, res: Response) => {
 const API_VERSION = process.env.API_VERSION || "v1";
 
 app.use(`/api/${API_VERSION}/areas`, require("./entities/areas/areas.routes"));
-app.use(`/api/${API_VERSION}/areas/:areaId`, require("./entities/rooms/rooms.routes"));
+app.use(
+  `/api/${API_VERSION}/areas/:areaId`,
+  require("./entities/rooms/rooms.routes")
+);
 app.use(
   `/api/${API_VERSION}/areas/:areaId/:roomId`,
   require("./entities/machines/machines.routes")
 );
-app.use(`/api/${API_VERSION}/events`, require("./entities/events/events.routes"));
-
+app.use(
+  `/api/${API_VERSION}/events`,
+  require("./entities/events/events.routes")
+);
 
 // error handler (last)
-app.use(errorHandler)
+app.use(errorHandler);
 
 type UpdateData = {
   data: {

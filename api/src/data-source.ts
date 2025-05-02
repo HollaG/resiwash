@@ -9,11 +9,11 @@ import { UpdateEvent } from "./models/UpdateEvent"
 
 export const AppDataSource = new DataSource({
     type: "postgres",
-    host: "localhost",
+    host: process.env.DB_HOST || "localhost",
     port: 5432,
-    username: "laundryapi",
-    password: "laundryapi123",
-    database: "laundry",
+    username: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
     entities: [Area, Machine, Room, Sensor, UpdateEvent, User],
