@@ -14,16 +14,17 @@
    "dependencies": {
       "dotenv": "^16.4.7",
       "express": "^4.21.2",
+      "express-async-handler": "^1.2.0",
+      "pg": "^8.14.1",
       "reflect-metadata": "^0.2.2",
-      "typeorm": "0.3.22",
-      "pg": "^8.14.1"
+      "typeorm": "0.3.22"
    },
    "devDependencies": {
-      "@types/node": "^22.13.9",
-      "ts-node": "^10.9.2",
-      "typescript": "^5.8.2",
       "@types/express": "^5.0.0",
+      "@types/node": "^22.13.9",
       "concurrently": "^9.1.2",
-      "nodemon": "^3.1.9"
+      "nodemon": "^3.1.9",
+      "ts-node": "^10.9.2",
+      "typescript": "^5.8.2"
    }
 }

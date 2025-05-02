@@ -2,7 +2,7 @@
 
 #define LIGHT_SENSOR_PIN D2     // Light sensor input pin
 #define COMPANY_ID 0xFFFE       // Custom Company ID (use 0xFFFF if unofficial)
-#define CUSTOM_IDENTIFIER 0xA5  // Unique identifier for our NRF52840 devices
+#define CUSTOM_IDENTIFIER 0xA5  // Unique identifier for our NRF52840 devices // custom ,no other meaning
 
 
 // indicator light output
@@ -14,10 +14,12 @@
 
 // MAX MACHINE ID = 31
 
-int machine1_ID = 0;
+// MACHINE ID 0 IS RESERVED ==> INDICATES NOT IN USE
+
+int machine1_ID = 1;
 int machine1_PIN = D2;
 
-int machine2_ID = 24;
+int machine2_ID = 2;
 int machine2_PIN = D2;
 
 struct Machine {
@@ -101,6 +103,8 @@ void loop() {
 
   sensorData[3] = (sensorData[3] + 1) % 16;  // broadcast number
 
+  Serial.printf("Transmitting ID %d\n", sensorData[3]);
+
   // for every machine, if it is enabled,
   // read its LDR value,
   // compare to threshold,
@@ -109,7 +113,7 @@ void loop() {
 
   for (int i = 0; i < machineCount; i++) {
     Machine m = machines[i];
-    int result = 0b10000000;
+    int result = 0b00000000;
 
     // add machine ID
     result = result | (m.ID << 1);
@@ -126,9 +130,9 @@ void loop() {
 
 
     // store in sensorData
-    sensorData[3 + i] = result;
+    sensorData[4 + i] = result;
 
-    Serial.printf("Stored value %d in sensorData %d. ID of %d was %d\n", result, 3 + i, m.ID, value);
+    Serial.printf("Stored value %d in sensorData %d. ID of %d was %d\n", result, 4 + i, m.ID, value);
 
   }
 
@@ -149,5 +153,5 @@ void loop() {
   Bluefruit.Advertising.start(0);  // Restart advertising
 
 
-  delay(5000);  // Update sensor data every second
+  delay(30000);  // Update sensor data every second
 }

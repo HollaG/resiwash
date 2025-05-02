@@ -3,20 +3,34 @@
 #include <Arduino.h>
 #include "BLEDevice.h"
 
+#include <unordered_map>
+
 #define CUSTOM_IDENTIFIER 0xA5  // Expected identifier byte
 
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "String"
-#include <WifiClientSecure.h>
+// #include <WifiClientSecure.h>
+#include <WifiClient.h>
 
-WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
+// WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
+WiFiClient client;  // or WiFiClientSecure for HTTPS
 HTTPClient http;
 
-#define ssid "espspot"
-#define pass "1234567890"
-const char *serverName = "https://resiwash.marcussoh.com/api/rvrc/block_e/";
+// #define ssid "espspot"
+// #define pass "1234567890"
+#define ssid "SINGTEL-C6A8"
+#define pass "wkskgx37k7tW"
+// const char *serverName = "https://resiwash.marcussoh.com/api/rvrc/block_e/";
+const char *serverName = "http://192.168.1.6:3000/api/v1/events/bulk";
+
+const char *host = "192.168.1.6";
+int port = 3000;
+const char *path = "/api/v1/events/bulk";
+
+int machineId = 1;
+
 
 BLEScan *pBLEScan;
 
@@ -45,6 +59,8 @@ void printMachineData(const MachineData &data) {
   Serial.printf("  State    : %d\n", data.state);
 }
 
+std::unordered_map<int, int> idMap;
+
 // TODO: queuing system???
 String jsonPost;
 bool hasData = false;
@@ -60,10 +76,15 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
         uint8_t identifier = (uint8_t)manufacturerData[2];
 
         if (identifier == CUSTOM_IDENTIFIER) {  // ✅ Filter only NRF52840 devices
-          // uint16_t lightValue = (uint8_t)manufacturerData[3] | ((uint8_t)manufacturerData[4] << 8);
+                                                // uint16_t lightValue = (uint8_t)manufacturerData[3] | ((uint8_t)manufacturerData[4] << 8);
 
           // uint8_t machine2 = (uint8_t)manufacturerData[3] & 0x0F;
           // uint8_t machine1 = (uint8_t)manufacturerData[3] >> 4;
+          Serial.println(manufacturerData[0]);
+          Serial.println(manufacturerData[1]);
+          Serial.println(manufacturerData[2]);
+          Serial.println(manufacturerData[3]);
+          Serial.println(manufacturerData[4]);
 
           uint8_t transmissionId = (uint8_t)manufacturerData[3];
           Serial.printf("Transmission ID is %d\n", transmissionId);
@@ -80,23 +101,51 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 
           // Process 16 machines starting from manufacturerData[4]
           JsonDocument doc;
-          doc["group"] = 0;
+          // doc["group"] = 0;
           JsonArray machineArray = doc["data"].to<JsonArray>();
           for (int i = 0; i < 16; i++) {
             uint8_t rawMachineData = manufacturerData[4 + i];
             Serial.printf("Raw Data Machine%d: %d\n", i + 1, rawMachineData);
 
-            MachineData machineData = { 0, 0, 0, 0 };
-            getMachineData(rawMachineData, machineData.active, machineData.type, machineData.reserved, machineData.state);
-
-            if (machineData.active) {
-              printMachineData(machineData);
-
-              JsonObject machineObj = machineArray.add<JsonObject>();
-              machineObj["id"] = i;  // TODO: convert this to actual ids maybe through a map?
-              machineObj["type"] = machineData.type;
-              machineObj["state"] = machineData.state;
+            if (rawMachineData == 0) {
+              continue;  // not active
             }
+
+            int machineId = rawMachineData >> 1 & 0b01111111;
+            int state = rawMachineData & 0b00000001;
+
+
+
+            if (idMap.find(machineId) != idMap.end()) {
+              Serial.print("Actual ID: ");
+              Serial.println(idMap[machineId]);
+            } else {
+              Serial.println("localId not found");
+
+              continue;
+            }
+
+            JsonObject machineObj = machineArray.add<JsonObject>();
+            // machineObj["id"] = i;  // TODO: convert this to actual ids maybe through a map?
+            machineObj["machineId"] = idMap[machineId];  // TODO: convert this to actual ids maybe through a map?
+            // machineObj["type"] = machineData.type;
+            machineObj["statusCode"] = state;
+
+
+
+
+            // MachineData machineData = { 0, 0, 0, 0 };
+            // getMachineData(rawMachineData, machineData.active, machineData.type, machineData.reserved, machineData.state);
+
+            // if (machineData.active) {
+            //   printMachineData(machineData);
+
+            //   JsonObject machineObj = machineArray.add<JsonObject>();
+            //   // machineObj["id"] = i;  // TODO: convert this to actual ids maybe through a map?
+            //   machineObj["machineId"] = 1;  // TODO: convert this to actual ids maybe through a map?
+            //   // machineObj["type"] = machineData.type;
+            //   machineObj["statusCode"] = machineData.state;
+            // }
           }
 
           // // try get request
@@ -143,7 +192,13 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   }
 };
 
+
+
 void setup() {
+  idMap[1] = 1;  // map localId 1 to globalId 1
+  idMap[2] = 2;
+
+
   Serial.begin(115200);
 
   Serial.println("Connecting to wifi...");
@@ -179,11 +234,12 @@ void loop() {
 
     // POST request
     Serial.println("Sending post request...");
- 
 
-    client.setInsecure();
 
-    http.begin(client, "https://resiwash.marcussoh.com/api/rvrc/block_e");
+    // client.setInsecure();
+
+    Serial.printf("Sending post request to %s\n", serverName);
+    http.begin(client, serverName);
 
     http.addHeader("Content-Type", "application/json");
     int httpResponseCode = http.POST(jsonPost);
@@ -199,22 +255,19 @@ void loop() {
 
     hasData = false;
   }
-  // // try get request
-  // Serial.println("Attempting GET request...");
-  // if (http.begin(client, "httpbin.org", 443, "/get", true)) {
+  // try get request
+  // if (http.begin(client, host, port, path, false)) {  // false = HTTP
   //   int httpCode = http.GET();
   //   if (httpCode > 0) {
-  //     Serial.print("GET Response code: ");
-  //     Serial.println(httpCode);
-  //     Serial.println("Response:");
+  //     Serial.printf("GET Response code: %d\n", httpCode);
   //     Serial.println(http.getString());
   //   } else {
-  //     Serial.print("GET request failed: ");
+  //     Serial.print("GET failed: ");
   //     Serial.println(http.errorToString(httpCode));
   //   }
   //   http.end();
   // } else {
-  //   Serial.println("Unable to connect for GET request");
+  //   Serial.println("Unable to connect");
   // }
 }
 
