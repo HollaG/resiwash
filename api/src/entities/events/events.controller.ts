@@ -3,6 +3,7 @@ import { AppDataSource } from "../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../core/responses";
 import asyncHandler from "express-async-handler";
 import { UpdateEvent } from "../../models/UpdateEvent";
+import { Machine } from "../../models/Machine";
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   const eventRepository = AppDataSource.getRepository(UpdateEvent);
@@ -28,23 +29,58 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
 
   const { status, machineId, statusCode } = req.body;
 
-  if (statusCode === undefined) {
-    return sendErrorResponse(res, "Status code is required", 400);
+  try {
+    const event = await saveEvent({ status, machineId, statusCode });
+    sendOkResponse(res, event);
+  } catch (error) {
+    console.error("Error saving event:", error);
+    return sendErrorResponse(res, error.message, 500);
   }
 
-  if (!machineId || Number(machineId) <= 0) {
-    return sendErrorResponse(res, "Machine ID is required", 400);
-  }
+  // if (statusCode === undefined) {
+  //   return sendErrorResponse(res, "Status code is required", 400);
+  // }
 
-  const eventRepository = AppDataSource.getRepository(UpdateEvent);
+  // if (!machineId || Number(machineId) <= 0) {
+  //   return sendErrorResponse(res, "Machine ID is required", 400);
+  // }
 
-  const event = new UpdateEvent();
-  event.statusCode = statusCode;
-  event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+  // const eventRepository = AppDataSource.getRepository(UpdateEvent);
 
-  await eventRepository.save(event);
+  // // get the latest event for the machine
+  // const latestEvent = await eventRepository.findOne({
+  //   where: {
+  //     machine: { machineId: Number(machineId) },
+  //   },
+  //   order: {
+  //     timestamp: "DESC",
+  //   },
+  // });
 
-  sendOkResponse(res, event);
+  // // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
+  // if (!latestEvent || latestEvent.statusCode !== statusCode) {
+  //   const event = new UpdateEvent();
+  //   event.statusCode = statusCode;
+  //   event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+
+  //   await eventRepository.save(event);
+  //   sendOkResponse(res, event);
+  // } else {
+  //   // update the machine's lastUpdated timestamp
+
+  //   const machine = await AppDataSource.getRepository(Machine).findOne({
+  //     where: { machineId: Number(machineId) },
+  //   });
+
+  //   if (!machine) {
+  //     return sendErrorResponse(res, "Machine not found", 404);
+  //   }
+  //   machine.lastUpdated = new Date(); // update the lastUpdated timestamp
+
+  //   await AppDataSource.getRepository(Machine).save(machine);
+
+  //   return sendOkResponse(res, latestEvent); // return the latest event
+  // }
 });
 
 export const createMultipleEvents = asyncHandler(
@@ -54,7 +90,10 @@ export const createMultipleEvents = asyncHandler(
 
     console.log("createMultipleEvents", req.body);
 
-    const { data }: { data: { statusCode: number; machineId: number; status?: string }[] } = req.body;
+    const {
+      data,
+    }: { data: { statusCode: number; machineId: number; status?: string }[] } =
+      req.body;
 
     if (!data || !Array.isArray(data)) {
       return sendErrorResponse(res, "Data is required", 400);
@@ -64,27 +103,95 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(res, "Data is empty", 400);
     }
 
-    const eventRepository = AppDataSource.getRepository(UpdateEvent);
+    const events = await Promise.allSettled(
+      // will never reject
+      data.map((item) => saveEvent(item))
+    );
+    if (events.some((event) => event.status === "rejected")) {
+      const errors = events
+        .filter((event) => event.status === "rejected")
+        .map((event) => (event as PromiseRejectedResult).reason);
+      return sendErrorResponse(res, errors, 500);
+    }
+    sendOkResponse(
+      res,
+      events.map((event) => (event as PromiseFulfilledResult<any>).value)
+    );
 
-    const events = data.map((item) => {
-      if (item.statusCode === undefined) {
-        throw new Error("Status code is required");
-      }
+    // const eventRepository = AppDataSource.getRepository(UpdateEvent);
 
-      if (!item.machineId || Number(item.machineId) <= 0) {
-        throw new Error("Machine ID is required");
-      }
+    // const events = data.map((item) => {
+    //   if (item.statusCode === undefined) {
+    //     throw new Error("Status code is required");
+    //   }
 
-      const event = new UpdateEvent();
-      event.statusCode = item.statusCode;
-      event.machine = { machineId: Number(item.machineId) } as any; // type assertion to satisfy TypeScript
+    //   if (!item.machineId || Number(item.machineId) <= 0) {
+    //     throw new Error("Machine ID is required");
+    //   }
 
-      return event;
-    });
+    //   const event = new UpdateEvent();
+    //   event.statusCode = item.statusCode;
+    //   event.machine = { machineId: Number(item.machineId) } as any; // type assertion to satisfy TypeScript
 
-    await eventRepository.save(events);
+    //   return event;
+    // });
 
-    sendOkResponse(res, events);
-
+    // await eventRepository.save(events);
   }
 );
+
+const saveEvent = async ({
+  status,
+  machineId,
+  statusCode,
+}: {
+  status?: string;
+  machineId: number;
+  statusCode: number;
+}) => {
+  if (statusCode === undefined) {
+    throw new Error("Status code is required");
+  }
+
+  if (!machineId || Number(machineId) <= 0) {
+    throw new Error("Machine ID is required");
+  }
+
+  const eventRepository = AppDataSource.getRepository(UpdateEvent);
+
+  // get the latest event for the machine
+  const latestEvent = await eventRepository.findOne({
+    where: {
+      machine: { machineId: Number(machineId) },
+    },
+    order: {
+      timestamp: "DESC",
+    },
+  });
+
+  const machine = await AppDataSource.getRepository(Machine).findOne({
+    where: { machineId: Number(machineId) },
+  });
+
+  if (!machine) {
+    throw new Error("Machine not found");
+  }
+  machine.lastUpdated = new Date(); // update the lastUpdated timestamp
+
+  await AppDataSource.getRepository(Machine).save(machine);
+
+  // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
+  if (!latestEvent || latestEvent.statusCode !== statusCode) {
+    const event = new UpdateEvent();
+    event.statusCode = statusCode;
+    event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+
+    await eventRepository.save(event);
+
+    return event;
+  } else {
+    // update the machine's lastUpdated timestamp
+
+    return latestEvent; // TODO: do we need to return the latest event?
+  }
+};

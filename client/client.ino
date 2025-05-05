@@ -96,62 +96,87 @@ int threshold = 50;
 bool initialized = false;
 bool atLeastOneHigh = false;
 
+unsigned long lastReadTime = 0;
+const unsigned long period = 10000;  // 10 000ms, 10s
+
+
 void loop() {
+
+  delay(100);
+
 
   atLeastOneHigh = false;
   initialized = true;
 
-  sensorData[3] = (sensorData[3] + 1) % 16;  // broadcast number
+  unsigned long currentMillis = millis();
 
-  Serial.printf("Transmitting ID %d\n", sensorData[3]);
-
-  // for every machine, if it is enabled,
-  // read its LDR value,
-  // compare to threshold,
-  // update sensorData bits
-
-
+  // scan all inputs and set the LED to high if inputs are HIGH
   for (int i = 0; i < machineCount; i++) {
     Machine m = machines[i];
-    int result = 0b00000000;
-
-    // add machine ID
-    result = result | (m.ID << 1);
-
-    // add state
     int value = digitalRead(m.PIN);
 
     if (value == HIGH) {
-      result = result | 1;
+
       atLeastOneHigh = true;
+      break;
     } else {
-      result = result & 0b11111110;
+      atLeastOneHigh = false;
     }
-
-
-    // store in sensorData
-    sensorData[4 + i] = result;
-
-    Serial.printf("Stored value %d in sensorData %d. ID of %d was %d\n", result, 4 + i, m.ID, value);
-
   }
 
   if (atLeastOneHigh) {
     digitalWrite(LED_PIN, HIGH);
-  } else { 
+  } else {
     digitalWrite(LED_PIN, LOW);
   }
 
 
+  if (currentMillis - lastReadTime >= period) {
+    // more than 10 seconds since last update, change the advertising packet
 
-  Bluefruit.Advertising.stop();  // Stop advertising before updating
-  Bluefruit.Advertising.clearData();
-  Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
-  Bluefruit.Advertising.addTxPower();
-  Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, sensorData, sizeof(sensorData));
-  Bluefruit.ScanResponse.addName();
-  Bluefruit.Advertising.start(0);  // Restart advertising
+    sensorData[3] = (sensorData[3] + 1) % 16;  // broadcast number
+
+    Serial.printf("Transmitting ID %d\n", sensorData[3]);
+
+    // for every machine, if it is enabled,
+    // read its LDR value,
+    // compare to threshold,
+    // update sensorData bits
 
 
-  delay(30000);  // Update sensor data every second
+    for (int i = 0; i < machineCount; i++) {
+      Machine m = machines[i];
+      int result = 0b00000000;
+
+      // add machine ID
+      result = result | (m.ID << 1);
+
+      // add state
+      int value = digitalRead(m.PIN);
+
+      if (value == HIGH) {
+        result = result | 1;
+      } else {
+        result = result & 0b11111110;
+      }
+
+
+      // store in sensorData
+      sensorData[4 + i] = result;
+
+      Serial.printf("Stored value %d in sensorData %d. ID of %d was %d\n", result, 4 + i, m.ID, value);
+    }
+
+
+
+    Bluefruit.Advertising.stop();  // Stop advertising before updating
+    Bluefruit.Advertising.clearData();
+    Bluefruit.Advertising.addFlags(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
+    Bluefruit.Advertising.addTxPower();
+    Bluefruit.Advertising.addData(BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA, sensorData, sizeof(sensorData));
+    Bluefruit.ScanResponse.addName();
+    Bluefruit.Advertising.start(0);  // Restart advertising
+
+    lastReadTime = currentMillis;
+  }
 }

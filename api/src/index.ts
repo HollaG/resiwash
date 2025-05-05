@@ -5,6 +5,7 @@ import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import fs from "fs";
 import { errorHandler } from "./middleware/errorHandler";
+import cors from "cors";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ AppDataSource.initialize()
 
 const app: Express = express();
 app.use(express.json());
+app.use(cors())
 const port = process.env.PORT || 3000;
 
 // ROUTES

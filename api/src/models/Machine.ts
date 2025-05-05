@@ -44,4 +44,7 @@ export class Machine {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({type: 'timestamp', nullable: true})
+  lastUpdated: Date; // Last time that there was an update from the sensor
 }

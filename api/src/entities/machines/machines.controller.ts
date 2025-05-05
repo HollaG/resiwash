@@ -5,28 +5,61 @@ import { AppDataSource } from "../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../core/responses";
 import { Machine } from "../../models/Machine";
 import { MachineType } from "../../core/types";
+import { UpdateEvent } from "../../models/UpdateEvent";
 
 export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   const areaId = req.params.areaId;
   const roomId = req.params.roomId;
 
-  const machineRepository = AppDataSource.getRepository(Machine);
   // only rooms with :areaId
   if (!areaId || Number(areaId) <= 0) {
     console.log("getRooms: areaId is not valid", areaId);
     return sendErrorResponse(res, "Area ID is required", 400);
   }
 
-  const machines = await machineRepository.find({
-    where: {
-      room: {
-        roomId: Number(roomId), //
-      },
-    },
-    // relations: ["room"], // include this if you want the full Area object loaded too
-  });
+  const machines = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .innerJoinAndSelect("machine.room", "room")
+    .innerJoinAndSelect("room.area", "area")   
+    .where("room.roomId = :roomId", { roomId })
+    .andWhere("area.areaId = :areaId", { areaId })
+    .orderBy("machine.name", "ASC")
+    .getMany();
 
-  sendOkResponse(res, machines);
+  // const evE );
+
+  // each machine should only have the latest event (this prevents information overload)
+  // assert: `machines.events` should be length 0 or 1
+
+  const result = []
+  for (const machine of machines) {
+    const events = await AppDataSource.getRepository(UpdateEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machine.machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(1)
+      .getMany();
+
+  
+    if (!events || events.length === 0) {
+      machine.events = []
+    } else { 
+      // only take the latest event
+      const latestEvent = events[0];
+      machine.events = [latestEvent];
+    }
+
+    result.push({
+      status: machine.events.length > 0 ? machine.events[0].statusCode : -1,
+      machine
+    })
+  }
+
+  
+
+
+
+  sendOkResponse(res, result);
 });
 
 export const createMachine = async (req: Request, res: Response) => {
@@ -73,21 +106,40 @@ export const getOneMachine = asyncHandler(
   async (req: Request, res: Response) => {
     const areaId = req.params.areaId;
     const roomId = req.params.roomId;
-    const machineId = req.params.machineId;
+    const machineId = Number(req.params.machineId);
 
-    const machineRepository = AppDataSource.getRepository(Machine);
     // only rooms with :areaId
     if (!areaId || Number(areaId) <= 0) {
       console.log("getRooms: areaId is not valid", areaId);
       return sendErrorResponse(res, "Area ID is required", 400);
     }
-    const machineWithEvents = await AppDataSource.getRepository(Machine)
-      .createQueryBuilder("machine")
-      .leftJoinAndSelect("machine.events", "event")
-      .where("machine.machineId = :id", { id: machineId })
-      .orderBy("event.timestamp", "DESC") // sort events descending
-      .getOne();
+    const machine = await AppDataSource.getRepository(Machine).findOneBy({
+      machineId,
+    });
 
-    sendOkResponse(res, machineWithEvents);
+    if (!machine) {
+      return sendErrorResponse(res, "Machine not found", 404);
+    }
+
+    const events = await AppDataSource.getRepository(UpdateEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(10)
+      .getMany();
+
+    machine.events = events;
+
+    let status = null;
+    if (events.length > 0) {
+      status = events[0].statusCode;
+    } else {
+      status = -1;
+    }
+
+    sendOkResponse(res, {
+      status,
+      machine,
+    });
   }
 );
