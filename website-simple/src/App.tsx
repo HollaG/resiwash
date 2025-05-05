@@ -5,8 +5,8 @@ import '@mantine/core/styles.css';
 import { Anchor, Box, Button, Container, MantineProvider, Table } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useFetch } from '@mantine/hooks';
-import { statusCodeToEnum, StatusCodeToEnumMap } from './types/enums';
-import { MachineStatus, MachineWithRoomAndEvents } from './types/datatypes';
+import { statusCodeToEnum } from './types/enums';
+import { MachineStatus } from './types/datatypes';
 import { formatDistanceToNow } from 'date-fns';
 
 
@@ -15,12 +15,12 @@ export default function App() {
   const [washerCount, setWasherCount] = useState(0);
   const [dryerCount, setDryerCount] = useState(0);
 
-  const [areaId, setAreaId] = useState(2);
-  const [roomId, setRoomId] = useState(1);
+  const [areaId] = useState(1);
+  const [roomId] = useState(2);
 
-  const [url, setUrl] = useState("https://resiwash.marcussoh.com/api/v1")
+  const [url] = useState("https://resiwash.marcussoh.com/api/v1")
 
-  const { data, loading, error, refetch } = useFetch<{
+  const { data, refetch } = useFetch<{
     status: number;
     data: MachineStatus[];
   }>(
