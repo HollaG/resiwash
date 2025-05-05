@@ -1,3 +1,8 @@
+export type ServerResponse<T> = {
+  status: number,
+  data: T
+}
+
 export type Area = {
   areaId: number;
   name: string;
@@ -62,7 +67,14 @@ export type MachineWithRoomAndEvents = Machine & {
   events: MachineEvent[];
 };
 
-export type MachineStatus = {
+// GET /${roomId}/${areaId}
+export type MachineStatusOverview = {
   status: number, // TODO: change to enum
   machine: MachineWithRoomAndEvents
+}
+
+// GET /${roomId}/${areaId}/${machineId}
+export type MachineStatusSpecific = {
+  status: number,
+  machine: MachineWithEvents
 }

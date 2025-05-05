@@ -125,7 +125,7 @@ export const getOneMachine = asyncHandler(
       .createQueryBuilder("event")
       .where("event.machineId = :id", { id: machineId })
       .orderBy("event.timestamp", "DESC")
-      .take(10)
+      .take(100)
       .getMany();
 
     machine.events = events;
