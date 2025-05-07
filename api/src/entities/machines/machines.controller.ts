@@ -6,6 +6,7 @@ import { sendErrorResponse, sendOkResponse } from "../../core/responses";
 import { Machine } from "../../models/Machine";
 import { MachineType } from "../../core/types";
 import { UpdateEvent } from "../../models/UpdateEvent";
+import { RawEvent } from "../../models/RawEvent";
 
 export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   const areaId = req.params.areaId;
@@ -20,7 +21,7 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   const machines = await AppDataSource.getRepository(Machine)
     .createQueryBuilder("machine")
     .innerJoinAndSelect("machine.room", "room")
-    .innerJoinAndSelect("room.area", "area")   
+    .innerJoinAndSelect("room.area", "area")
     .where("room.roomId = :roomId", { roomId })
     .andWhere("area.areaId = :areaId", { areaId })
     .orderBy("machine.name", "ASC")
@@ -40,10 +41,10 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
       .take(1)
       .getMany();
 
-  
+
     if (!events || events.length === 0) {
       machine.events = []
-    } else { 
+    } else {
       // only take the latest event
       const latestEvent = events[0];
       machine.events = [latestEvent];
@@ -55,7 +56,7 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
     })
   }
 
-  
+
 
 
 
@@ -108,6 +109,8 @@ export const getOneMachine = asyncHandler(
     const roomId = req.params.roomId;
     const machineId = Number(req.params.machineId);
 
+    const showRaw = req.query.raw === "true" ? true : false;
+
     // only rooms with :areaId
     if (!areaId || Number(areaId) <= 0) {
       console.log("getRooms: areaId is not valid", areaId);
@@ -121,6 +124,8 @@ export const getOneMachine = asyncHandler(
       return sendErrorResponse(res, "Machine not found", 404);
     }
 
+
+
     const events = await AppDataSource.getRepository(UpdateEvent)
       .createQueryBuilder("event")
       .where("event.machineId = :id", { id: machineId })
@@ -128,7 +133,15 @@ export const getOneMachine = asyncHandler(
       .take(100)
       .getMany();
 
+    const rawEvents = await AppDataSource.getRepository(RawEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(1000)
+      .getMany();
+
     machine.events = events;
+    machine.rawEvents = rawEvents;
 
     let status = null;
     if (events.length > 0) {

@@ -6,6 +6,7 @@ import { Machine } from "./models/Machine"
 import { Room } from "./models/Room"
 import { Sensor } from "./models/Sensor"
 import { UpdateEvent } from "./models/UpdateEvent"
+import { RawEvent } from "./models/RawEvent"
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -16,7 +17,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
-    entities: [Area, Machine, Room, Sensor, UpdateEvent, User],
+    entities: [Area, Machine, Room, Sensor, UpdateEvent, User, RawEvent],
     migrations: [],
     subscribers: [],
 })

@@ -56,6 +56,7 @@ export type RoomWithMachines = Room & {
 
 export type MachineWithEvents = Machine & {
   events: MachineEvent[];
+  rawEvents: MachineEvent[]; // TODO: rename to RawEvent
 };
 
 export type RoomWithArea = Room & {

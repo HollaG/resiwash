@@ -4,6 +4,13 @@ import { sendErrorResponse, sendOkResponse } from "../../core/responses";
 import asyncHandler from "express-async-handler";
 import { UpdateEvent } from "../../models/UpdateEvent";
 import { Machine } from "../../models/Machine";
+import SensorStabilizer from "../../core/SensorStabilizer";
+import { RawEvent } from "../../models/RawEvent";
+
+
+const debounceMachineMap: {
+  [machineId: number]: SensorStabilizer
+} = {}
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   const eventRepository = AppDataSource.getRepository(UpdateEvent);
@@ -111,6 +118,7 @@ export const createMultipleEvents = asyncHandler(
       const errors = events
         .filter((event) => event.status === "rejected")
         .map((event) => (event as PromiseRejectedResult).reason);
+      console.log("error: ", errors)
       return sendErrorResponse(res, errors, 500);
     }
     sendOkResponse(
@@ -143,13 +151,13 @@ export const createMultipleEvents = asyncHandler(
 const saveEvent = async ({
   status,
   machineId,
-  statusCode,
+  statusCode: rawStatusCode,
 }: {
   status?: string;
   machineId: number;
   statusCode: number;
 }) => {
-  if (statusCode === undefined) {
+  if (rawStatusCode === undefined) {
     throw new Error("Status code is required");
   }
 
@@ -179,6 +187,19 @@ const saveEvent = async ({
   machine.lastUpdated = new Date(); // update the lastUpdated timestamp
 
   await AppDataSource.getRepository(Machine).save(machine);
+
+  // always save to raw events 
+  const rawEvent = new RawEvent();
+  rawEvent.statusCode = rawStatusCode;
+  rawEvent.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+  const rawEventRepository = AppDataSource.getRepository(RawEvent);
+  await rawEventRepository.save(rawEvent);
+
+  if (!debounceMachineMap[machineId]) {
+    debounceMachineMap[machineId] = new SensorStabilizer();
+  }
+
+  let statusCode = debounceMachineMap[machineId].update(rawStatusCode);
 
   // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
   if (!latestEvent || latestEvent.statusCode !== statusCode) {

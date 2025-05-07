@@ -11,6 +11,7 @@ import {
 import { Room } from "./Room";
 import { UpdateEvent } from "./UpdateEvent";
 import { MachineType } from "../core/types";
+import { RawEvent } from "./RawEvent";
 
 @Entity()
 export class Machine {
@@ -39,12 +40,15 @@ export class Machine {
   @OneToMany(() => UpdateEvent, (evt) => evt.machine)
   events: UpdateEvent[];
 
+  @OneToMany(() => RawEvent, (evt) => evt.machine)
+  rawEvents: RawEvent[];
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({type: 'timestamp', nullable: true})
+  @Column({ type: 'timestamp', nullable: true })
   lastUpdated: Date; // Last time that there was an update from the sensor
 }
