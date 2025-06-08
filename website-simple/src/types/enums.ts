@@ -26,4 +26,5 @@ export enum Pages {
   ADMIN = "admin"
 }
 
-export const  BASE_URL = "http://localhost:3000/api/v1";
+// export const  BASE_URL = "http://localhost:3000/api/v1";
+export const BASE_URL = "https://resiwash.marcussoh.com/api/v1";

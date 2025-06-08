@@ -13,7 +13,8 @@ export const HomePage = () => {
   const [areaId, setAreaId] = useState(2);
   const [roomId, setRoomId] = useState(1);
 
-  const [url] = useState("http://localhost:3000/api/v1")
+  // const [url] = useState("http://localhost:3000/api/v1")
+  const [url] = useState("https://resiwash.marcussoh.com/api/v1")
 
   const [currentMachine, setCurrentMachine] = useState<MachineWithEvents | null>(null)
 
