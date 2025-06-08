@@ -5,11 +5,12 @@
 
 import express from "express";
 import { createEvent, createMultipleEvents, getEvents } from "./events.controller";
+import { VerifyToken } from "../../middleware/auth";
 const router = express.Router();
 
 router.get("/", getEvents)
-router.post("/", createEvent)
-router.post("/bulk", createMultipleEvents)
+router.post("/", VerifyToken, createEvent)
+router.post("/bulk", VerifyToken, createMultipleEvents)
 
 
 module.exports = router;

@@ -7,12 +7,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import '@mantine/notifications/styles.css';
 import { Notifications } from '@mantine/notifications'
+import { AuthProvider } from './context/useAuth.tsx'
 
 
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <AuthProvider>
+
+
     <QueryClientProvider client={queryClient}>
 
       <MantineProvider>
@@ -22,6 +26,6 @@ createRoot(document.getElementById('root')!).render(
 
         </Container>
       </MantineProvider>
-    </QueryClientProvider>
+    </QueryClientProvider>    </AuthProvider>
   </StrictMode>,
 )

@@ -16,6 +16,9 @@
       "dotenv": "^16.4.7",
       "express": "^4.21.2",
       "express-async-handler": "^1.2.0",
+      "express-session": "^1.18.1",
+      "firebase": "^11.9.0",
+      "firebase-admin": "^13.4.0",
       "pg": "^8.14.1",
       "reflect-metadata": "^0.2.2",
       "typeorm": "0.3.22"
@@ -26,6 +29,6 @@
       "concurrently": "^9.1.2",
       "nodemon": "^3.1.9",
       "ts-node": "^10.9.2",
-      "typescript": "^5.8.2"
+      "typescript": "^5.8.3"
    }
 }

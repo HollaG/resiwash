@@ -6,7 +6,7 @@ import { Response } from 'express';
  * @param res Pass on the response object from express
  * @param payload any object to be sent as a response
  */
-export const sendOkResponse = (res: Response, payload: any) => {
+export const sendOkResponse = (res: Response, payload: any & { message?: string }) => {
   res.status(200).json({
     status: 'success',
     data: payload,

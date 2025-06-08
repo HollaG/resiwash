@@ -5,12 +5,13 @@
 
 import express from "express";
 import { createRoom, deleteRoom, getRooms } from "./rooms.controller";
+import { VerifyToken } from "../../middleware/auth";
 
 const router = express.Router({mergeParams: true});
 
-router.delete("/:id", deleteRoom);
+router.delete("/:id", VerifyToken, deleteRoom);
 router.get("/", getRooms)
-router.post("/", createRoom)
+router.post("/", VerifyToken, createRoom)
 
 
 module.exports = router;

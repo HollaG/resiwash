@@ -1,16 +1,17 @@
-import { Table, Stack, Button, Box, Divider, Anchor } from "@mantine/core";
+import { Table, Stack, Button, Box, Divider, Anchor, Input, TextInput } from "@mantine/core";
 import { useFetch } from "@mantine/hooks";
 import { formatDistanceToNow, formatDate } from "date-fns";
 import { useState, useEffect } from "react";
 import { MachineWithEvents, ServerResponse, MachineStatusOverview, MachineStatusSpecific } from "../../types/datatypes";
 import { statusCodeToEnum, Pages } from "../../types/enums";
+import { useAuth } from "../../context/useAuth";
 
 export const HomePage = () => {
   const [washerCount, setWasherCount] = useState(0);
   const [dryerCount, setDryerCount] = useState(0);
 
-  const [areaId] = useState(2);
-  const [roomId] = useState(1);
+  const [areaId, setAreaId] = useState(2);
+  const [roomId, setRoomId] = useState(1);
 
   const [url] = useState("http://localhost:3000/api/v1")
 
@@ -23,7 +24,7 @@ export const HomePage = () => {
   console.log("data", data?.data)
 
   useEffect(() => {
-    if (data) {
+    if (data && data.data) {
       setWasherCount(data.data.filter((machineStatus) => machineStatus.machine.type === 'washer').length);
       setDryerCount(data.data.filter((machineStatus) => machineStatus.machine.type === 'dryer').length);
     }
@@ -69,8 +70,34 @@ export const HomePage = () => {
     refetch()
     currentMachine && onTableRowClicked(currentMachine.machineId)
   }
+  const { currentUser, register, login: loginUser, logout  } = useAuth();
+  const login = () => {
+    const email = window.prompt("Enter email:");
+    if (!email) return;
+    const password = window.prompt("Enter password:");
+    if (!password) return;
+
+    // You can now use username and password, e.g., send to your API
+    console.log("Username:", email, "Password:", password);
+
+    loginUser(email, password)
+      .then(() => {
+        console.log("User logged in successfully");
+      })
+      .catch((error: any) => {
+        console.error("Error logging user:", error);
+      });
+  };
+
 
   return <Stack>
+    {!currentUser && <Button onClick={login}> Login </Button>}
+    {currentUser && <Box>
+      <b>Logged in as {currentUser.email}</b>
+      <Button onClick={() => {
+        logout();
+      }}>Logout</Button>
+      </Box>}
 
     <Box>
 
@@ -78,6 +105,11 @@ export const HomePage = () => {
       <p>There are currently {washerCount} washers and {dryerCount} dryers being checked.</p>
       <p><i>This is a work in progress! Don't expect accurate results or 100% uptime/coverage.</i></p>
       <Button onClick={update}> Refresh </Button>
+    </Box>
+
+    <Box style={{display: "flex", gap: "10px"}}>
+      <TextInput value={areaId} label="Area ID" onChange={e => setAreaId(parseInt(e.currentTarget.value))} type="number" />
+      <TextInput value={roomId} label="Room ID" onChange={(e) => setRoomId(parseInt(e.currentTarget.value))} type="number" />
     </Box>
     <Table highlightOnHover>
       <Table.Thead>
