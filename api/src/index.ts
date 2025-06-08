@@ -82,7 +82,6 @@ app.use(
 // Events
 app.use(
   `/api/${API_VERSION}/events`,
-  VerifyToken,
   require("./entities/events/events.routes")
 );
 

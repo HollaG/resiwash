@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get("/", getEvents)
 router.post("/", VerifyToken, createEvent)
-router.post("/bulk", VerifyToken, createMultipleEvents)
+router.post("/bulk", createMultipleEvents)
 
 
 module.exports = router;
