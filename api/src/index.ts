@@ -58,6 +58,11 @@ app.use(
   require("./entities/events/events.routes")
 );
 
+app.use(
+  `/api/${API_VERSION}/sensors`,
+  require("./entities/sensors/sensors.routes")
+);
+
 // error handler (last)
 app.use(errorHandler);
 

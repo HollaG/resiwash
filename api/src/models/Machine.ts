@@ -7,11 +7,13 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
 } from "typeorm";
 import { Room } from "./Room";
 import { UpdateEvent } from "./UpdateEvent";
 import { MachineType } from "../core/types";
 import { RawEvent } from "./RawEvent";
+import { SensorToMachine } from "./SensorToMachine";
 
 @Entity()
 export class Machine {
@@ -42,6 +44,9 @@ export class Machine {
 
   @OneToMany(() => RawEvent, (evt) => evt.machine)
   rawEvents: RawEvent[];
+
+  @OneToOne(() => SensorToMachine, (SensorToMachine) => SensorToMachine.machine)
+  sensorToMachine: SensorToMachine;
 
   @CreateDateColumn()
   createdAt: Date;

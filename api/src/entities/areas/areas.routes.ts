@@ -4,9 +4,10 @@
  */
 
 import express from "express";
-import { createArea, getAreas } from "./areas.controller";
+import { createArea, deleteArea, getAreas } from "./areas.controller";
 const router = express.Router();
 
+router.delete("/:id", deleteArea);
 router.get("/", getAreas)
 router.post("/", createArea)
 

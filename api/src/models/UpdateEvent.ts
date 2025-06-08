@@ -17,6 +17,9 @@ export class UpdateEvent {
   @Column()
   statusCode: number;
 
+  @Column({nullable: true})
+  reading: number;
+
   @ManyToOne(() => Machine, (machine) => machine.events)
   @JoinColumn({ name: "machineId" })
   machine: Machine;

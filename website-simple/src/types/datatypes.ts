@@ -22,6 +22,7 @@ export type MachineEvent = {
   timestamp: string; // or `Date` if you parse it
   status: string | null;
   statusCode: number;
+  reading: number
 };
 
 export type Machine = {
@@ -45,6 +46,27 @@ export type Room = {
   createdAt: string; // or Date
   updatedAt: string; // or Date
 };
+
+export type Sensor = { 
+  sensorId: number, 
+  macAddress: string,
+  apiKey: string, 
+  createdAt: string, // or Date
+  updatedAt: string, // or Date
+}
+
+export type SensorWithRoom = Sensor & {
+  room: Room
+}
+
+
+export type SensorToMachine = {
+  sensorId: number;
+  source: string;
+  localId: number; // Local identifier for the sensor
+  machineId: number; // ID of the machine this sensor is linked to
+}
+
 
 export type AreaWithRooms = Area & {
   rooms: Room[];

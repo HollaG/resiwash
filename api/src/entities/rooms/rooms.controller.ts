@@ -56,8 +56,23 @@ export const createRoom = (async (req: Request, res: Response) => {
   await roomRepository.save(room);
 
   sendOkResponse(res, room);
-  
 
+});
 
+export const deleteRoom = asyncHandler(async (req: Request, res: Response) => {
+  const roomId = parseInt(req.params.id, 10);
+  if (isNaN(roomId)) {
+    return sendErrorResponse(res, "Invalid room ID", 400);
+  }
 
+  const roomRepository = AppDataSource.getRepository(Room);
+  const room = await roomRepository.findOneBy({ roomId });
+
+  if (!room) {
+    return sendErrorResponse(res, "Room not found", 404);
+  }
+
+  await roomRepository.remove(room);
+
+  sendOkResponse(res, { message: "Room deleted successfully" });
 });

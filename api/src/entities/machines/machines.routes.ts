@@ -4,14 +4,15 @@
  */
 
 import express from "express";
-import { createMachine, getMachines, getOneMachine } from "./machines.controller";
+import { createMachine, deleteMachine, getMachines, getOneMachine } from "./machines.controller";
 
 
 const router = express.Router({mergeParams: true});
 
+
 router.get("/", getMachines)
 router.post("/", createMachine)
 router.get("/:machineId", getOneMachine)
-
+router.delete("/:machineId", deleteMachine);
 
 module.exports = router;

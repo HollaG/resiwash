@@ -1,6 +1,18 @@
-// UpdateEvents should be `immutable`. 
+// UpdateEvents should be `immutable`.
+type Reading = {
+  value: number;
+  threshold: number;
+};
 
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, CreateDateColumn, JoinColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  CreateDateColumn,
+  JoinColumn,
+} from "typeorm";
 import { Machine } from "./Machine";
 
 @Entity()
@@ -11,14 +23,13 @@ export class RawEvent {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column({ nullable: true })
-  status: string;
-
   @Column()
   statusCode: number;
+
+  @Column({ type: "json" })
+  readings: Reading[];
 
   @ManyToOne(() => Machine, (machine) => machine.events)
   @JoinColumn({ name: "machineId" })
   machine: Machine;
-
 }

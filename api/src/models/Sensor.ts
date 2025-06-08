@@ -19,6 +19,9 @@ export class Sensor {
   room: Room;
 
   @Column()
+  macAddress: string;
+
+  @Column({nullable: true})
   apiKey: string; // hashed
 
   @CreateDateColumn()

@@ -32,6 +32,7 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   // each machine should only have the latest event (this prevents information overload)
   // assert: `machines.events` should be length 0 or 1
 
+  console.log("getMachines", machines);
   const result = []
   for (const machine of machines) {
     const events = await AppDataSource.getRepository(UpdateEvent)
@@ -50,10 +51,13 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
       machine.events = [latestEvent];
     }
 
+    // TODO: do we want the backend to calculate if the machine is online or not?
     result.push({
       status: machine.events.length > 0 ? machine.events[0].statusCode : -1,
       machine
     })
+
+    // result.push(machine)
   }
 
 
@@ -79,7 +83,7 @@ export const createMachine = async (req: Request, res: Response) => {
     return sendErrorResponse(res, "Name is required", 400);
   }
   if (!roomId || Number(roomId) <= 0) {
-    return sendErrorResponse(res, "Area ID is required", 400);
+    return sendErrorResponse(res, "Room ID is required", 400);
   }
   if (!type) {
     return sendErrorResponse(res, "Type is required", 400);
@@ -154,5 +158,27 @@ export const getOneMachine = asyncHandler(
       status,
       machine,
     });
+  }
+);
+
+export const deleteMachine = asyncHandler(
+  async (req: Request, res: Response) => {
+    const areaId = req.params.areaId;
+    const roomId = req.params.roomId;
+    const machineId = parseInt(req.params.machineId, 10);
+    if (isNaN(machineId)) {
+      return sendErrorResponse(res, "Invalid machine ID", 400);
+    }
+
+    const machineRepository = AppDataSource.getRepository(Machine);
+    const machine = await machineRepository.findOneBy({ machineId });
+
+    if (!machine) {
+      return sendErrorResponse(res, "Machine not found", 404);
+    }
+
+    await machineRepository.remove(machine);
+
+    sendOkResponse(res, { message: "Machine deleted successfully" });
   }
 );

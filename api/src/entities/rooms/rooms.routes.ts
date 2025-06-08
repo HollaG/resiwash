@@ -4,10 +4,11 @@
  */
 
 import express from "express";
-import { createRoom, getRooms } from "./rooms.controller";
+import { createRoom, deleteRoom, getRooms } from "./rooms.controller";
 
 const router = express.Router({mergeParams: true});
 
+router.delete("/:id", deleteRoom);
 router.get("/", getRooms)
 router.post("/", createRoom)
 

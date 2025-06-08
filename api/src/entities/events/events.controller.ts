@@ -6,11 +6,13 @@ import { UpdateEvent } from "../../models/UpdateEvent";
 import { Machine } from "../../models/Machine";
 import SensorStabilizer from "../../core/SensorStabilizer";
 import { RawEvent } from "../../models/RawEvent";
-
+import { Sensor } from "../../models/Sensor";
+import { SensorToMachine } from "../../models/SensorToMachine";
+import { In } from "typeorm";
 
 const debounceMachineMap: {
-  [machineId: number]: SensorStabilizer
-} = {}
+  [machineId: number]: SensorStabilizer;
+} = {};
 
 export const getEvents = asyncHandler(async (req: Request, res: Response) => {
   const eventRepository = AppDataSource.getRepository(UpdateEvent);
@@ -33,7 +35,6 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   // todo: authentication via API key
 
   console.log("createEvent", req.body);
-
   const { status, machineId, statusCode } = req.body;
 
   try {
@@ -90,6 +91,20 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   // }
 });
 
+type EspEvent = {
+  macAddress: string; // mac address of the machine
+
+  localId: number; // localId
+  state: number; // integer
+  source: string; // source
+  strategy: number; // strategy, unused for now. Can be AND, OR, etc
+  readings: Reading[];
+};
+type Reading = {
+  value: number;
+  threshold: number;
+};
+
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
     // expected fields: data: { statusCode, machineId, status? }[]
@@ -97,34 +112,163 @@ export const createMultipleEvents = asyncHandler(
 
     console.log("createMultipleEvents", req.body);
 
-    const {
-      data,
-    }: { data: { statusCode: number; machineId: number; status?: string }[] } =
-      req.body;
+    const data = req.body.data as EspEvent[];
+    const macAddress = req.body.macAddress as string;
+
+    if (!macAddress) {
+      return sendErrorResponse(res, "MAC address is required", 400);
+    }
+
+    // check to see if valid macAddress exists
+    const sensor = await AppDataSource.getRepository(Sensor).findOne({
+      where: { macAddress },
+    });
+
+    if (!sensor) {
+      return sendErrorResponse(res, "Sensor not found", 404);
+    }
 
     if (!data || !Array.isArray(data)) {
       return sendErrorResponse(res, "Data is required", 400);
     }
 
-    if (data.length === 0) {
-      return sendErrorResponse(res, "Data is empty", 400);
+    console.log("createMultipleEvents debug sensor", sensor);
+
+    // get all SensorToMachine links for the sensor
+    const sensorToMachineRepository =
+      AppDataSource.getRepository(SensorToMachine);
+    const sensorLinks = await sensorToMachineRepository.find({
+      where: { sensorId: sensor.sensorId },
+      relations: ["machine"],
+    });
+
+    if (sensorLinks.length === 0) {
+      return sendErrorResponse(
+        res,
+        "No machine links found for the sensor",
+        404
+      );
     }
 
-    const events = await Promise.allSettled(
-      // will never reject
-      data.map((item) => saveEvent(item))
-    );
-    if (events.some((event) => event.status === "rejected")) {
-      const errors = events
-        .filter((event) => event.status === "rejected")
-        .map((event) => (event as PromiseRejectedResult).reason);
-      console.log("error: ", errors)
-      return sendErrorResponse(res, errors, 500);
-    }
-    sendOkResponse(
-      res,
-      events.map((event) => (event as PromiseFulfilledResult<any>).value)
-    );
+    const rawEventRepository = AppDataSource.getRepository(RawEvent);
+    const actualEventRepository = AppDataSource.getRepository(UpdateEvent);
+
+    const machineIds = sensorLinks.map((link) => link.machineId);
+    const machineRepository = AppDataSource.getRepository(Machine);
+
+    console.log("createMultipleEvents debug machineIds", machineIds);
+
+    const latestEvents = await actualEventRepository
+      .createQueryBuilder("event")
+      .leftJoinAndSelect("event.machine", "machine")
+      .distinctOn(["event.machineId"])
+      .where("event.machineId IN (:...machineIds)", { machineIds }) // <-- add this line
+      .orderBy("event.machineId", "ASC")
+      .addOrderBy("event.timestamp", "DESC")
+      .getMany();
+
+    console.log("createMultipleEvents debug latestEvents", latestEvents);
+
+    const rawEvents: RawEvent[] = [];
+    const actualEvents: UpdateEvent[] = []
+    
+    data.forEach((espEvent) => {
+      // convert EspEvent to UpdateEvent
+      const machine = sensorLinks.find((link) => {
+        return (
+          link.source === espEvent.source && link.localId === espEvent.localId
+        );
+      });
+
+      if (!machine) {
+        // return sendErrorResponse(res, `No machine link found for source: ${espEvent.source} and localId: ${espEvent.localId}`, 404);
+      } else {
+        const rawEvent = new RawEvent();
+        const { state, readings } = espEvent;
+        rawEvent.statusCode = state
+        rawEvent.readings = readings
+        rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
+        rawEvents.push(rawEvent);
+
+        // --------- for actual events ---------
+        if (!debounceMachineMap[machine.machineId]) {
+          debounceMachineMap[machine.machineId] = new SensorStabilizer();
+        }
+
+        const actualEvent = new UpdateEvent();
+        actualEvent.statusCode = debounceMachineMap[machine.machineId].update(
+          state
+        );
+
+        // find the latest event for this machine
+        const latestEvent = latestEvents.find(
+          (event) => event.machine.machineId === machine.machineId
+        );
+
+        if (!latestEvent || latestEvent.statusCode !== state) {
+          const event = new UpdateEvent();
+          event.statusCode = state;
+          event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
+
+          // await actualEventRepository.save(event);
+
+          // return event;
+          actualEvents.push(event);
+        } else {
+          // NO STATE CHANGE
+          // machine's lastUpdated timestamp comes from latest event
+
+         
+  
+        }
+      }
+    });
+
+    const savedRawEvents = await rawEventRepository.save(rawEvents);
+
+    // for all raw events, update the machine's lastUpdated timestamp
+    const machineIdsToUpdate = rawEvents.map((event) => event.machine.machineId);
+    const machinesToUpdate = await machineRepository.find({
+      where: { machineId: In(machineIdsToUpdate) },
+    })
+
+    machinesToUpdate.forEach((machine) => {
+      machine.lastUpdated = new Date(); // update the lastUpdated timestamp
+    });
+    await machineRepository.save(machinesToUpdate);
+
+    const savedActualEvents = await actualEventRepository.save(actualEvents);
+
+    sendOkResponse(res, savedRawEvents);
+
+    // const {
+    //   data,
+    // }: { data: { statusCode: number; machineId: number; status?: string }[] } =
+    //   req.body;
+
+    // if (!data || !Array.isArray(data)) {
+    //   return sendErrorResponse(res, "Data is required", 400);
+    // }
+
+    // if (data.length === 0) {
+    //   return sendErrorResponse(res, "Data is empty", 400);
+    // }
+
+    // const events = await Promise.allSettled(
+    //   // will never reject
+    //   data.map((item) => saveEvent(item))
+    // );
+    // if (events.some((event) => event.status === "rejected")) {
+    //   const errors = events
+    //     .filter((event) => event.status === "rejected")
+    //     .map((event) => (event as PromiseRejectedResult).reason);
+    //   console.log("error: ", errors)
+    //   return sendErrorResponse(res, errors, 500);
+    // }
+    // sendOkResponse(
+    //   res,
+    //   events.map((event) => (event as PromiseFulfilledResult<any>).value)
+    // );
 
     // const eventRepository = AppDataSource.getRepository(UpdateEvent);
 
@@ -188,7 +332,7 @@ const saveEvent = async ({
 
   await AppDataSource.getRepository(Machine).save(machine);
 
-  // always save to raw events 
+  // always save to raw events
   const rawEvent = new RawEvent();
   rawEvent.statusCode = rawStatusCode;
   rawEvent.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
@@ -211,8 +355,6 @@ const saveEvent = async ({
 
     return event;
   } else {
-    // update the machine's lastUpdated timestamp
-
     return latestEvent; // TODO: do we need to return the latest event?
   }
 };

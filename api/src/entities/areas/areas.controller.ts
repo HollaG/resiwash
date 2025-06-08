@@ -11,7 +11,7 @@ export const getAreas = asyncHandler(async (req: Request, res: Response) => {
   sendOkResponse(res, areas);
 });
 
-export const createArea = (async (req: Request, res: Response) => {
+export const createArea = async (req: Request, res: Response) => {
   // expected fields: name
   // optional fields: location, description, imageUrl, shortName
 
@@ -36,4 +36,22 @@ export const createArea = (async (req: Request, res: Response) => {
   await areaRepository.save(area);
 
   sendOkResponse(res, area);
+};
+
+export const deleteArea = asyncHandler(async (req: Request, res: Response) => {
+  const areaId = parseInt(req.params.id, 10);
+  if (isNaN(areaId)) {
+    return sendErrorResponse(res, "Invalid area ID", 400);
+  }
+
+  const areaRepository = AppDataSource.getRepository(Area);
+  const area = await areaRepository.findOneBy({ areaId });
+
+  if (!area) {
+    return sendErrorResponse(res, "Area not found", 404);
+  }
+
+  await areaRepository.remove(area);
+
+  sendOkResponse(res, { message: "Area deleted successfully" });
 });
