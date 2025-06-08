@@ -1,6 +1,6 @@
 import { Button, Input, Table } from "@mantine/core";
 import { useFetchData } from "../hooks/useFetchData";
-import React, { useRef } from "react";
+import React from "react";
 
 interface CustomTableProps<T> {
   headerKeys: { value: string, label: string, required?: boolean }[]
@@ -20,14 +20,10 @@ export const CustomTable = <T extends Object,>({
   onRowClick,
 
   onDelete,
-  onAdd,
-  renderRow,
-  children
-}: CustomTableProps<T>) => {
+  onAdd }: CustomTableProps<T>) => {
 
   const { data, refetch } = useFetchData<T[]>(url);
 
-  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const rows = data?.map((item, index) => {
     return (
@@ -41,6 +37,7 @@ export const CustomTable = <T extends Object,>({
 
           console.log('value', value, item);
           return (
+            // @ts-ignore
             <Table.Td key={key.value.toString()}>{value}</Table.Td>
           )
         })}
@@ -57,12 +54,19 @@ export const CustomTable = <T extends Object,>({
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const newItem: any = {};
     headerKeys.forEach((key) => {
-      newItem[key.value] = formData.get(key.value.toString());
+      newItem[onlyReturnPropertyAfterLastDot(key.value)] = formData.get(onlyReturnPropertyAfterLastDot(key.value.toString()));
 
     })
 
     onAdd?.(newItem).then(() => refetch());
   }
+
+  const onlyReturnPropertyAfterLastDot = (value: string) => {
+    const parts = value.split(".");
+    if (parts.length === 1) return value; // No dot found, return the original value
+    return parts[parts.length - 1];
+  }
+
 
   return <form onSubmit={onSubmit}>
     <Table>
@@ -78,7 +82,7 @@ export const CustomTable = <T extends Object,>({
         {rows}
         {onAdd && <Table.Tr>
           {(headerKeys).map((key) => (
-            <Table.Td key={key.value.toString()}><Input required={key.required} name={key.value.toString()} /></Table.Td>
+            <Table.Td key={key.value.toString()}><Input required={key.required} name={onlyReturnPropertyAfterLastDot(key.value.toString())} /></Table.Td>
           ))}
           <Table.Td colSpan={Object.keys(headerKeys || {}).length + 1}>
             <Button type="submit">Add New</Button>

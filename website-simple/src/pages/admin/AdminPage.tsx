@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Area, Machine, MachineWithEvents, Room, Sensor, SensorToMachine, SensorWithRoom, ServerResponse } from "../../types/datatypes";
-import { Button, Group, Input, Select, Stack, Table, TextInput } from "@mantine/core";
+import { Area, Machine, MachineWithEvents, Room, Sensor, SensorToMachine, SensorWithRoom } from "../../types/datatypes";
+import { Button, Group, Select, Stack, TextInput } from "@mantine/core";
 import { useFetchData } from "../../hooks/useFetchData";
 import { CustomTable } from "../../components/CustomTable";
 import { useCrud } from "../../hooks/useCRUD";
@@ -196,7 +195,10 @@ export const AdminPage = () => {
       const data = await crudMachineData({
         method: "DELETE",
         body: {},
-        append: machine.machineId.toString(),
+
+        // TODO: LOOK INTO THE TYPING ISSUE ()
+        // @ts-ignore
+        append: machine.machine.machineId.toString(),
       });
       console.log('Machine deleted:', data);
 

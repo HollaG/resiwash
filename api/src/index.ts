@@ -69,15 +69,12 @@ app.use(
   require("./entities/rooms/rooms.routes")
 );
 
-
 // Areas
 app.use(
   `/api/${API_VERSION}/areas`,
   VerifyToken,
   require("./entities/areas/areas.routes")
 );
-
-
 
 // Events
 app.use(
@@ -88,7 +85,6 @@ app.use(
 // Sensors
 app.use(
   `/api/${API_VERSION}/sensors`,
-  VerifyToken,
   require("./entities/sensors/sensors.routes")
 );
 

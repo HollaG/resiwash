@@ -2,15 +2,11 @@
 // All packages except `@mantine/hooks` require styles imports
 import '@mantine/core/styles.css';
 
-import { Anchor, Box, Button, Container, Divider, MantineProvider, Stack, Table } from '@mantine/core';
-import { useEffect, useState } from 'react';
-import { useFetch } from '@mantine/hooks';
-import { Pages, statusCodeToEnum } from './types/enums';
-import { MachineStatusOverview, MachineStatusSpecific, MachineWithEvents, ServerResponse } from './types/datatypes';
-import { formatDate, formatDistanceToNow } from 'date-fns';
+import { Button, Stack } from '@mantine/core';
+import { useState } from 'react';
+import { Pages } from './types/enums';
 import { AdminPage } from './pages/admin/AdminPage';
 import { HomePage } from './pages/home/HomePage';
-import { QueryClientProvider } from '@tanstack/react-query';
 
 
 

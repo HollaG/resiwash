@@ -23,10 +23,10 @@ type AuthContextType = {
 
 const defaultValue: AuthContextType = {
   currentUser: null,
-  login: async (email: string, password: string) => {
+  login: async (_email: string, _password: string) => {
     throw new Error("login function not implemented");
   },
-  register: async (email: string, password: string) => {
+  register: async (_email: string, _password: string) => {
     throw new Error("register function not implemented");
   },
   logout: async () => {

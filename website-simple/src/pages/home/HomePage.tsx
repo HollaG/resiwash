@@ -1,9 +1,9 @@
-import { Table, Stack, Button, Box, Divider, Anchor, Input, TextInput } from "@mantine/core";
+import { Table, Stack, Button, Box, Divider, Anchor, TextInput } from "@mantine/core";
 import { useFetch } from "@mantine/hooks";
 import { formatDistanceToNow, formatDate } from "date-fns";
 import { useState, useEffect } from "react";
 import { MachineWithEvents, ServerResponse, MachineStatusOverview, MachineStatusSpecific } from "../../types/datatypes";
-import { statusCodeToEnum, Pages } from "../../types/enums";
+import { statusCodeToEnum } from "../../types/enums";
 import { useAuth } from "../../context/useAuth";
 
 export const HomePage = () => {
@@ -71,7 +71,7 @@ export const HomePage = () => {
     refetch()
     currentMachine && onTableRowClicked(currentMachine.machineId)
   }
-  const { currentUser, register, login: loginUser, logout  } = useAuth();
+  const { currentUser, login: loginUser, logout  } = useAuth();
   const login = () => {
     const email = window.prompt("Enter email:");
     if (!email) return;
