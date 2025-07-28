@@ -76,6 +76,12 @@ app.use(
   require("./entities/areas/areas.routes")
 );
 
+// Locations
+app.use(
+  `/api/${API_VERSION}/locations`,
+  require("./entities/locations/locations.routes")
+);
+
 // Events
 app.use(
   `/api/${API_VERSION}/events`,
