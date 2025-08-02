@@ -24,7 +24,7 @@ export class RawEvent {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column({ type: "enum", enum: MachineStatus })
+  @Column({ type: "enum", enum: MachineStatus, nullable: true })
   status: MachineStatus;
 
   // deprecated
