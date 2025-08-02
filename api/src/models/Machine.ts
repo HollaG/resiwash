@@ -28,7 +28,7 @@ export class Machine {
 
   @Column({
     type: "enum",
-    enum: MachineType
+    enum: MachineType,
   })
   type: MachineType; // Washer, Dryer, etc.
 
@@ -54,6 +54,9 @@ export class Machine {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   lastUpdated: Date; // Last time that there was an update from the sensor
+
+  @Column({ type: "timestamp", nullable: true })
+  lastChangeTime: Date; // Last time that the machine changed state (e.g., from in use to available)
 }
