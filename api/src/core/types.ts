@@ -1,7 +1,8 @@
+// todo: change to UPPERCASE
 export enum MachineType {
-  UNKNOWN = "UNKNOWN",
-  WASHER = "WASHER",
-  DRYER = "DRYER",
+  UNKNOWN = "unknown",
+  WASHER = "washer",
+  DRYER = "dryer",
 }
 
 export enum MachineStatus {
