@@ -213,7 +213,7 @@ export const createMultipleEvents = asyncHandler(
           if (!latestEvent || latestEvent.status !== status) {
             const event = new UpdateEvent();
 
-            event.status = STATUS_CODE_MAP[status];
+            event.status = status;
             event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
 
             // await actualEventRepository.save(event);
