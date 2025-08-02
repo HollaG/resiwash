@@ -1,7 +1,16 @@
-// UpdateEvents should be `immutable`. 
+// UpdateEvents should be `immutable`.
 
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, CreateDateColumn, JoinColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  CreateDateColumn,
+  JoinColumn,
+} from "typeorm";
 import { Machine } from "./Machine";
+import { MachineStatus } from "../core/types";
 
 @Entity()
 export class UpdateEvent {
@@ -11,17 +20,18 @@ export class UpdateEvent {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column({nullable: true})
-  status: string;
+  @Column({ type: "enum", enum: MachineStatus })
+  status: MachineStatus;
 
-  @Column()
+  // deprecated
+  // use status instead
+  @Column({ nullable: true })
   statusCode: number;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   reading: number;
 
   @ManyToOne(() => Machine, (machine) => machine.events)
   @JoinColumn({ name: "machineId" })
   machine: Machine;
-
 }

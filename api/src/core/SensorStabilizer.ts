@@ -1,15 +1,17 @@
+import { MachineStatus } from "./types";
+
 // sensorStabilizer.js
 const MAX_HISTORY = 7;
 
 export default class SensorStabilizer {
-  private history: number[];
+  private history: MachineStatus[];
 
   constructor() {
     this.history = [];
   }
 
   // 0, 0,0 , 0, 0, 0,0,0,0,1, 0, 1, 0 , 0, 1, 1,1 1, ,0 ,1, 1,
-  update(value: number): number {
+  update(value: MachineStatus): MachineStatus {
     this.history.push(value);
     if (this.history.length > MAX_HISTORY) {
       this.history.shift(); // keep only last 7 values
@@ -20,29 +22,29 @@ export default class SensorStabilizer {
       return value;
     }
 
-    const mostFreq = mostFreqEle(this.history)
-    console.log(`last 7 values are ${this.history.join(", ")}. saving ${mostFreq}`)
+    const mostFreq = mostFreqEle(this.history);
+    console.log(
+      `last 7 values are ${this.history.join(", ")}. saving ${mostFreq}`
+    );
 
     // return the most common item in the history
-    return mostFreq
+    return mostFreq;
   }
 }
 
-
-function mostFreqEle(arr: number[]) {
-  let n = arr.length, maxcount = 0;
-  let res = 0;
+function mostFreqEle(arr: MachineStatus[]) {
+  let n = arr.length,
+    maxcount = 0;
+  let res: MachineStatus | null = null;
 
   for (let i = 0; i < n; i++) {
     let count = 0;
     for (let j = 0; j < n; j++) {
-      if (arr[i] === arr[j])
-        count++;
+      if (arr[i] === arr[j]) count++;
     }
 
-    // If count is greater or if count 
-    // is same but value is bigger.
-    if (count > maxcount || (count === maxcount && arr[i] > res)) {
+    // If count is greater, update the result
+    if (count > maxcount) {
       maxcount = count;
       res = arr[i];
     }

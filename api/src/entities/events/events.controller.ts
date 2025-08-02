@@ -9,6 +9,7 @@ import { RawEvent } from "../../models/RawEvent";
 import { Sensor } from "../../models/Sensor";
 import { SensorToMachine } from "../../models/SensorToMachine";
 import { In } from "typeorm";
+import { MachineStatus, STATUS_CODE_MAP } from "../../core/types";
 
 const debounceMachineMap: {
   [machineId: number]: SensorStabilizer;
@@ -29,66 +30,54 @@ export const getEvents = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
-  // expected fields: statusCode, machineId
-  // optional fields: status
-
-  // todo: authentication via API key
-
-  console.log("createEvent", req.body);
-  const { status, machineId, statusCode } = req.body;
-
-  try {
-    const event = await saveEvent({ status, machineId, statusCode });
-    sendOkResponse(res, event);
-  } catch (error) {
-    console.error("Error saving event:", error);
-    return sendErrorResponse(res, error.message, 500);
-  }
-
-  // if (statusCode === undefined) {
-  //   return sendErrorResponse(res, "Status code is required", 400);
-  // }
-
-  // if (!machineId || Number(machineId) <= 0) {
-  //   return sendErrorResponse(res, "Machine ID is required", 400);
-  // }
-
-  // const eventRepository = AppDataSource.getRepository(UpdateEvent);
-
-  // // get the latest event for the machine
-  // const latestEvent = await eventRepository.findOne({
-  //   where: {
-  //     machine: { machineId: Number(machineId) },
-  //   },
-  //   order: {
-  //     timestamp: "DESC",
-  //   },
-  // });
-
-  // // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
-  // if (!latestEvent || latestEvent.statusCode !== statusCode) {
-  //   const event = new UpdateEvent();
-  //   event.statusCode = statusCode;
-  //   event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
-
-  //   await eventRepository.save(event);
+  // to implement!
+  // // expected fields: statusCode, machineId
+  // // optional fields: status
+  // // todo: authentication via API key
+  // console.log("createEvent", req.body);
+  // const { status, machineId, statusCode } = req.body;
+  // try {
+  //   const event = await saveEvent({ status, machineId, statusCode });
   //   sendOkResponse(res, event);
-  // } else {
-  //   // update the machine's lastUpdated timestamp
-
-  //   const machine = await AppDataSource.getRepository(Machine).findOne({
-  //     where: { machineId: Number(machineId) },
-  //   });
-
-  //   if (!machine) {
-  //     return sendErrorResponse(res, "Machine not found", 404);
-  //   }
-  //   machine.lastUpdated = new Date(); // update the lastUpdated timestamp
-
-  //   await AppDataSource.getRepository(Machine).save(machine);
-
-  //   return sendOkResponse(res, latestEvent); // return the latest event
+  // } catch (error) {
+  //   console.error("Error saving event:", error);
+  //   return sendErrorResponse(res, error.message, 500);
   // }
+  // // if (statusCode === undefined) {
+  // //   return sendErrorResponse(res, "Status code is required", 400);
+  // // }
+  // // if (!machineId || Number(machineId) <= 0) {
+  // //   return sendErrorResponse(res, "Machine ID is required", 400);
+  // // }
+  // // const eventRepository = AppDataSource.getRepository(UpdateEvent);
+  // // // get the latest event for the machine
+  // // const latestEvent = await eventRepository.findOne({
+  // //   where: {
+  // //     machine: { machineId: Number(machineId) },
+  // //   },
+  // //   order: {
+  // //     timestamp: "DESC",
+  // //   },
+  // // });
+  // // // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
+  // // if (!latestEvent || latestEvent.statusCode !== statusCode) {
+  // //   const event = new UpdateEvent();
+  // //   event.statusCode = statusCode;
+  // //   event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+  // //   await eventRepository.save(event);
+  // //   sendOkResponse(res, event);
+  // // } else {
+  // //   // update the machine's lastUpdated timestamp
+  // //   const machine = await AppDataSource.getRepository(Machine).findOne({
+  // //     where: { machineId: Number(machineId) },
+  // //   });
+  // //   if (!machine) {
+  // //     return sendErrorResponse(res, "Machine not found", 404);
+  // //   }
+  // //   machine.lastUpdated = new Date(); // update the lastUpdated timestamp
+  // //   await AppDataSource.getRepository(Machine).save(machine);
+  // //   return sendOkResponse(res, latestEvent); // return the latest event
+  // // }
 });
 
 type EspEvent = {
@@ -105,11 +94,20 @@ type Reading = {
   threshold: number;
 };
 
+/**
+ * Create multiple events from ESP data.
+ *
+ * Note: the ESP transmits statusCode in order to save bandwidth.
+ * We need to convert this to a MachineStatus.
+ *
+ * This function expects the following request body:
+ * {
+ *   macAddress: string, // MAC address of the sensor
+ *   data: EspEvent[] // array of events
+ *  }
+ */
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
-    // expected fields: data: { statusCode, machineId, status? }[]
-    // optional fields: status
-
     console.log("createMultipleEvents", req.body);
 
     const data = req.body.data as EspEvent[];
@@ -184,44 +182,55 @@ export const createMultipleEvents = asyncHandler(
         // return sendErrorResponse(res, `No machine link found for source: ${espEvent.source} and localId: ${espEvent.localId}`, 404);
       } else {
         const rawEvent = new RawEvent();
-        const { state, readings } = espEvent;
-        rawEvent.statusCode = state;
-        rawEvent.readings = readings;
-        rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
-        rawEvents.push(rawEvent);
+        const { state: statusCode, readings } = espEvent;
 
-        // --------- for actual events ---------
-        if (!debounceMachineMap[machine.machineId]) {
-          debounceMachineMap[machine.machineId] = new SensorStabilizer();
-        }
-
-        const actualEvent = new UpdateEvent();
-        actualEvent.statusCode =
-          debounceMachineMap[machine.machineId].update(state);
-
-        // find the latest event for this machine
-        const latestEvent = latestEvents.find(
-          (event) => event.machine.machineId === machine.machineId
-        );
-
-        if (!latestEvent || latestEvent.statusCode !== state) {
-          const event = new UpdateEvent();
-          event.statusCode = state;
-          event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
-
-          // await actualEventRepository.save(event);
-
-          // return event;
-          actualEvents.push(event);
+        if (!STATUS_CODE_MAP[statusCode]) {
+          // continue;
         } else {
-          // NO STATE CHANGE
-          // machine's lastUpdated timestamp comes from latest event
+          const status = STATUS_CODE_MAP[statusCode] as MachineStatus;
+          rawEvent.status = status;
+
+          rawEvent.readings = readings;
+          rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
+          rawEvents.push(rawEvent);
+
+          // --------- for actual events ---------
+          if (!debounceMachineMap[machine.machineId]) {
+            debounceMachineMap[machine.machineId] = new SensorStabilizer();
+          }
+
+          const actualEvent = new UpdateEvent();
+
+          const debouncedStatus =
+            debounceMachineMap[machine.machineId].update(status);
+          actualEvent.status = debouncedStatus;
+
+          // find the latest event for this machine
+          const latestEvent = latestEvents.find(
+            (event) => event.machine.machineId === machine.machineId
+          );
+
+          if (!latestEvent || latestEvent.status !== status) {
+            const event = new UpdateEvent();
+
+            event.status = STATUS_CODE_MAP[status];
+            event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
+
+            // await actualEventRepository.save(event);
+
+            // return event;
+            actualEvents.push(event);
+          } else {
+            // NO STATE CHANGE
+            // machine's lastUpdated timestamp comes from latest event
+          }
         }
       }
     });
 
     const savedRawEvents = await rawEventRepository.save(rawEvents);
 
+    // ------- raw events always get saved -------
     // for all raw events, update the machine's lastUpdated timestamp
     const machineIdsToUpdate = rawEvents.map(
       (event) => event.machine.machineId
@@ -237,13 +246,18 @@ export const createMultipleEvents = asyncHandler(
 
     const savedActualEvents = await actualEventRepository.save(actualEvents);
 
-    // for all actual events, update the machine's lastChangeTime timestamp
+    // ------- actual events get saved only if there is a state change -------
+    // for all actual events, update the machine's lastChangeTime timestamp,
+    // copy the currentStatus to previousStatus,
+    // set the currentStatus to the new status
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
         (m) => m.machineId === event.machine.machineId
       );
       if (machine) {
         machine.lastChangeTime = new Date(); // update the lastChangeTime timestamp
+        machine.previousStatus = machine.currentStatus; // copy the currentStatus to previousStatus
+        machine.currentStatus = event.status; // set the currentStatus to the new status
       }
     });
     await machineRepository.save(machinesToUpdate);
@@ -301,18 +315,30 @@ export const createMultipleEvents = asyncHandler(
   }
 );
 
+/**
+ * Create a single event from manual entry.
+ *
+ * Note: the ESP transmits statusCode in order to save bandwidth.
+ * We need to convert this to a MachineStatus.
+ *
+ * This function expects the following request body:
+ * {
+ *   macAddress: string, // MAC address of the sensor
+ *   data: EspEvent[] // array of events
+ *  }
+ */
 const saveEvent = async ({
-  status,
   machineId,
   statusCode: rawStatusCode,
 }: {
-  status?: string;
   machineId: number;
   statusCode: number;
 }) => {
   if (rawStatusCode === undefined) {
     throw new Error("Status code is required");
   }
+
+  const status = STATUS_CODE_MAP[rawStatusCode] as MachineStatus;
 
   if (!machineId || Number(machineId) <= 0) {
     throw new Error("Machine ID is required");
@@ -352,12 +378,12 @@ const saveEvent = async ({
     debounceMachineMap[machineId] = new SensorStabilizer();
   }
 
-  let statusCode = debounceMachineMap[machineId].update(rawStatusCode);
+  let debouncedStatus = debounceMachineMap[machineId].update(status);
 
   // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
-  if (!latestEvent || latestEvent.statusCode !== statusCode) {
+  if (!latestEvent || latestEvent.status !== debouncedStatus) {
     const event = new UpdateEvent();
-    event.statusCode = statusCode;
+    event.status = debouncedStatus;
     event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
 
     await eventRepository.save(event);

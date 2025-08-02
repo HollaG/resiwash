@@ -8,7 +8,9 @@ import { MachineType } from "../../core/types";
 import { UpdateEvent } from "../../models/UpdateEvent";
 import { RawEvent } from "../../models/RawEvent";
 
+// get all machines. but only
 export const getMachines = asyncHandler(async (req: Request, res: Response) => {
+  console.log("getMachines", req.params);
   const areaId = req.params.areaId;
   const roomId = req.params.roomId;
 
@@ -34,30 +36,6 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
 
   // console.log("getMachines", machines);
   // const result = []
-  // for (const machine of machines) {
-  //   const events = await AppDataSource.getRepository(UpdateEvent)
-  //     .createQueryBuilder("event")
-  //     .where("event.machineId = :id", { id: machine.machineId })
-  //     .orderBy("event.timestamp", "DESC")
-  //     .take(1)
-  //     .getMany();
-
-  //   if (!events || events.length === 0) {
-  //     machine.events = []
-  //   } else {
-  //     // only take the latest event
-  //     const latestEvent = events[0];
-  //     machine.events = [latestEvent];
-  //   }
-
-  //   // TODO: do we want the backend to calculate if the machine is online or not?
-  //   result.push({
-  //     status: machine.events.length > 0 ? machine.events[0].statusCode : -1,
-  //     machine
-  //   })
-
-  //   // result.push(machine)
-  // }
 
   const result = await AppDataSource.createQueryRunner().query(
     `
@@ -88,8 +66,40 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
     [areaId, roomId]
   );
 
+  for (const machine of result) {
+    const events = await AppDataSource.getRepository(UpdateEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machine.machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(1)
+      .getMany();
+
+    if (!events || events.length === 0) {
+      machine.events = [];
+    } else {
+      // only take the latest event
+      const latestEvent = events[0];
+      machine.events = [latestEvent];
+    }
+
+    // also get the raw events
+    const rawEvents = await AppDataSource.getRepository(RawEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machine.machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(1)
+      .getMany();
+    if (!rawEvents || rawEvents.length === 0) {
+      machine.rawEvents = [];
+    } else {
+      // only take the latest event
+      const latestEvent = rawEvents[0];
+      machine.rawEvents = [latestEvent];
+    }
+  }
+
   // additional fields:
-  // `currentStatus`, `previousStatus`
+  // `currentStatus`, `previousStatus`, `events`, `rawEvents`
 
   // to display how long ago the machine was in this status, use lastChangeTime
   // example message: Changed to `${currentStatus}` ${new Date(currentTimestamp).toLocaleTimeString()} ago (from ${previousStatus})

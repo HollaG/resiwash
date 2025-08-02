@@ -11,7 +11,7 @@ import {
 } from "typeorm";
 import { Room } from "./Room";
 import { UpdateEvent } from "./UpdateEvent";
-import { MachineType } from "../core/types";
+import { MachineStatus, MachineType } from "../core/types";
 import { RawEvent } from "./RawEvent";
 import { SensorToMachine } from "./SensorToMachine";
 
@@ -57,6 +57,14 @@ export class Machine {
   @Column({ type: "timestamp", nullable: true })
   lastUpdated: Date; // Last time that there was an update from the sensor
 
+  // processed fields
   @Column({ type: "timestamp", nullable: true })
   lastChangeTime: Date; // Last time that the machine changed state (e.g., from in use to available)
+
+  // for easy access
+  @Column({ nullable: true })
+  currentStatus: MachineStatus; // Current status of the machine
+
+  @Column({ nullable: true })
+  previousStatus: MachineStatus; // Previous status of the machine
 }

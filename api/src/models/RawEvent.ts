@@ -14,6 +14,7 @@ import {
   JoinColumn,
 } from "typeorm";
 import { Machine } from "./Machine";
+import { MachineStatus } from "../core/types";
 
 @Entity()
 export class RawEvent {
@@ -23,7 +24,12 @@ export class RawEvent {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column()
+  @Column({ type: "enum", enum: MachineStatus })
+  status: MachineStatus;
+
+  // deprecated
+  // use status instead
+  @Column({ nullable: true })
   statusCode: number;
 
   @Column({ type: "json" })

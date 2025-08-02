@@ -1,16 +1,16 @@
 export enum MachineType {
-  UNKNOWN = "unknown",
-  WASHER = "washer",
-  DRYER = "dryer",
+  UNKNOWN = "UNKNOWN",
+  WASHER = "WASHER",
+  DRYER = "DRYER",
 }
 
-export enum MachineStatus { 
-  AVAILABLE = "available",
-  IN_USE = "in_use",
-  HAS_ISSUES = "has_issues",
+export enum MachineStatus {
+  AVAILABLE = "AVAILABLE",
+  IN_USE = "IN_USE",
+  HAS_ISSUES = "HAS_ISSUES",
 }
 
 export const STATUS_CODE_MAP = {
   0: MachineStatus.AVAILABLE,
   1: MachineStatus.IN_USE,
-}
+};
