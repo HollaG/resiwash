@@ -20,14 +20,14 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
     return sendErrorResponse(res, "Area ID is required", 400);
   }
 
-  // const machines = await AppDataSource.getRepository(Machine)
-  //   .createQueryBuilder("machine")
-  //   .innerJoinAndSelect("machine.room", "room")
-  //   .innerJoinAndSelect("room.area", "area")
-  //   .where("room.roomId = :roomId", { roomId })
-  //   .andWhere("area.areaId = :areaId", { areaId })
-  //   .orderBy("machine.name", "ASC")
-  //   .getMany();
+  const machines = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .innerJoinAndSelect("machine.room", "room")
+    .innerJoinAndSelect("room.area", "area")
+    .where("room.roomId = :roomId", { roomId })
+    .andWhere("area.areaId = :areaId", { areaId })
+    .orderBy("machine.name", "ASC")
+    .getMany();
 
   // // const evE );
 
@@ -37,36 +37,36 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   // console.log("getMachines", machines);
   // const result = []
 
-  const result = await AppDataSource.createQueryRunner().query(
-    `
-  WITH ranked_events AS (
-    SELECT
-      "machineId",
-      "statusCode",
-      "timestamp",
-      ROW_NUMBER() OVER (PARTITION BY "machineId" ORDER BY "timestamp" DESC) AS rank
-    FROM "update_event"
-  )
-  SELECT
-    m.*,
-    current."statusCode" AS "currentStatus",
-    previous."statusCode" AS "previousStatus",
-    current."timestamp" AS "currentTimestamp",
-    room."roomId",
-    room."areaId"
-  FROM "machine" m
-  LEFT JOIN ranked_events current
-    ON m."machineId" = current."machineId" AND current.rank = 1
-  LEFT JOIN ranked_events previous
-    ON m."machineId" = previous."machineId" AND previous.rank = 2
-  LEFT JOIN "room"
-    ON m."roomId" = room."roomId"
-  WHERE room."areaId" = $1 AND room."roomId" = $2
-  `,
-    [areaId, roomId]
-  );
+  // const result = await AppDataSource.createQueryRunner().query(
+  //   `
+  // WITH ranked_events AS (
+  //   SELECT
+  //     "machineId",
+  //     "statusCode",
+  //     "timestamp",
+  //     ROW_NUMBER() OVER (PARTITION BY "machineId" ORDER BY "timestamp" DESC) AS rank
+  //   FROM "update_event"
+  // )
+  // SELECT
+  //   m.*,
+  //   current."statusCode" AS "currentStatus",
+  //   previous."statusCode" AS "previousStatus",
+  //   current."timestamp" AS "currentTimestamp",
+  //   room."roomId",
+  //   room."areaId"
+  // FROM "machine" m
+  // LEFT JOIN ranked_events current
+  //   ON m."machineId" = current."machineId" AND current.rank = 1
+  // LEFT JOIN ranked_events previous
+  //   ON m."machineId" = previous."machineId" AND previous.rank = 2
+  // LEFT JOIN "room"
+  //   ON m."roomId" = room."roomId"
+  // WHERE room."areaId" = $1 AND room."roomId" = $2
+  // `,
+  //   [areaId, roomId]
+  // );
 
-  for (const machine of result) {
+  for (const machine of machines) {
     const events = await AppDataSource.getRepository(UpdateEvent)
       .createQueryBuilder("event")
       .where("event.machineId = :id", { id: machine.machineId })
@@ -104,7 +104,7 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   // to display how long ago the machine was in this status, use lastChangeTime
   // example message: Changed to `${currentStatus}` ${new Date(currentTimestamp).toLocaleTimeString()} ago (from ${previousStatus})
 
-  sendOkResponse(res, result);
+  sendOkResponse(res, machines);
 });
 
 export const createMachine = async (req: Request, res: Response) => {

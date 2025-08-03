@@ -1,0 +1,51 @@
+.tab {
+  &[data-orientation="horizontal"] {
+    &[data-variant="default"] {
+      border-color: var(--tab-border-color);
+
+      &:where([data-active]) {
+        border-color: var(--tabs-color);
+      }
+    }
+
+    &[data-variant="outline"] {
+      border-bottom-color: var(--tabs-color);
+
+      &:not([data-active]) {
+        border-left: none;
+        border-right: none;
+      }
+
+      &:where([data-active]) {
+        border-color: var(--tabs-color);
+        border-bottom: none;
+      }
+    }
+  }
+
+
+}
+
+.list {
+  &[data-orientation="horizontal"] {
+    display: flex;
+    flex-wrap: nowrap;
+
+    scrollbar-width: none;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &[data-variant="outline"] {
+      --tab-border-color: transparent;
+    }
+  }
+}
+
+.list {
+  position: relative;
+  margin-bottom: var(--mantine-spacing-md);
+}

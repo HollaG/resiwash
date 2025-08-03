@@ -1,9 +1,10 @@
 import { Area, Machine, MachineWithEvents, Room, Sensor, SensorToMachine, SensorWithRoom } from "../../types/datatypes";
-import { Button, Group, Select, Stack, TextInput } from "@mantine/core";
+import { Box, Button, Group, Select, Stack, TextInput } from "@mantine/core";
 import { useFetchData } from "../../hooks/useFetchData";
 import { CustomTable } from "../../components/CustomTable";
 import { useCrud } from "../../hooks/useCRUD";
 import { useState } from "react";
+import { useAuth } from "../../context/useAuth";
 
 const getAreasUrl = () => {
   return '/areas';
@@ -33,6 +34,28 @@ export const AdminPage = () => {
     getAreasUrl(),
   )
 
+
+
+
+
+  const { currentUser, login: loginUser, logout } = useAuth();
+  const login = () => {
+    const email = window.prompt("Enter email:");
+    if (!email) return;
+    const password = window.prompt("Enter password:");
+    if (!password) return;
+
+    // You can now use username and password, e.g., send to your API
+    console.log("Username:", email, "Password:", password);
+
+    loginUser(email, password)
+      .then(() => {
+        console.log("User logged in successfully");
+      })
+      .catch((error: any) => {
+        console.error("Error logging user:", error);
+      });
+  };
 
   const headerKeysArea: {
     value: keyof Area;
@@ -284,7 +307,20 @@ export const AdminPage = () => {
     }
   }
 
+  if (!currentUser) {
+    return <Stack style={{ paddingBottom: "2rem" }}>
+      <Button onClick={login}>Login</Button>
+    </Stack>
+  }
+
   return <Stack style={{ paddingBottom: "2rem" }}>
+
+    {currentUser && <Box>
+      <b>Logged in as {currentUser.email}</b>
+      <Button onClick={() => {
+        logout();
+      }}>Logout</Button>
+    </Box>}
     <h1>Areas</h1>
     <CustomTable<Area> headerKeys={headerKeysArea} url={getAreasUrl()} onAdd={onAddArea} onDelete={onDeleteArea} onRowClick={onClickArea} />
 

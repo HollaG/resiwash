@@ -2,30 +2,22 @@
 // All packages except `@mantine/hooks` require styles imports
 import '@mantine/core/styles.css';
 
-import { Button, Stack } from '@mantine/core';
-import { useState } from 'react';
-import { Pages } from './types/enums';
+import { Stack } from '@mantine/core';
+
 import { AdminPage } from './pages/admin/AdminPage';
-import { HomePage } from './pages/home/HomePage';
+import { Home } from './pages/home/Home';
 
 
 
 export default function App() {
-  const [page, setPage] = useState(Pages.HOME);
 
-
-  if (page === Pages.ADMIN) {
-    return <Stack>
-      <Button onClick={() => setPage(Pages.HOME)}>Back to Home</Button>
-      <AdminPage />
-    </Stack>
+  // if url contains /admin, show admin page
+  if (window.location.pathname.includes('/admin')) {
+    return <Stack py="xl"><AdminPage /></Stack>
   } else {
-    return <Stack>
-      <Button onClick={() => setPage(Pages.ADMIN)}>Back to Admin</Button>
-      <HomePage />
-    </Stack>
+    // setPage(Pages.HOME);
+    return <Stack py="xl"><Home /> </Stack>
   }
-
 
 
 

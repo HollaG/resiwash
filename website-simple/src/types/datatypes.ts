@@ -1,7 +1,7 @@
 export type ServerResponse<T> = {
-  status: number,
-  data: T
-}
+  status: string;
+  data: T;
+};
 
 export type Area = {
   areaId: number;
@@ -14,26 +14,28 @@ export type Area = {
   updatedAt: string; // or Date
 };
 
-
-
-
 export type MachineEvent = {
   eventId: number;
   timestamp: string; // or `Date` if you parse it
   status: string | null;
+
+  // deprecated
+  // use status instead
   statusCode: number;
-  reading: number
+
+  reading: number;
 };
 
 export type Machine = {
   machineId: number;
   name: string;
   label: string;
-  type: 'washer' | 'dryer' | string; // Extend or narrow as needed
+  type: MachineType; // Extend or narrow as needed
   imageUrl: string | null;
   createdAt: string; // or `Date`
   updatedAt: string; // or `Date`
   lastUpdated: string; // or `Date`
+  lastChangeTime: string; // when the machine last changed status
 };
 
 export type Room = {
@@ -47,26 +49,29 @@ export type Room = {
   updatedAt: string; // or Date
 };
 
-export type Sensor = { 
-  sensorId: number, 
-  macAddress: string,
-  apiKey: string, 
-  createdAt: string, // or Date
-  updatedAt: string, // or Date
-}
+// combined type
+export type Location = Area & {
+  rooms: (Room & { machineCount: number })[];
+};
+
+export type Sensor = {
+  sensorId: number;
+  macAddress: string;
+  apiKey: string;
+  createdAt: string; // or Date
+  updatedAt: string; // or Date
+};
 
 export type SensorWithRoom = Sensor & {
-  room: Room
-}
-
+  room: Room;
+};
 
 export type SensorToMachine = {
   sensorId: number;
   source: string;
   localId: number; // Local identifier for the sensor
   machineId: number; // ID of the machine this sensor is linked to
-}
-
+};
 
 export type AreaWithRooms = Area & {
   rooms: Room[];
@@ -92,12 +97,25 @@ export type MachineWithRoomAndEvents = Machine & {
 
 // GET /${roomId}/${areaId}
 export type MachineStatusOverview = {
-  status: number, // TODO: change to enum
-  machine: MachineWithRoomAndEvents
-}
-
+  currentStatus: MachineStatus;
+  previousStatus: MachineStatus;
+  // machine: MachineWithRoomAndEvents;
+} & MachineWithEvents;
 // GET /${roomId}/${areaId}/${machineId}
 export type MachineStatusSpecific = {
-  status: number,
-  machine: MachineWithEvents
+  status: MachineStatus;
+  machine: MachineWithEvents;
+};
+
+export enum MachineType {
+  WASHER = "washer",
+  DRYER = "dryer",
+  OTHER = "other", // For any other types not specified
+}
+
+export enum MachineStatus {
+  AVAILABLE = "AVAILABLE",
+  IN_USE = "IN_USE",
+  HAS_ISSUES = "HAS_ISSUES",
+  UNKNOWN = "UNKNOWN", // For any status that doesn't fit the above
 }

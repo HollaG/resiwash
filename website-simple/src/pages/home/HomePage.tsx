@@ -1,10 +1,10 @@
-import { Table, Stack, Button, Box, Divider, Anchor, TextInput } from "@mantine/core";
+
+import { Table, Stack, Box, Divider, Anchor, TextInput } from "@mantine/core";
 import { useFetch } from "@mantine/hooks";
 import { formatDistanceToNow, formatDate } from "date-fns";
 import { useState, useEffect } from "react";
 import { MachineWithEvents, ServerResponse, MachineStatusOverview, MachineStatusSpecific } from "../../types/datatypes";
 import { statusCodeToEnum } from "../../types/enums";
-import { useAuth } from "../../context/useAuth";
 
 export const HomePage = () => {
   const [washerCount, setWasherCount] = useState(0);
@@ -18,7 +18,7 @@ export const HomePage = () => {
 
   const [currentMachine, setCurrentMachine] = useState<MachineWithEvents | null>(null)
 
-  const { data, refetch } = useFetch<ServerResponse<MachineStatusOverview[]>>(
+  const { data } = useFetch<ServerResponse<MachineStatusOverview[]>>(
     `${url}/areas/${areaId}/${roomId}`
   )
 
@@ -67,48 +67,20 @@ export const HomePage = () => {
     </Table.Tr>
   })
 
-  const update = () => {
-    refetch()
-    currentMachine && onTableRowClicked(currentMachine.machineId)
-  }
-  const { currentUser, login: loginUser, logout  } = useAuth();
-  const login = () => {
-    const email = window.prompt("Enter email:");
-    if (!email) return;
-    const password = window.prompt("Enter password:");
-    if (!password) return;
-
-    // You can now use username and password, e.g., send to your API
-    console.log("Username:", email, "Password:", password);
-
-    loginUser(email, password)
-      .then(() => {
-        console.log("User logged in successfully");
-      })
-      .catch((error: any) => {
-        console.error("Error logging user:", error);
-      });
-  };
 
 
   return <Stack>
-    {!currentUser && <Button onClick={login}> Login </Button>}
-    {currentUser && <Box>
-      <b>Logged in as {currentUser.email}</b>
-      <Button onClick={() => {
-        logout();
-      }}>Logout</Button>
-      </Box>}
+
 
     <Box>
 
       <h1>Hello RV!</h1>
       <p>There are currently {washerCount} washers and {dryerCount} dryers being checked.</p>
       <p><i>This is a work in progress! Don't expect accurate results or 100% uptime/coverage.</i></p>
-      <Button onClick={update}> Refresh </Button>
+      {/* <Button onClick={update}> Refresh </Button> */}
     </Box>
 
-    <Box style={{display: "flex", gap: "10px"}}>
+    <Box style={{ display: "flex", gap: "10px" }}>
       <TextInput value={areaId} label="Area ID" onChange={e => setAreaId(parseInt(e.currentTarget.value))} type="number" />
       <TextInput value={roomId} label="Room ID" onChange={(e) => setRoomId(parseInt(e.currentTarget.value))} type="number" />
     </Box>

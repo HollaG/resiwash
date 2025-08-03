@@ -1,3 +1,10 @@
+#include "sys/time.h"
+#include "BLEDevice.h"
+#include "BLEUtils.h"
+#include "BLEServer.h"
+#include "BLEBeacon.h"
+#include "esp_sleep.h"
+
 #include <dummy.h>
 
 #include <Arduino.h>
@@ -11,20 +18,21 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "String"
-// #include <WifiClientSecure.h>
-#include <WifiClient.h>
+#include <WifiClientSecure.h>
+// #include <WifiClient.h>
 
-// WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
-WiFiClient client;  // or WiFiClientSecure for HTTPS
+WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
+// WiFiClient client;  // or WiFiClientSecure for HTTPS
 HTTPClient http;
 
-// #define ssid "espspot"
-// #define pass "1234567890"
-#define ssid "SINGTEL-C6A8"
-#define pass "wkskgx37k7tW"
-// const char *serverName = "https://resiwash.marcussoh.com/api/v1/events/bulk";
-const char *serverName = "http://192.168.1.3:3000/api/v1/events/bulk";
-const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
+#define ssid "espspot"
+#define pass "bvtx4675"
+// #define ssid "SINGTEL-C6A8"
+// #define pass "wkskgx37k7tW"
+const char *serverName = "https://resiwash.marcussoh.com/api/v1/events/bulk";
+// const char *serverName = "http://192.168.1.3:3000/api/v1/events/bulk";
+// const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
+const char *registerName = "https://resiwash.marcussoh.com/api/v1/sensors/register";
 
 // const char *host = "192.168.1.6";
 // int port = 3000;
@@ -33,8 +41,8 @@ const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
 #define BAUD 9600
 #define RXD2 16
 #define TXD2 17
-#define TXD1 19
-#define RXD1 21
+#define TXD1 18
+#define RXD1 19
 
 #define START_BYTE 251
 #define END_BYTE 252
@@ -125,7 +133,7 @@ void setup() {
   String wifiMacString = WiFi.macAddress();
 
   // post request to /sensors/register
-  // client.setInsecure();
+  client.setInsecure();
   Serial.printf("Sending post request to %s\n", registerName);
   http.begin(client, registerName);
   http.addHeader("Content-Type", "application/json");

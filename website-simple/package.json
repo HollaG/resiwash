@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mantine/core": "^7.17.7",
-    "@mantine/hooks": "^7.17.7",
-    "@mantine/notifications": "^7.17.7",
+    "@mantine/core": "^8.2.1",
+    "@mantine/form": "^8.2.1",
+    "@mantine/hooks": "^8.2.1",
+    "@mantine/notifications": "^8.2.1",
+    "@tabler/icons-react": "^3.34.1",
     "@tanstack/react-query": "^5.77.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.9.0",
