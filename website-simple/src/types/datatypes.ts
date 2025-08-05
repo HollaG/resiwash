@@ -17,7 +17,7 @@ export type Area = {
 export type MachineEvent = {
   eventId: number;
   timestamp: string; // or `Date` if you parse it
-  status: string | null;
+  status: MachineStatus;
 
   // deprecated
   // use status instead
@@ -95,17 +95,18 @@ export type MachineWithRoomAndEvents = Machine & {
   events: MachineEvent[];
 };
 
-// GET /${roomId}/${areaId}
+// GET /${roomId}/${areaId} returns a list of machines in a room
+// note: only return 1 event per machine to save bandwidth
 export type MachineStatusOverview = {
   currentStatus: MachineStatus;
   previousStatus: MachineStatus;
   // machine: MachineWithRoomAndEvents;
-} & MachineWithEvents;
+} & MachineWithRoomAndEvents;
+
+
 // GET /${roomId}/${areaId}/${machineId}
-export type MachineStatusSpecific = {
-  status: MachineStatus;
-  machine: MachineWithEvents;
-};
+// returns 10 last events
+export type MachineStatusSpecific = MachineWithRoomAndEvents
 
 export enum MachineType {
   WASHER = "washer",
@@ -119,3 +120,19 @@ export enum MachineStatus {
   HAS_ISSUES = "HAS_ISSUES",
   UNKNOWN = "UNKNOWN", // For any status that doesn't fit the above
 }
+
+export const convertMachineStatusToString = (status: MachineStatus): string => {
+  switch (status) {
+    case MachineStatus.AVAILABLE:
+      return "Available";
+    case MachineStatus.IN_USE:
+      return "In Use";
+    case MachineStatus.HAS_ISSUES:
+      return "Has Issues";
+    case MachineStatus.UNKNOWN:
+      return "Unknown";
+    default:
+      return "Unknown Status";
+  }
+};
+

@@ -5,9 +5,9 @@ import { useScrollableTabs } from "../Tabs/base/useScrollableTabs"
 
 import classes from "./index.module.css"
 import { useState } from "react"
-import { DetailView } from "../detail-view/DetailView"
+import { DetailView } from "../saved-location/SavedLocation"
 
-export const DetailViewList = () => {
+export const SavedLocationsWrapper = () => {
   const { savedLocations } = useSavedLocations()
   const { tabListReference } = useScrollableTabs();
 

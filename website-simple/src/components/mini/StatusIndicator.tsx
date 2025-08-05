@@ -1,5 +1,6 @@
 import { Box } from '@mantine/core';
 import { MachineStatus } from '../../types/datatypes';
+import { getColorForMachineStatus } from '../../utils/colors';
 
 interface StatusIndicatorProps {
   /** The status of the indicator */
@@ -12,18 +13,6 @@ interface StatusIndicatorProps {
  * A circular status indicator that shows different states with appropriate colors
  */
 export const StatusIndicator = ({ status, size = 'md' }: StatusIndicatorProps) => {
-  const getBackgroundColor = () => {
-    switch (status) {
-      case MachineStatus.AVAILABLE:
-        return 'var(--mantine-color-green-5)';
-      case MachineStatus.IN_USE:
-        return 'var(--mantine-color-red-5)';
-      case MachineStatus.UNKNOWN:
-        return 'var(--mantine-color-gray-5)';
-      default:
-        return 'var(--mantine-color-gray-5)';
-    }
-  };
 
   const getSizeStyles = () => {
     switch (size) {
@@ -42,7 +31,7 @@ export const StatusIndicator = ({ status, size = 'md' }: StatusIndicatorProps) =
     <Box
       style={{
         ...getSizeStyles(),
-        backgroundColor: getBackgroundColor(),
+        backgroundColor: getColorForMachineStatus(status),
       }}
     />
   );

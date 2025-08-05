@@ -1,19 +1,19 @@
-import { Box, Card, Group, Stack, Text } from "@mantine/core";
-import { useAllMachineInfo } from "../../hooks/query/useMachineInfo";
+import { Group, Stack, Text } from "@mantine/core";
+import { useLocationMachines } from "../../hooks/query/useLocationMachines";
 import { useLocationInfo } from "../../hooks/query/useLocationInfo";
 import React from "react";
 import { StatusIndicator } from "../mini/StatusIndicator";
-import { formatDistanceToNow } from "date-fns";
 import { MachineStatus } from "../../types/datatypes";
+import { MachineDetails } from "../machine-details/MachineDetails";
 
 type DetailViewProps = {
   areaId: number;
   roomId: number;
 }
-const DetailViewComponent = (props: DetailViewProps) => {
+const SavedLocation = (props: DetailViewProps) => {
   const { areaId, roomId } = props;
 
-  const { data: machineData, isLoading } = useAllMachineInfo({ areaId, roomId });
+  const { data: machineData, isLoading } = useLocationMachines({ areaId, roomId });
   const { data: locationData } = useLocationInfo()
 
   const area = locationData?.find(location => location.areaId === areaId);
@@ -45,22 +45,7 @@ const DetailViewComponent = (props: DetailViewProps) => {
 
     <Stack gap="sm">
       {machineData.map((machineOverview, index) => (
-        <Card key={index} padding="md" radius={'lg'} withBorder>
-          <Group style={{ flexWrap: 'nowrap' }} gap="md">
-            <Box style={{ flexShrink: 0 }}>
-
-              <StatusIndicator size="lg" status={(machineOverview.currentStatus)} />
-            </Box>
-            <Stack gap={'2px'}>
-              <Text fw={600}>{machineOverview.name} </Text>
-              <Text c="dimmed" size="sm"> Updated {machineOverview.lastUpdated ? formatDistanceToNow(new Date(machineOverview.lastUpdated), {
-                addSuffix: true,
-                includeSeconds: true,
-                locale: undefined,
-              }) : 'N/A'}</Text>
-            </Stack>
-          </Group>
-        </Card>
+        <MachineDetails key={index} machineOverview={machineOverview} />
 
       ))}
     </Stack>
@@ -76,4 +61,4 @@ const DetailViewComponent = (props: DetailViewProps) => {
 
 };
 
-export const DetailView = React.memo(DetailViewComponent);
+export const DetailView = React.memo(SavedLocation);

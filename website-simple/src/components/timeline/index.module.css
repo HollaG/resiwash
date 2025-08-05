@@ -1,0 +1,59 @@
+.timelineScrollContainer {
+  overflow-x: auto;
+  /* padding: 0 24px; */
+}
+.timelineContainer {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 0px;
+  padding: 4rem 24px;
+  align-items: center;
+  width: fit-content;
+  margin-left: auto;
+}
+
+.timelineItem {
+  position: relative;
+}
+
+.timelineConnector {
+  height: 2px;
+  width: 100px;
+}
+
+.timelineLabel {
+  position: absolute;
+  white-space: nowrap;
+  width: 70px;
+  text-align: center;
+}
+
+.timelineLabelBottom {
+  top: 24px;
+  left: -20px;
+}
+
+.timelineSeparatorContainer {
+  position: relative;
+}
+
+.timelineSeparator {
+  width: 2px;
+  height: 16px;
+}
+
+.timelineSeparatorLabel {
+  position: absolute;
+  white-space: nowrap;
+
+  left: -32px;
+  width: 70px;
+  text-align: center;
+
+  &.top {
+    top: -30px;
+  }
+  &.bottom {
+    top: 24px;
+  }
+}

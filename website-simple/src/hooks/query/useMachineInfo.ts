@@ -1,19 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
 import { urlBuilder } from "../../utils/helpers";
-import { MachineStatusOverview } from "../../types/datatypes";
+import { MachineWithRoomAndEvents } from "../../types/datatypes";
 
-export const useAllMachineInfo = ({
+/**
+ * Get detailed information about a specific machine in a room and area.
+ * @param param0 
+ */
+export const useMachineInfo = ({
   areaId,
   roomId,
+  machineId,
+  load = false
 }: {
   areaId: number;
   roomId: number;
+  machineId: number;
+  load?: boolean;
 }) => {
-  const { data, isLoading, error } = useQuery<MachineStatusOverview[]>({
-    queryKey: ["machineInfo", areaId, roomId],
+  const { data, isLoading, error } = useQuery<MachineWithRoomAndEvents>({
+    queryKey: ["machineInfo", areaId, roomId, machineId],
     queryFn: async ({ queryKey }) => {
-      const [_, areaId, roomId] = queryKey;
-      const response = await fetch(urlBuilder(`areas/${areaId}/${roomId}`));
+      const [_, areaId, roomId, machineId] = queryKey;
+      const response = await fetch(urlBuilder(`areas/${areaId}/${roomId}/${machineId}`));
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -21,9 +29,10 @@ export const useAllMachineInfo = ({
       if (data.status === "error") {
         throw new Error(`Error fetching machine info: ${data.message}`);
       }
-      return data.data as MachineStatusOverview[];
+      return data.data; // Assuming data.data contains the machine information
     },
-  });
 
+    enabled: load, // Only run this query if load is true
+  });
   return { data, isLoading, error };
-};
+}

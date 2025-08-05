@@ -2,7 +2,7 @@ import { Alert, Collapse, Stack, Title } from "@mantine/core";
 import { useSavedLocations } from "../../hooks/useSavedLocations";
 import { IconInfoCircle } from '@tabler/icons-react';
 import { LocationSelector } from "../../components/location-selector/LocationSelector";
-import { DetailViewList } from "../../components/detail-view-list/DetailViewList";
+import { SavedLocationsWrapper } from "../../components/saved-locations-wrapper/SavedLocationsWrapper";
 export const Home = () => {
   const { hasNoSavedLocations } = useSavedLocations();
   return <Stack>
@@ -16,7 +16,7 @@ export const Home = () => {
     </Collapse>
 
     <LocationSelector />
-    <DetailViewList />
+    <SavedLocationsWrapper />
   </Stack>
 }
 
