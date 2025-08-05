@@ -172,7 +172,7 @@ export const getOneMachine = asyncHandler(
       .createQueryBuilder("event")
       .where("event.machineId = :id", { id: machineId })
       .orderBy("event.timestamp", "DESC")
-      .take(100)
+      .take(10)
       .getMany();
 
     const rawEvents = await AppDataSource.getRepository(RawEvent)
@@ -192,10 +192,7 @@ export const getOneMachine = asyncHandler(
       status = -1;
     }
 
-    sendOkResponse(res, {
-      status,
-      machine,
-    });
+    sendOkResponse(res, machine);
   }
 );
 
