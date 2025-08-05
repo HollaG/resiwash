@@ -1,10 +1,9 @@
 import { Card, Group, Box, Stack, Text, Collapse, } from "@mantine/core"
 import { formatDistanceToNow } from "date-fns"
 import { StatusIndicator } from "../mini/StatusIndicator"
-import { MachineStatus, MachineStatusOverview } from "../../types/datatypes"
+import { MachineStatusOverview } from "../../types/datatypes"
 import { useState } from "react"
 import { useMachineInfo } from "../../hooks/query/useMachineInfo"
-import { getColorForMachineStatus } from "../../utils/colors"
 import { CustomTimeline } from "../timeline/Timeline"
 
 export const MachineDetails = ({
@@ -49,26 +48,4 @@ export const MachineDetails = ({
       </Collapse>
     </div>
   </Card >
-}
-
-// const Indicator = ({ outside, inside }: { outside: MachineStatus, inside: MachineStatus }) => {
-//   const innerColor = getColorForMachineStatus(inside);
-//   const outerColor = getColorForMachineStatus(outside);
-
-
-
-//   return <div style={{ display: 'flex', justifyContent: "center", alignItems: 'center', width: '16px', height: '16px', borderRadius: '50%', backgroundColor: outerColor }}>
-//     <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: innerColor }}> </div>
-
-//   </div>
-
-// }
-
-const VerticalBar = ({ status }: { status: MachineStatus }) => {
-  const color = getColorForMachineStatus(status);
-  return <div style={{
-    width: '2px',
-    height: '16px',
-    backgroundColor: color,
-  }}> </div>
 }
