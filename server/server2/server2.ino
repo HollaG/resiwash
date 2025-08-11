@@ -1,28 +1,43 @@
+/** Core file for the ESP32 used as the receiver.*/
+
+// Strategy map: 0->OR, 1->NOR,
+
+// core libraries
 #include "sys/time.h"
-#include "BLEDevice.h"
-#include "BLEUtils.h"
-#include "BLEServer.h"
-#include "BLEBeacon.h"
 #include "esp_sleep.h"
-
-#include <dummy.h>
-
 #include <Arduino.h>
-// #include "BLEDevice.h"
-
 #include <unordered_map>
-
-#define CUSTOM_IDENTIFIER 0xA5  // Expected identifier byte
-
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include "String"
-#include <WifiClientSecure.h>
-// #include <WifiClient.h>
 
-WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
-// WiFiClient client;  // or WiFiClientSecure for HTTPS
+// oled display
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <stdarg.h>  // for va_list, va_start, va_end
+#include <stdio.h>   // for vsnprintf
+
+
+#include "OneButton.h"  // for debounce rot. enc.
+
+#define SCREEN_WIDTH 128  // OLED display width, in pixels
+#define SCREEN_HEIGHT 64  // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET -1  // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
+// == if HTTPS, use Secure, if HTTP (local dev), use non-secure
+// #include <WifiClientSecure.h>
+#include <WifiClient.h>
+
+// WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
+WiFiClient client;  // or WiFiClientSecure for HTTPS
+
 HTTPClient http;
 
 #define ssid "espspot"
@@ -34,33 +49,26 @@ const char *serverName = "https://resiwash.marcussoh.com/api/v1/events/bulk";
 // const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
 const char *registerName = "https://resiwash.marcussoh.com/api/v1/sensors/register";
 
-// const char *host = "192.168.1.6";
-// int port = 3000;
-// const char *path = "/api/v1/events/bulk";
-
 #define BAUD 9600
 #define RXD2 16
 #define TXD2 17
 #define TXD1 18
 #define RXD1 19
 
+#define BTN_PIN 5
+
 #define START_BYTE 251
 #define END_BYTE 252
 
-// BLEScan *pBLEScan;
-
-struct MachineData {
-  uint8_t active;
-  uint8_t type;
-  uint8_t reserved;
-  uint8_t state;
-};
-
-int previousId = 0;  // TODO: convert to map
-
-// <serialId (0 to 255) : actualId (0 to ???)>
 std::unordered_map<int, int> serial1Map;
 std::unordered_map<int, int> serial2Map;
+
+OneButton btn = OneButton(
+  BTN_PIN,  // Input pin for the button
+  true,     // Button is active LOW
+  true      // Enable internal pull-up resistor
+);
+
 
 struct Message {
   uint8_t id;
@@ -76,92 +84,320 @@ struct Message {
 String jsonPost;
 bool hasData = false;
 
-
-
-struct MachineInfo {
-  uint8_t id;
-  bool state;
-  uint8_t reading;
-};
-
 // Initialize the two serial inputs
 HardwareSerial mySerial1(1);
 HardwareSerial mySerial2(2);
-void setup() {
 
-  serial2Map[0] = 2;
-  serial2Map[1] = 3;
-  serial2Map[2] = 4;
-  serial2Map[3] = 5;
-  serial2Map[4] = 6;
+void safeFlushSerial(HardwareSerial &s) {
+  while (s.available() > 0) s.read();
+}
 
-  Serial.begin(115200);
+void onConnectWifi() {
+  HTTPClient http;
+  int httpResponseCode = -1;
 
-  Serial.println("Connecting to wifi...");
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, pass);
-  Serial.print("Connecting to WiFi ..");
-  while (WiFi.status() != WL_CONNECTED) {
-    Serial.print('.');
-    delay(1000);
+
+  if (!http.begin(client, registerName)) {
+    Serial.println("[error] http.begin() failed");
+    ESP.restart();
+    return;
   }
 
-  Serial.println(WiFi.localIP());
-
-  mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
-  mySerial1.begin(BAUD, SERIAL_8N1, RXD1, TXD1);
-
-  Serial.println("ESP32 BLE Scanner - Repeated Scanning");
-
-  // BLEDevice::init("ESP32_BLE_Scanner");
-
-  // pBLEScan = BLEDevice::getScan();
-  // pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  // pBLEScan->setInterval(100);
-  // pBLEScan->setWindow(99);
-  // pBLEScan->setActiveScan(true);
-
-  while (mySerial1.available() > 0) {
-    mySerial1.read();
-  }
-
-  while (mySerial2.available() > 0) {
-    mySerial2.read();
-  }
-
-  // get mac address
-  String wifiMacString = WiFi.macAddress();
-
-  // post request to /sensors/register
-  client.setInsecure();
-  Serial.printf("Sending post request to %s\n", registerName);
-  http.begin(client, registerName);
+  http.setTimeout(8000);
   http.addHeader("Content-Type", "application/json");
-  String jsonPayload = "{\"macAddress\":\"" + wifiMacString + "\"}";
 
-  int httpResponseCode = http.POST(jsonPayload);
-  // Read response
-  Serial.println(httpResponseCode);
-  Serial.print(http.getString());
-  Serial.println("End post request");
-  // Disconnect
+  // Avoid big temporary Strings (less fragmentation)
+  char macBuf[18];
+  WiFi.macAddress().toCharArray(macBuf, sizeof(macBuf));
+  char payload[64];
+  snprintf(payload, sizeof(payload), "{\"macAddress\":\"%s\"}", macBuf);
+
+  Serial.println("POST /sensors/register");
+  httpResponseCode = http.POST((uint8_t *)payload, strlen(payload));
+
+  Serial.printf("HTTP code: %d\n", httpResponseCode);
+  if (httpResponseCode > 0) {
+    String body = http.getString();
+    Serial.println(body);
+  }
   http.end();
 }
 
+// Shift entire screen down by 8 pixels (one page) on a 128x64 SSD1306
+void shiftDownOneTextRow(Adafruit_SSD1306 &d) {
+  uint8_t *buf = d.getBuffer();  // 1024 bytes (128*64/8)
+  const int WIDTH = 128;
+  const int PAGES = 8;  // 64 / 8
 
+  // move bottom-up to avoid overwrite
+  for (int page = PAGES - 1; page >= 1; --page) {
+    memcpy(buf + page * WIDTH, buf + (page - 1) * WIDTH, WIDTH);
+  }
+  // clear top page (y=0..7)
+  memset(buf + 0 * WIDTH, 0, WIDTH);
+}
+
+
+void pushTopFast(const String &s) {
+  shiftDownOneTextRow(display);
+  display.setCursor(0, 0);
+  display.setTextSize(1);
+  display.setTextWrap(false);
+  display.print(s);
+  display.display();
+}
+
+// New version with printf-style formatting
+void pushTopFastFmt(const char *fmt, ...) {
+  char buf[64];  // adjust if you need longer lines
+
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buf, sizeof(buf), fmt, args);
+  va_end(args);
+
+  pushTopFast(String(buf));
+}
+
+
+/**
+* OLED screen controls
+* by clicking, the user can change serialSource from 1 to 2 and back
+* the user can also rotate the encoder to change the displayId
+* the displayId will reset to 0 when the button is pushed
+* the displayId will never go below 0
+*/
+
+int displayId = 0;     // start with 0
+int serialSource = 1;  // serial 1
+
+bool hasReceivedData = false;
+Message savedData = { 0, 0, 0, 0, 0, 0, 0 };
+
+// Called when encoder is rotated
+void onRotate(int direction) {
+  // direction > 0 → clockwise, direction < 0 → counterclockwise
+  displayId += direction;
+
+  if (displayId < 0) {
+    displayId = 0;  // never below 0
+  }
+
+  Serial.printf("[OLED] Rotated: direction=%d, displayId=%d\n", direction, displayId);
+}
+
+// Called when encoder button is clicked
+void onClick() {
+  // Toggle between serial 1 and serial 2
+  serialSource = (serialSource == 1) ? 2 : 1;
+
+  // Reset displayId
+  displayId = 0;
+
+  // reset the data
+  hasReceivedData = false;
+  savedData = { 0, 0, 0, 0, 0, 0, 0 };
+
+  Serial.printf("[OLED] Clicked: serialSource=%d, displayId reset to 0\n", serialSource);
+}
+
+void drawCenteredText(const char *text, int16_t y, uint8_t textSize = 1) {
+  display.setTextSize(textSize);
+  display.setTextColor(SSD1306_WHITE);
+
+  int16_t x1, y1;
+  uint16_t w, h;
+  display.getTextBounds(text, 0, y, &x1, &y1, &w, &h);
+
+  int16_t x = (display.width() - w) / 2;
+  display.setCursor(x, y);
+  display.print(text);
+}
+
+void drawRightAligned(int16_t y, const char *format, ...) {
+  char buf[64];  // Adjust as needed for your longest string
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buf, sizeof(buf), format, args);
+  va_end(args);
+
+  // Each character = 6 pixels wide in size 1
+  int16_t x = display.width() - (strlen(buf) * 6);
+  display.setCursor(x, y);
+  display.print(buf);
+}
+
+void drawHeader() {
+  String ip = WiFi.localIP().toString();
+  String mac = WiFi.macAddress();  // e.g. "24:6F:28:AA:BB:CC"
+
+  // Draw IP at top
+  drawCenteredText(ip.c_str(), 0, 1);
+
+  // Draw MAC just below IP
+  drawCenteredText(mac.c_str(), 10, 1);
+
+  // Draw line under both
+  display.drawLine(0, 20, display.width(), 20, SSD1306_WHITE);
+
+}
+
+
+
+void drawMachineInfo() {
+  display.setCursor(0, 24);  // below the line
+  drawRightAligned(24, "ID %d", displayId);
+  display.setCursor(0, 24);
+  if (serialSource == 1) {
+    display.println("Serial 1");
+  } else {
+    display.println("Serial 2");
+  }
+
+  if (!hasReceivedData) {
+    display.printf("Waiting for data\n");
+  } else {
+    // if (savedData.state == 0) {
+    //   display.printf("Status: available\n");
+    // } else {
+    //   display.printf("Status: in use\n");
+    // }
+    // display.printf("Strategy: %d\n", savedData.strategy);
+    display.printf("Left sensor: %d/%d\n", savedData.reading1, savedData.thres1);
+    display.printf("Right sensor: %d/%d\n", savedData.reading2, savedData.thres2);
+  }
+
+
+}
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);
+
+  // initialize screen
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {  // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;)
+      ;
+  }
+
+  delay(2000);
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+
+
+
+  // Display static text
+  display.println("Initializing...");
+  display.display();
+
+  // initalize buttons
+  btn.attachPress(onClick);
+  // pinMode(BTN_PIN, INPUT_PULLUP);
+
+
+  // Bring up UARTs *before* Wi-Fi so they aren't initialized during RF spikes
+  mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
+  mySerial1.begin(BAUD, SERIAL_8N1, RXD1, TXD1);
+  safeFlushSerial(mySerial1);
+  safeFlushSerial(mySerial2);
+  display.println("Connecting Wi-Fi...");
+  display.display();
+
+  Serial.println("\nConnecting to Wi-Fi…");
+  WiFi.persistent(false);
+  WiFi.setSleep(false);  // keep radio awake; avoids some timing weirdness
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true, true);  // clear old state
+  delay(200);
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(250);
+    Serial.print('.');
+  }
+  Serial.println();
+
+  display.print("Connected ");
+  display.println(WiFi.localIP());
+  display.display();
+
+  Serial.print("Wi-Fi OK. IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.printf("Free heap before HTTP: %u\n", ESP.getFreeHeap());
+
+  // Give the stack a breather before TLS
+  delay(500);
+
+
+
+  onConnectWifi();
+  display.println("Registered");
+  display.display();
+  delay(1000);
+  display.clearDisplay();
+  display.display();
+  display.setCursor(0, 0);
+
+
+  display.clearDisplay();
+
+  drawHeader();
+  display.display();
+}
+
+// parsed messages stored here
 Message serial1Messages[255];
-int serial1Count = 0;
-int serial1Buffer[1024];
-int serial2Buffer[1024];
 Message serial2Messages[255];
+int serial1Count = 0;
 int serial2Count = 0;
 
-bool isCurrentlyReading = false;
+// buffer for reading from Serial
+int serial1Buffer[1024];
+int serial2Buffer[1024];
+
 
 void loop() {
-  delay(100);
-  Serial.print(".");
 
+  // loop only every 50ms
+  delay(50);
+
+  // functions to run every loop
+  btn.tick();
+
+  display.clearDisplay();
+  drawHeader();
+  drawMachineInfo();
+  display.display();
+
+
+  // we somehow lost connection...
+  if (WiFi.status() != WL_CONNECTED) {
+    // re-connect
+    Serial.println("[error] connection LOST");
+
+    // clear the display
+    WiFi.disconnect();
+    WiFi.begin(ssid, pass);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("Reconnecting...");
+    display.display();
+    while (WiFi.status() != WL_CONNECTED) {
+      delay(250);
+      Serial.print('.');
+    }
+
+    Serial.println("[info] connection regained");
+
+    onConnectWifi();
+  }
+
+  // message from S2
   if (mySerial2.available()) {
     Serial.println("");
     Serial.println("--- Available message in Serial 2 ---");
@@ -178,19 +414,19 @@ void loop() {
 
       uint8_t byteFromSerial = mySerial2.read();
 
-      serial1Buffer[bytesRead] = byteFromSerial;
+      serial2Buffer[serial2Count] = byteFromSerial;
 
-
-      bytesRead = bytesRead + 1;
+      serial2Count = serial2Count + 1;
+      // bytesRead = bytesRead + 1;
       Serial.printf("%d ", byteFromSerial);
-      if ((bytesRead - 1) % sizeof(Message) == 0) {
+      if ((serial2Count - 1) % sizeof(Message) == 0) {
         Serial.printf("\n");
       }
 
       if (isReading && byteFromSerial == START_BYTE) {
         // restart from the start, for some reason we had a fail
         isStarted = true;
-        bytesRead = 1;
+        serial2Count = 1;
 
         // Serial.printf("[serial2]received start byte, disregarding previous items");
         continue;
@@ -205,12 +441,12 @@ void loop() {
         }
 
         // sanity check to see if the number of bytes received makes sense
-        int messageBytes = bytesRead - 2;
+        int messageBytes = serial2Count - 2;
         int remainder = messageBytes % sizeof(Message);
 
         if (remainder != 0) {
           // some error in reading the length
-          Serial.printf("[error][serial2] bytesRead=%d, sizeof message=%d, remainder=%d", bytesRead, sizeof(Message), remainder);
+          Serial.printf("[error][serial2] bytesRead=%d, sizeof message=%d, remainder=%d", serial2Count, sizeof(Message), remainder);
           break;  // exit this inner loop
         }
 
@@ -225,11 +461,11 @@ void loop() {
       if (!isStarted) {
         // something went wrong, ignore this
         Serial.println("[error][serial2] first byte received was not start byte");
-        bytesRead = 0;
+        // bytesRead = 0;
         serial2Count = 0;
 
         // clear the buffer
-         while (mySerial2.available()) {
+        while (mySerial2.available()) {
           mySerial2.read();
         }
         break;  // exit this inner loop
@@ -238,20 +474,105 @@ void loop() {
       // read the bytes
       // do some logic here
     }
+  }
 
-    if (bytesRead > 0) {
-      // buffer[0] is start bit
-      // buffer[bytesRead-1] is end bit
+  // message from S1
+  if (mySerial1.available()) {
+    Serial.println("");
+    Serial.println("--- Available message in Serial 1 ---");
 
 
-      // first validate that there are integer division
-      // validated earlier
+    bool isStarted = false;
+    bool isReading = true;
+    int bytesRead = 0;
 
-      String jsonPost;
-      JsonDocument doc;
-      JsonArray machineArray = doc["data"].to<JsonArray>();
-      doc["macAddress"] = WiFi.macAddress();
-      for (int i = 0; i < bytesRead - 1; i += sizeof(Message)) {
+    while (mySerial1.available() || isReading) {
+      while (!mySerial1.available()) {
+        // Need this in case we haven't received the end byte yet!
+      }
+
+      uint8_t byteFromSerial = mySerial1.read();
+
+      serial1Buffer[serial1Count] = byteFromSerial;
+
+      serial1Count = serial1Count + 1;
+      // bytesRead = bytesRead + 1;
+      Serial.printf("%d ", byteFromSerial);
+      if ((serial1Count - 1) % sizeof(Message) == 0) {
+        Serial.printf("\n");
+      }
+
+      if (isReading && byteFromSerial == START_BYTE) {
+        // restart from the start, for some reason we had a fail
+        isStarted = true;
+        serial1Count = 1;
+
+        continue;
+      }
+
+      if (isReading && byteFromSerial == END_BYTE) {
+        isStarted = false;
+
+        // clear out buffer
+        while (mySerial1.available()) {
+          mySerial1.read();
+        }
+
+        // sanity check to see if the number of bytes received makes sense
+        int messageBytes = serial1Count - 2;
+        int remainder = messageBytes % sizeof(Message);
+
+        if (remainder != 0) {
+          // some error in reading the length
+          Serial.printf("[error][serial1] bytesRead=%d, sizeof message=%d, remainder=%d", serial1Count, sizeof(Message), remainder);
+          break;  // exit this inner loop
+        }
+
+        // TODO: do some post requests here
+        int messageCount = messageBytes / sizeof(Message);
+        Serial.printf("\n[serial1] Read %d messages\n", messageCount);
+
+        break;  // exit this inner loop
+      }
+
+      // if not start and end byte,
+      if (!isStarted) {
+        // something went wrong, ignore this
+        Serial.println("[error][serial1] first byte received was not start byte");
+        // bytesRead = 0;
+        serial1Count = 0;
+
+        // clear the buffer
+        while (mySerial1.available()) {
+          mySerial1.read();
+        }
+        break;  // exit this inner loop
+      }
+
+      // read the bytes
+      // do some logic here
+    }
+  }
+
+  if (serial2Count > 0 || serial1Count > 0) {
+
+
+
+
+    // buffer[0] is start bit
+    // buffer[bytesRead-1] is end bit
+
+
+    // first validate that there are integer division
+    // validated earlier
+
+    String jsonPost;
+    JsonDocument doc;
+    JsonArray machineArray = doc["data"].to<JsonArray>();
+    doc["macAddress"] = WiFi.macAddress();
+    if (serial1Count > 0) {
+      Serial.printf("[info] parsing data from serial 1 buffer. size is %d\n", serial1Count);
+      for (int i = 0; i < serial1Count - 2; i += sizeof(Message)) {
         uint8_t id = serial1Buffer[1 + i + 0];
         uint8_t state = serial1Buffer[1 + i + 1];
         uint8_t strategy = serial1Buffer[1 + i + 2];
@@ -259,6 +580,51 @@ void loop() {
         uint8_t thres1 = serial1Buffer[1 + i + 4];
         uint8_t reading2 = serial1Buffer[1 + i + 5];
         uint8_t thres2 = serial1Buffer[1 + i + 6];
+
+
+        JsonObject machineObj = machineArray.add<JsonObject>();
+        machineObj["localId"] = id;
+        machineObj["state"] = state;
+        machineObj["strategy"] = strategy;
+        machineObj["source"] = "serial1";
+
+
+        JsonArray readingsArray = machineObj["readings"].to<JsonArray>();
+
+        JsonObject data_0_readings_0 = readingsArray.add<JsonObject>();
+        data_0_readings_0["value"] = reading1;
+        data_0_readings_0["threshold"] = thres1;
+
+        JsonObject data_0_readings_1 = readingsArray.add<JsonObject>();
+        data_0_readings_1["value"] = reading2;
+        data_0_readings_1["threshold"] = thres2;
+
+        Serial.printf("[info][serial1] %d %d %d %d %d %d %d\n", id, state, strategy, reading1, thres1, reading2, thres2);
+        // pushTopFastFmt("1 %d %d %d %d %d %d %d\n", id, state, strategy, reading1, thres1, reading2, thres2);
+
+
+        // update the display with this machine's information
+        if (id == displayId && serialSource == 1) {  // serial1
+          // Message m =
+          savedData = { id, state, strategy, reading1, thres1, reading2, thres2 };
+          hasReceivedData = true;
+        }
+
+        // // save to the serial Map
+        // // serial2Messages[serial2Count] = m;
+      }
+      serial1Count = 0;
+    }
+    if (serial2Count > 0) {
+      Serial.println("[info] parsing data from serial 2 buffer");
+      for (int i = 0; i < serial2Count - 2; i += sizeof(Message)) {
+        uint8_t id = serial2Buffer[1 + i + 0];
+        uint8_t state = serial2Buffer[1 + i + 1];
+        uint8_t strategy = serial2Buffer[1 + i + 2];
+        uint8_t reading1 = serial2Buffer[1 + i + 3];
+        uint8_t thres1 = serial2Buffer[1 + i + 4];
+        uint8_t reading2 = serial2Buffer[1 + i + 5];
+        uint8_t thres2 = serial2Buffer[1 + i + 6];
 
 
         JsonObject machineObj = machineArray.add<JsonObject>();
@@ -278,256 +644,40 @@ void loop() {
         data_0_readings_1["value"] = reading2;
         data_0_readings_1["threshold"] = thres2;
 
+        Serial.printf("[info][serial2] %d %d %d %d %d %d %d\n", id, state, strategy, reading1, thres1, reading2, thres2);
+        // pushTopFastFmt("1 %d %d %d %d %d %d %d\n", id, state, strategy, reading1, thres1, reading2, thres2);
 
+        // Message m = { id, state, strategy, reading1, thres1, reading2, thres2 };
 
-        Message m = { id, state, strategy, reading1, thres1, reading2, thres2 };
+        // // save to the serial Map
+        // // serial2Messages[serial2Count] = m;
 
-        // save to the serial Map
-        serial2Messages[serial2Count] = m;
+        // update the display with this machine's information
+        if (id == displayId && serialSource == 2) {  // serial1
+          savedData = { id, state, strategy, reading1, thres1, reading2, thres2 };
+          hasReceivedData = true;
+        }
       }
-
-      // POST request
-      serializeJson(doc, jsonPost);
-
-      Serial.println("Sending post request...");
-      // client.setInsecure();
-      Serial.printf("Sending post request to %s\n", serverName);
-      http.begin(client, serverName);
-      http.addHeader("Content-Type", "application/json");
-      int httpResponseCode = http.POST(jsonPost);
-      // Read response
-      Serial.println(httpResponseCode);
-      Serial.print(http.getString());
-      Serial.println("End post request");
-      // Disconnect
-      http.end();
-
-      // upload
+      serial2Count = 0;
     }
+
+
+
+
+    // POST request
+    serializeJson(doc, jsonPost);
+
+    Serial.println("Sending post request...");
+    // client.setInsecure();
+    Serial.printf("Sending post request to %s\n", serverName);
+    http.begin(client, serverName);
+    http.addHeader("Content-Type", "application/json");
+    int httpResponseCode = http.POST(jsonPost);
+    // Read response
+    Serial.println(httpResponseCode);
+    Serial.print(http.getString());
+    Serial.println("End post request");
+    // Disconnect
+    http.end();
   }
 }
-
-// if serial1
-
-
-
-
-// void loop3() {
-//   delay(10);
-
-//   Serial.print(".");
-
-
-//   if (mySerial2.available()) {
-
-//     Serial.println("---");
-
-//     MachineInfo currentMessage;
-//     int counter = 0;
-//     while (mySerial2.available() || isCurrentlyReading) {
-//       while (!mySerial2.available()) {}  // busy waiting until something becomes available
-
-//       uint8_t byteFromSerial = mySerial2.read();
-
-//       Serial.printf("[serial2] Read %d\n", byteFromSerial);
-
-//       // 255 signals start and end
-//       if (!isCurrentlyReading && byteFromSerial != START_BYTE) {
-//         // Ignore
-//         continue;
-//       }
-//       if (!isCurrentlyReading && byteFromSerial == START_BYTE) {
-//         isCurrentlyReading = true;
-//         continue;
-//       }
-
-//       // end
-//       if (isCurrentlyReading && byteFromSerial == END_BYTE) {
-//         isCurrentlyReading = false;
-
-//         // do some logic here to reset
-//         // clear the buffer
-//         while (mySerial2.available()) {
-//           mySerial2.read();
-//         }
-
-//         break;
-//       }
-
-//       // when in this section, we are setting values
-//       if (counter == 0) {
-//         currentMessage.id = byteFromSerial;
-//       }
-//       if (counter == 1) {
-//         currentMessage.state = byteFromSerial;
-//       }
-
-//       if (counter == 2) {
-//         currentMessage.reading = byteFromSerial;
-//         counter = 0;
-
-//         messages[messageLength] = currentMessage;
-//         messageLength++;
-//         currentMessage = { 0, 0, 0 };
-//         continue;
-//       }
-
-//       counter++;
-//     }
-
-//     Serial.printf("[serial2] Read %d messages\n", messageLength);
-
-//     // String line = mySerial2.readStringUntil('\n');
-
-//     // Serial.printf("[serial2] %s\n", line);
-//   }
-
-//   if (messageLength > 0) {
-//     // blah
-
-//     messageLength = 0;
-//   }
-//   // while (mySerial2.available() > 0) {
-//   //   // uint8_t byteFromSerial = mySerial2.read();
-//   //   // Serial.printf("byteFromSerial=%d\n", byteFromSerial);
-//   // }
-// }
-// void loop2() {
-//   // Serial.println("Scanning...");
-
-//   // pBLEScan->start(1, false);  // Scan for 1 second
-//   // pBLEScan->clearResults();   // Free memory from previous scans
-
-//   delay(1000);  // Wait 1 second before restarting the scan
-//   Serial.println("[info] looping...");
-//   Message *messageList;
-//   int count = 0;
-//   // if (mySerial1.available()) {
-//   //   Serial.println("[info] Serial1 available");
-//   //   while (mySerial1.available()) {
-//   //     Message incoming;
-//   //     Serial1.readBytes((char *)&incoming, sizeof(incoming));
-//   //     // add incoming to messageList
-//   //     Serial.printf("[serial1] Read %d %d %d", incoming.id, incoming.state, incoming.reading);
-//   //     // if id not in map, skip
-//   //     if (serial1Map.find(incoming.id) == serial1Map.end()) {
-//   //       Serial.printf("[serial1] ID %d not found in map\n", incoming.id);
-//   //       continue;
-//   //     }
-
-//   //     Serial.printf("[serial1] ID: %d, State: %d, Reading: %d\n", incoming.id, incoming.state, incoming.reading);
-//   //     incoming.id = serial1Map[incoming.id];
-//   //     messageList[count] = incoming;
-//   //     count++;
-//   //   }
-//   // }
-
-//   // if (mySerial2.available()) {
-//   //   Serial.println("[info] Serial2 available");
-
-
-//   //   while (mySerial2.available() >= sizeof(Message)) {
-//   //     uint8_t raw[sizeof(Message)];
-//   //     Serial2.readBytes((char *)raw, sizeof(raw));
-//   //     Serial.print("Raw bytes: ");
-//   //     for (int i = 0; i < sizeof(raw); i++) {
-//   //       Serial.printf("%02X ", raw[i]);
-//   //     }
-//   //     Serial.println();
-
-//   //     //   Message incoming;
-//   //     //   Serial2.readBytes((char *)&incoming, sizeof(incoming));
-
-//   //     //   Serial.printf("[serial2] Read %d %d %d\n", incoming.id, incoming.state, incoming.reading);
-//   //     //   // add incoming to messageList
-
-//   //     //   // if id not in map, skip
-//   //     //   if (serial2Map.find(incoming.id) == serial2Map.end()) {
-//   //     //     Serial.printf("[serial2] ID %d not found in map\n", incoming.id);
-//   //     //     continue;
-//   //     //   }
-
-//   //     //   incoming.id = serial2Map[incoming.id];
-//   //     //   Serial.printf("ID: %d, State: %d, Reading: %d\n", incoming.id, incoming.state, incoming.reading);
-//   //     //   // messageList[count] = incoming;
-//   //     //   count++;
-//   //   }
-
-//   //   // clear stupid bytes
-//   //   while (mySerial2.available()) mySerial2.read();
-//   // }
-
-//   if (count > 0) {
-//     return;
-//     // send messageList to server
-//     // convert messageList to json
-//     JsonDocument doc;
-//     JsonArray machineArray = doc["data"].to<JsonArray>();
-//     for (int i = 0; i < count; i++) {
-//       Message incoming = messageList[i];
-//       JsonObject machineObj = machineArray.add<JsonObject>();
-//       machineObj["machineId"] = incoming.id;
-//       machineObj["statusCode"] = incoming.state;
-//       machineObj["reading"] = incoming.reading;
-
-//       Serial.printf("Got reading for %d %d %d", incoming.id, incoming.state, incoming.reading);
-//     }
-
-//     // POST request
-//     serializeJson(doc, jsonPost);
-//     hasData = true;
-
-//     Serial.println("Sending post request...");
-
-//     client.setInsecure();
-
-//     Serial.printf("Sending post request to %s\n", serverName);
-//     http.begin(client, serverName);
-
-//     http.addHeader("Content-Type", "application/json");
-//     int httpResponseCode = http.POST(jsonPost);
-
-//     // Read response
-//     Serial.println(httpResponseCode);
-//     Serial.print(http.getString());
-
-//     Serial.println("End post request");
-
-//     // Disconnect
-//     http.end();
-//   } else {
-//     Serial.println("No data to send");
-//     // clear messageList
-//     //
-//   }
-
-//   // if data
-//   // send post request
-
-//   // --- contents below this line are outdated ---
-
-//   // if (hasData) {
-
-//   //   // POST request
-//   //   Serial.println("Sending post request...");
-
-//   //   client.setInsecure();
-
-//   //   Serial.printf("Sending post request to %s\n", serverName);
-//   //   http.begin(client, serverName);
-
-//   //   http.addHeader("Content-Type", "application/json");
-//   //   int httpResponseCode = http.POST(jsonPost);
-
-//   //   // Read response
-//   //   Serial.println(httpResponseCode);
-//   //   Serial.print(http.getString());
-
-//   //   Serial.println("End post request");
-
-//   //   // Disconnect
-//   //   http.end();
-
-//   //   hasData = false;
-//   // }
-// }

@@ -44,10 +44,12 @@ void setup() {
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
 
-  // int trigger = digitalRead(TRIG_PIN);
-  // if (trigger) {
-  //   sender = true;
-  // }
+  int trigger = digitalRead(TRIG_PIN);
+  if (trigger) {
+    sender = true;
+  } else { 
+    sender = false;
+  }
 
 
   Serial.begin(9600);
