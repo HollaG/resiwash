@@ -6,7 +6,10 @@ import { SavedLocationsWrapper } from "../../components/saved-locations-wrapper/
 export const Home = () => {
   const { hasNoSavedLocations } = useSavedLocations();
   return <Stack>
-    <Title order={1}>Welcome to Resiwash!</Title>
+    <Alert variant="light" color="yellow" radius="xl" title="Development notice" icon={<IconInfoCircle />}>
+      ResiWash is currently under development. All data here may not be accurate unless stated otherwise in the RVRC Telegram Chat.
+    </Alert>
+    <Title order={1}>Welcome to ResiWash!</Title>
 
     {/* room selector */}
     <Collapse in={hasNoSavedLocations}>

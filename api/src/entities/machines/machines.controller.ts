@@ -29,42 +29,6 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
     .orderBy("machine.name", "ASC")
     .getMany();
 
-  // // const evE );
-
-  // // each machine should only have the latest event (this prevents information overload)
-  // // assert: `machines.events` should be length 0 or 1
-
-  // console.log("getMachines", machines);
-  // const result = []
-
-  // const result = await AppDataSource.createQueryRunner().query(
-  //   `
-  // WITH ranked_events AS (
-  //   SELECT
-  //     "machineId",
-  //     "statusCode",
-  //     "timestamp",
-  //     ROW_NUMBER() OVER (PARTITION BY "machineId" ORDER BY "timestamp" DESC) AS rank
-  //   FROM "update_event"
-  // )
-  // SELECT
-  //   m.*,
-  //   current."statusCode" AS "currentStatus",
-  //   previous."statusCode" AS "previousStatus",
-  //   current."timestamp" AS "currentTimestamp",
-  //   room."roomId",
-  //   room."areaId"
-  // FROM "machine" m
-  // LEFT JOIN ranked_events current
-  //   ON m."machineId" = current."machineId" AND current.rank = 1
-  // LEFT JOIN ranked_events previous
-  //   ON m."machineId" = previous."machineId" AND previous.rank = 2
-  // LEFT JOIN "room"
-  //   ON m."roomId" = room."roomId"
-  // WHERE room."areaId" = $1 AND room."roomId" = $2
-  // `,
-  //   [areaId, roomId]
-  // );
 
   for (const machine of machines) {
     const events = await AppDataSource.getRepository(UpdateEvent)

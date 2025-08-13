@@ -16,9 +16,22 @@
   position: relative;
 }
 
+.timelineConnectorContainer {
+  position: relative;
+}
+
 .timelineConnector {
   height: 2px;
   width: 100px;
+}
+
+.timelineConnectorLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  text-align: center;
 }
 
 .timelineLabel {
@@ -26,6 +39,7 @@
   white-space: nowrap;
   width: 70px;
   text-align: center;
+  font-weight: 600;
 }
 
 .timelineLabelBottom {
@@ -49,6 +63,8 @@
   left: -32px;
   width: 70px;
   text-align: center;
+
+  font-weight: 600;
 
   &.top {
     top: -30px;

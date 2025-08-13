@@ -191,7 +191,7 @@ void loop() {
         // delay(50);
         // Serial.write(END_BYTE);
 
-        Serial.flush();
+        Serial.flush(); // waits for output buffer to finish sending
 
         // clear the buffer
         i = 0;

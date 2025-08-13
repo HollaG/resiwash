@@ -34,7 +34,7 @@ export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
     const timeDifference = new Date(laterEventTime).getTime() - new Date(event.timestamp).getTime();
     const timeInMinutes = Math.floor(timeDifference / 60000); // Convert to minutes
     console.log({ timeDifference, timeInMinutes })
-    const width = Math.min(150, Math.max(50, timeInMinutes * 1.5)); // Ensure width is between 50px and 300px
+    const width = Math.min(150, Math.max(80, timeInMinutes * 1.5)); // Ensure width is between 50px and 300px
 
 
     // if the previous event and current one crosses a day, need to add a TimelineSeparator
@@ -49,8 +49,8 @@ export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
       const minutesTillEndOfDay = Math.floor(msTillEndOfDay / 60000); // right
 
       // note: (since start) + (till end) should equal timeDifference
-      const leftWidth = Math.min(150, Math.max(25, minutesSinceStartOfDay * 1.5));
-      const rightWidth = Math.min(150, Math.max(25, minutesTillEndOfDay * 1.5));
+      const leftWidth = Math.min(150, Math.max(40, minutesSinceStartOfDay * 1.5));
+      const rightWidth = Math.min(150, Math.max(40, minutesTillEndOfDay * 1.5));
 
       // using the startOfDay(new Date(laterEventTime)), format the date as 8 May, 2 June, 15 July, etc
       const label = format(startOfDay(new Date(laterEventTime)), 'd MMM');
@@ -68,16 +68,45 @@ export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
       // const rightWidth = Math.max(0, width - leftWidth);
       // console.log({ leftWidth, rightWidth, width })
     } else {
-      return [<TimelineConnector key={`${index}-1`} event={event} width={width} />, <TimelineEvent key={`${index}-2`} event={event} />,];
+      // first event
+      // should add a time label
+      // if > 60m show hours
+      // if > 24h, show days
+      // if > 7 days, show weeks
+      // if > 30 days, show months
+      let label = ''
+      if (timeInMinutes > 60) {
+        label = `${Math.floor(timeInMinutes / 60)}h`;
+      } else if (timeInMinutes > 1440) { // 24 hours
+        label = `${Math.floor(timeInMinutes / 1440)}d`;
+      } else if (timeInMinutes > 10080) { // 7 days
+        label = `${Math.floor(timeInMinutes / 10080)}w`;
+      } else if (timeInMinutes > 43200) { // 30 days
+        label = `${Math.floor(timeInMinutes / 43200)}m`;
+      } else {
+        label = `${timeInMinutes}m`;
+      }
+
+      // todo: if the first event was yesterday, it will not show the time label becuase it will be in the other if-block
+
+      return [<TimelineConnector key={`${index}-1`} event={event} width={width} label={index === 0 ? label : undefined} />, <TimelineEvent key={`${index}-2`} event={event} />,];
 
     }
 
 
   })
 
-  // add a TimelineSeparator at the end, with the label being "Now"
+  // SPECIAL: replace the first Timeline
+
+  // add a TimelineSeparator at the start, with the label being "Now"
   elements.unshift(
     <TimelineSeparator key={`now`} event={events[0]} labelTop="Now" labelBottom={format(new Date(), 'h:mm aaa').toLowerCase()} />
+  );
+
+  // add a timelineSeparator at the end, with the label being the last event's startOfDay
+  const lastEvent = events[events.length - 1];
+  elements.push(
+    ...[<TimelineConnector event={lastEvent} width={50} />, <TimelineSeparator key={`end`} event={lastEvent} labelTop={format(startOfDay(new Date(lastEvent.timestamp)), 'd MMM')} />]
   );
 
   return <div style={{ overflowX: 'auto' }} ref={ref}>
@@ -102,10 +131,13 @@ const TimelineEvent = ({ event }: { event: MachineEvent }) => {
   </div>
 }
 
-const TimelineConnector = ({ event, width }: { event: MachineEvent, width?: number }) => {
+const TimelineConnector = ({ event, width, label }: { event: MachineEvent, width?: number, label?: string }) => {
   const color = getColorForMachineStatus(event.status);
 
-  return <div className={styles.timelineConnector} style={{ backgroundColor: color, width: `${width}px` }} />;
+  return <div className={styles.timelineConnectorContainer}>
+    <div className={styles.timelineConnector} style={{ backgroundColor: color, width: `${width}px` }} />
+    <div className={styles.timelineConnectorLabel}>{label}</div>
+  </div>;
 }
 
 const TimelineSeparator = ({ event, labelTop, labelBottom }: { event: MachineEvent, labelTop?: string, labelBottom?: string }) => {
