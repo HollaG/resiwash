@@ -10,14 +10,19 @@ Dio http = DioClient.instance();
 class RoomRemoteDatasource {
   Future<RoomEntity> getRoomById(String areaId, String roomId) async {
     try {
+      print("get room by id");
+      print("$areaId $roomId");
       final Response<dynamic> response = await http.get(
         "/areas/$areaId/$roomId",
       );
+      print(response);
 
       final apiResponse = ApiResponse<RoomModel>.fromJson(
         response.data,
         (json) => RoomModel.fromJson(json as Map<String, dynamic>),
       );
+
+      print(apiResponse);
 
       return apiResponse.data.toEntity();
     } on DioException catch (e) {

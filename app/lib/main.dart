@@ -1,9 +1,13 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
 import 'util.dart';
 import 'theme.dart';
 
 void main() {
+  setupServiceLocator();
   runApp(const MyApp());
 }
 
@@ -22,10 +26,19 @@ class MyApp extends StatelessWidget {
     TextTheme textTheme = createTextTheme(context, "Open Sans", "Poppins");
 
     MaterialTheme theme = MaterialTheme(textTheme);
-    return MaterialApp.router(
+
+    final routerBuild = MaterialApp.router(
       routerConfig: router,
       title: 'Flutter Demo',
       theme: brightness == Brightness.light ? theme.light() : theme.dark(),
+    );
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => sl<RoomCubit>(instanceName: 'roomCubit'),
+        ),
+      ],
+      child: routerBuild,
     );
   }
 }

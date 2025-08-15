@@ -1,6 +1,7 @@
+import 'package:resiwash/features/Summary/presentation/screens/home_screen.dart';
 import 'package:resiwash/main.dart';
 import 'package:resiwash/views/base-view.dart';
-import 'package:resiwash/views/home/HomePage.dart';
+
 import 'package:resiwash/views/my-machines/myMachinesPage.dart';
 import 'package:resiwash/views/profile/profilePage.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.home,
-              builder: (context, state) => HomePage(),
+              builder: (context, state) => HomeScreen(),
             ),
           ],
         ),

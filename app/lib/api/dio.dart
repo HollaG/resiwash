@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:resiwash/core/logging/logger.dart';
 
 class DioClient {
   late final Dio _dio;
@@ -25,6 +27,18 @@ class DioClient {
           print('Error: ${e.message}');
           return handler.next(e);
         },
+      ),
+    );
+
+    _dio.interceptors.add(
+      LogInterceptor(
+        request: !kReleaseMode,
+        requestHeader: !kReleaseMode,
+        requestBody: !kReleaseMode,
+        responseHeader: false,
+        responseBody: !kReleaseMode,
+        error: true,
+        logPrint: (obj) => log.d(obj),
       ),
     );
   }

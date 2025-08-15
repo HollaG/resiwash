@@ -12,7 +12,7 @@ class DioClient {
     final dio = Dio(
       BaseOptions(
         baseUrl:
-            "https://resi-wash.com/api/v1", //Jsonplaceholder is a great place for getting dummy data.
+            "https://resiwash.marcussoh.com/api/v1", //Jsonplaceholder is a great place for getting dummy data.
       ),
     );
 
