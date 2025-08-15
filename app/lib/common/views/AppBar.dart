@@ -2,10 +2,14 @@
 import 'package:flutter/material.dart';
 
 class AppBarComponent extends StatelessWidget implements PreferredSizeWidget {
-  final String title = "Resiwash";
+  final String title;
   final List<Widget>? actions;
 
-  const AppBarComponent({Key? key, required this.actions}) : super(key: key);
+  const AppBarComponent({
+    super.key,
+    required this.actions,
+    required this.title,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +18,15 @@ class AppBarComponent extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
-      titleTextStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
-        // fontWeight: FontWeight.bold,/
+      titleTextStyle: Theme.of(context).textTheme.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w900,
         color: Theme.of(context).colorScheme.onPrimary,
-        // fontFamily: "Poppins"
+        fontFamily: "Poppins",
       ),
+      // titleTextStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
+      //   fontWeight: FontWeight.bold,
+      //   color: Theme.of(context).colorScheme.onPrimary,
+      // ),
     );
   }
 
