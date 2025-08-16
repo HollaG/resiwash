@@ -35,6 +35,9 @@ export class Machine {
   @Column({ nullable: true })
   imageUrl: string; // e.g., "https://example.com/image.jpg"
 
+  @Column()
+  roomId: number; // Foreign key to Room
+
   @ManyToOne(() => Room, (room) => room.machines)
   @JoinColumn({ name: "roomId" })
   room: Room;

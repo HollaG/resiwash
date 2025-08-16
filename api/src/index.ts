@@ -63,40 +63,57 @@ const API_VERSIONS = ["v1", "v2"];
 
 // Machines
 app.use(
-  `/api/${API_VERSION}/areas/:areaId/:roomId`,
+  `/api/v1/areas/:areaId/:roomId`,
   require("./entities/v1/machines/machines.routes")
 );
 
 // Rooms
-app.use(
-  `/api/${API_VERSION}/areas/:areaId`,
-  require("./entities/v1/rooms/rooms.routes")
-);
+app.use(`/api/v1/areas/:areaId`, require("./entities/v1/rooms/rooms.routes"));
 
 // Areas
 app.use(
-  `/api/${API_VERSION}/areas`,
+  `/api/v1/areas`,
   VerifyToken,
   require("./entities/v1/areas/areas.routes")
 );
 
 // Locations
 app.use(
-  `/api/${API_VERSION}/locations`,
+  `/api/v1/locations`,
   require("./entities/v1/locations/locations.routes")
 );
 
 // Events
-app.use(
-  `/api/${API_VERSION}/events`,
-  require("./entities/v1/events/events.routes")
-);
+app.use(`/api/v1/events`, require("./entities/v1/events/events.routes"));
 
 // Sensors
+app.use(`/api/v1/sensors`, require("./entities/v1/sensors/sensors.routes"));
+
+// API v2 Routes
+// Areas
 app.use(
-  `/api/${API_VERSION}/sensors`,
-  require("./entities/v1/sensors/sensors.routes")
+  `/api/v2/areas`,
+  VerifyToken,
+  require("./entities/v2/areas/areas.routes")
 );
+
+// Rooms
+app.use(`/api/v2/rooms`, require("./entities/v2/rooms/rooms.routes"));
+
+// Machines
+app.use(`/api/v2/machines`, require("./entities/v2/machines/machines.routes"));
+
+// Locations
+app.use(
+  `/api/v2/locations`,
+  require("./entities/v2/locations/locations.routes")
+);
+
+// Events
+app.use(`/api/v2/events`, require("./entities/v2/events/events.routes"));
+
+// Sensors
+app.use(`/api/v2/sensors`, require("./entities/v2/sensors/sensors.routes"));
 
 // error handler (last)
 app.use(errorHandler);
