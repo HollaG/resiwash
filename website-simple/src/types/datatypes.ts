@@ -36,6 +36,7 @@ export type Machine = {
   updatedAt: string; // or `Date`
   lastUpdated: string; // or `Date`
   lastChangeTime: string; // when the machine last changed status
+  roomId: number; // ID of the room this machine is in
 };
 
 export type Room = {
@@ -103,10 +104,9 @@ export type MachineStatusOverview = {
   // machine: MachineWithRoomAndEvents;
 } & MachineWithRoomAndEvents;
 
-
 // GET /${roomId}/${areaId}/${machineId}
 // returns 10 last events
-export type MachineStatusSpecific = MachineWithRoomAndEvents
+export type MachineStatusSpecific = MachineWithRoomAndEvents;
 
 export enum MachineType {
   WASHER = "washer",
@@ -135,4 +135,3 @@ export const convertMachineStatusToString = (status: MachineStatus): string => {
       return "Unknown Status";
   }
 };
-

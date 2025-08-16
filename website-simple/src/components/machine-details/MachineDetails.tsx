@@ -15,8 +15,7 @@ export const MachineDetails = ({
   const [showDetails, setShowDetails] = useState(false);
 
   const { data, isLoading } = useMachineInfo({
-    areaId: machineOverview.room.area.areaId,
-    roomId: machineOverview.room.roomId,
+    roomId: machineOverview.roomId,
     machineId: machineOverview.machineId,
     load: showDetails, // Load details only when showDetails is true
   });
