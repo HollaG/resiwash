@@ -110,52 +110,51 @@ export const getMachines = asyncHandler(
   }
 );
 
-export const getMachine = asyncHandler(async (req: Request, res: Response) => {
-  // const areaId = req.params.areaId;
-  // const roomId = req.params.roomId;
-  // const machineId = Number(req.params.machineId);
+interface GetMachineRequest {
+  extra?: boolean;
+  depth?: number; // for future use, to control how much data to return
+}
 
-  // const showRaw = req.query.raw === "true" ? true : false;
+export const getMachine = asyncHandler(
+  async (
+    req: Request<{ machineId: string }, unknown, unknown, GetMachineRequest>,
+    res: Response
+  ) => {
+    const machineId = parseInt(req.params.machineId, 10);
+    if (isNaN(machineId)) {
+      return sendErrorResponse(res, "Invalid machine ID", 400);
+    }
 
-  // // only rooms with :areaId
-  // if (!areaId || Number(areaId) <= 0) {
-  //   console.log("getRooms: areaId is not valid", areaId);
-  //   return sendErrorResponse(res, "Area ID is required", 400);
-  // }
-  // const machine = await AppDataSource.getRepository(Machine).findOneBy({
-  //   machineId,
-  // });
+    const { extra = false, depth = 0 } = req.query; // nothing to do with this yet
 
-  // if (!machine) {
-  //   return sendErrorResponse(res, "Machine not found", 404);
-  // }
+    const machine = await AppDataSource.getRepository(Machine).findOneBy({
+      machineId,
+    });
 
-  // const events = await AppDataSource.getRepository(UpdateEvent)
-  //   .createQueryBuilder("event")
-  //   .where("event.machineId = :id", { id: machineId })
-  //   .orderBy("event.timestamp", "DESC")
-  //   .take(10)
-  //   .getMany();
+    if (!machine) {
+      return sendErrorResponse(res, "Machine not found", 404);
+    }
 
-  // const rawEvents = await AppDataSource.getRepository(RawEvent)
-  //   .createQueryBuilder("event")
-  //   .where("event.machineId = :id", { id: machineId })
-  //   .orderBy("event.timestamp", "DESC")
-  //   .take(1000)
-  //   .getMany();
+    const events = await AppDataSource.getRepository(UpdateEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(10)
+      .getMany();
 
-  // machine.events = events;
-  // machine.rawEvents = rawEvents;
+    const rawEvents = await AppDataSource.getRepository(RawEvent)
+      .createQueryBuilder("event")
+      .where("event.machineId = :id", { id: machineId })
+      .orderBy("event.timestamp", "DESC")
+      .take(1000)
+      .getMany();
 
-  // let status = null;
-  // if (events.length > 0) {
-  //   status = events[0].statusCode;
-  // } else {
-  //   status = -1;
-  // }
+    machine.events = events;
+    machine.rawEvents = rawEvents;
 
-  sendOkResponse(res, {});
-});
+    sendOkResponse(res, machine);
+  }
+);
 
 export const createMachine = async (req: Request, res: Response) => {
   // expected fields: name, label, type
