@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../../data-source";
-import { sendErrorResponse, sendOkResponse } from "../../core/responses";
+import { AppDataSource } from "../../../data-source";
+import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import asyncHandler from "express-async-handler";
-import { UpdateEvent } from "../../models/UpdateEvent";
-import { Machine } from "../../models/Machine";
-import SensorStabilizer from "../../core/SensorStabilizer";
-import { RawEvent } from "../../models/RawEvent";
-import { Sensor } from "../../models/Sensor";
-import { SensorToMachine } from "../../models/SensorToMachine";
+import { UpdateEvent } from "../../../models/UpdateEvent";
+import { Machine } from "../../../models/Machine";
+import SensorStabilizer from "../../../core/SensorStabilizer";
+import { RawEvent } from "../../../models/RawEvent";
+import { Sensor } from "../../../models/Sensor";
+import { SensorToMachine } from "../../../models/SensorToMachine";
 import { In } from "typeorm";
-import { MachineStatus, STATUS_CODE_MAP } from "../../core/types";
+import { MachineStatus, STATUS_CODE_MAP } from "../../../core/types";
 
 const debounceMachineMap: {
   [machineId: number]: SensorStabilizer;

@@ -57,41 +57,45 @@ app.get("/", (req: Request, res: Response) => {
 
 const API_VERSION = process.env.API_VERSION || "v1";
 
+const API_VERSIONS = ["v1", "v2"];
+
+// ------ API v1 Routes ------
+
 // Machines
 app.use(
   `/api/${API_VERSION}/areas/:areaId/:roomId`,
-  require("./entities/machines/machines.routes")
+  require("./entities/v1/machines/machines.routes")
 );
 
 // Rooms
 app.use(
   `/api/${API_VERSION}/areas/:areaId`,
-  require("./entities/rooms/rooms.routes")
+  require("./entities/v1/rooms/rooms.routes")
 );
 
 // Areas
 app.use(
   `/api/${API_VERSION}/areas`,
   VerifyToken,
-  require("./entities/areas/areas.routes")
+  require("./entities/v1/areas/areas.routes")
 );
 
 // Locations
 app.use(
   `/api/${API_VERSION}/locations`,
-  require("./entities/locations/locations.routes")
+  require("./entities/v1/locations/locations.routes")
 );
 
 // Events
 app.use(
   `/api/${API_VERSION}/events`,
-  require("./entities/events/events.routes")
+  require("./entities/v1/events/events.routes")
 );
 
 // Sensors
 app.use(
   `/api/${API_VERSION}/sensors`,
-  require("./entities/sensors/sensors.routes")
+  require("./entities/v1/sensors/sensors.routes")
 );
 
 // error handler (last)

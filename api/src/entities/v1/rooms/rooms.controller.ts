@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 
 import asyncHandler from "express-async-handler";
-import { Room } from "../../models/Room";
-import { AppDataSource } from "../../data-source";
-import { sendErrorResponse, sendOkResponse } from "../../core/responses";
+import { Room } from "../../../models/Room";
+import { AppDataSource } from "../../../data-source";
+import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 
 export const getRooms = asyncHandler(async (req: Request, res: Response) => {
   const areaId = req.params.areaId;
@@ -26,7 +26,7 @@ export const getRooms = asyncHandler(async (req: Request, res: Response) => {
   sendOkResponse(res, rooms);
 });
 
-export const createRoom = (async (req: Request, res: Response) => {
+export const createRoom = async (req: Request, res: Response) => {
   const areaId = req.params.areaId;
   // expected fields: name
   // optional fields: location, description, imageUrl, shortName
@@ -56,8 +56,7 @@ export const createRoom = (async (req: Request, res: Response) => {
   await roomRepository.save(room);
 
   sendOkResponse(res, room);
-
-});
+};
 
 export const deleteRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomId = parseInt(req.params.id, 10);

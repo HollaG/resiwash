@@ -12,7 +12,7 @@ import {
   setSensorApiKey,
   setSensorLink,
 } from "./sensors.controller";
-import { VerifyToken } from "../../middleware/auth";
+import { VerifyToken } from "../../../middleware/auth";
 
 const router = express.Router({ mergeParams: true });
 

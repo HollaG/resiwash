@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../../data-source";
-import { Area } from "../../models/Area";
-import { sendErrorResponse, sendOkResponse } from "../../core/responses";
+import { AppDataSource } from "../../../data-source";
+import { Area } from "../../../models/Area";
+import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import asyncHandler from "express-async-handler";
 
 export const getAreas = asyncHandler(async (req: Request, res: Response) => {

@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 
 import asyncHandler from "express-async-handler";
-import { AppDataSource } from "../../data-source";
-import { sendErrorResponse, sendOkResponse } from "../../core/responses";
-import { Machine } from "../../models/Machine";
-import { MachineType } from "../../core/types";
-import { UpdateEvent } from "../../models/UpdateEvent";
-import { RawEvent } from "../../models/RawEvent";
+import { AppDataSource } from "../../../data-source";
+import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
+import { Machine } from "../../../models/Machine";
+import { MachineType } from "../../../core/types";
+import { UpdateEvent } from "../../../models/UpdateEvent";
+import { RawEvent } from "../../../models/RawEvent";
 
 // get all machines. but only
 export const getMachines = asyncHandler(async (req: Request, res: Response) => {
@@ -28,7 +28,6 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
     .andWhere("area.areaId = :areaId", { areaId })
     .orderBy("machine.name", "ASC")
     .getMany();
-
 
   for (const machine of machines) {
     const events = await AppDataSource.getRepository(UpdateEvent)
