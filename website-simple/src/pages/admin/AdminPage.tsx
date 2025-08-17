@@ -5,7 +5,6 @@ import { CustomTable } from "../../components/CustomTable";
 import { useCrud } from "../../hooks/useCRUD";
 import { useState } from "react";
 import { useAuth } from "../../context/useAuth";
-import { ar } from "date-fns/locale";
 
 const getAreasUrl = () => {
   return '/areas';
