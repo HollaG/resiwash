@@ -22,7 +22,7 @@
 
 
 #include "OneButton.h"  // for debounce rot. enc.
-
+#include <ESP32Encoder.h>
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
 #define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
@@ -56,6 +56,8 @@ const char *registerName = "https://resiwash.marcussoh.com/api/v1/sensors/regist
 #define RXD1 19
 
 #define BTN_PIN 5
+#define ENCODER_PIN1 15  // do NOT use D2
+#define ENCODER_PIN2 4
 
 #define START_BYTE 251
 #define END_BYTE 252
@@ -68,6 +70,8 @@ OneButton btn = OneButton(
   true,     // Button is active LOW
   true      // Enable internal pull-up resistor
 );
+
+ESP32Encoder encoder;
 
 
 struct Message {
@@ -168,22 +172,35 @@ void pushTopFastFmt(const char *fmt, ...) {
 * the displayId will never go below 0
 */
 
-int displayId = 0;     // start with 0
+int displayIdSerial1 = 0;  // start with 0
+int displayIdSerial2 = 0;
+
+
 int serialSource = 1;  // serial 1
 
 bool hasReceivedData = false;
 Message savedData = { 0, 0, 0, 0, 0, 0, 0 };
 
 // Called when encoder is rotated
-void onRotate(int direction) {
-  // direction > 0 → clockwise, direction < 0 → counterclockwise
-  displayId += direction;
+void onRotate(int direction, int serialSource) {
+  if (serialSource == 1) {
 
-  if (displayId < 0) {
-    displayId = 0;  // never below 0
+    displayIdSerial1 += direction;
+    if (displayIdSerial1 < -1) displayIdSerial1 = -1;
   }
 
-  Serial.printf("[OLED] Rotated: direction=%d, displayId=%d\n", direction, displayId);
+  if (serialSource == 2) {
+
+    displayIdSerial2 += direction;
+    if (displayIdSerial2 < -1) displayIdSerial2 = -1;
+  }
+
+  // reset the data
+  hasReceivedData = false;
+  savedData = { 0, 0, 0, 0, 0, 0, 0 };
+
+
+  Serial.printf("[OLED] Rotated serial %d: direction=%d, displayId1=%d, displayId2=%d\n", serialSource, direction, displayIdSerial1, displayIdSerial2);
 }
 
 // Called when encoder button is clicked
@@ -191,14 +208,12 @@ void onClick() {
   // Toggle between serial 1 and serial 2
   serialSource = (serialSource == 1) ? 2 : 1;
 
-  // Reset displayId
-  displayId = 0;
 
   // reset the data
   hasReceivedData = false;
   savedData = { 0, 0, 0, 0, 0, 0, 0 };
 
-  Serial.printf("[OLED] Clicked: serialSource=%d, displayId reset to 0\n", serialSource);
+  Serial.printf("[OLED] Clicked: serialSource=%d\n", serialSource);
 }
 
 void drawCenteredText(const char *text, int16_t y, uint8_t textSize = 1) {
@@ -239,35 +254,48 @@ void drawHeader() {
 
   // Draw line under both
   display.drawLine(0, 20, display.width(), 20, SSD1306_WHITE);
-
 }
 
 
 
 void drawMachineInfo() {
   display.setCursor(0, 24);  // below the line
-  drawRightAligned(24, "ID %d", displayId);
-  display.setCursor(0, 24);
+
   if (serialSource == 1) {
+    display.setCursor(0, 24);
     display.println("Serial 1");
-  } else {
+    if (displayIdSerial1 == -1) {
+      // draw DISABLED
+      drawCenteredText("DISABLED", 36, 2);
+    } else {
+      if (!hasReceivedData) {
+        display.printf("Waiting for data\n");
+      } else {
+
+        display.printf("Left sensor: %d/%d\n", savedData.reading1, savedData.thres1);
+        display.printf("Right sensor: %d/%d\n", savedData.reading2, savedData.thres2);
+      }
+
+      drawRightAligned(24, "ID %d", serialSource == 1 ? displayIdSerial1 : displayIdSerial2);
+    }
+  }
+
+  if (serialSource == 2) {
+    display.setCursor(0, 24);
     display.println("Serial 2");
+    if (displayIdSerial2 == -1) {
+      drawCenteredText("DISABLED", 36, 2);
+    } else {
+      // draw DISABLED
+      if (!hasReceivedData) {
+        display.printf("Waiting for data\n");
+      } else {
+        display.printf("Left sensor: %d/%d\n", savedData.reading1, savedData.thres1);
+        display.printf("Right sensor: %d/%d\n", savedData.reading2, savedData.thres2);
+      }
+      drawRightAligned(24, "ID %d", serialSource == 1 ? displayIdSerial1 : displayIdSerial2);
+    }
   }
-
-  if (!hasReceivedData) {
-    display.printf("Waiting for data\n");
-  } else {
-    // if (savedData.state == 0) {
-    //   display.printf("Status: available\n");
-    // } else {
-    //   display.printf("Status: in use\n");
-    // }
-    // display.printf("Strategy: %d\n", savedData.strategy);
-    display.printf("Left sensor: %d/%d\n", savedData.reading1, savedData.thres1);
-    display.printf("Right sensor: %d/%d\n", savedData.reading2, savedData.thres2);
-  }
-
-
 }
 
 void setup() {
@@ -347,6 +375,13 @@ void setup() {
 
   drawHeader();
   display.display();
+
+
+  ESP32Encoder::useInternalWeakPullResistors = puType::up;
+  // pinMode(ENCODER_PIN1, INPUT_PULLUP);
+  // pinMode(ENCODER_PIN2, INPUT_PULLUP);
+  encoder.attachHalfQuad(ENCODER_PIN1, ENCODER_PIN2);
+  Serial.println("Encoder Start = " + String((int32_t)encoder.getCount()));
 }
 
 // parsed messages stored here
@@ -359,14 +394,31 @@ int serial2Count = 0;
 int serial1Buffer[1024];
 int serial2Buffer[1024];
 
+int prevEncoder = 0;
 
 void loop() {
+  int cur = encoder.getCount();
+
+  if (cur > prevEncoder) {
+    // go next
+    onRotate(1, serialSource);
+  } else if (cur < prevEncoder) {
+    onRotate(-1, serialSource);
+  }
+
+  prevEncoder = cur;
+
+  // Serial.printf("D2 %d", digitalRead(ENCODER_PIN1));
+  // Serial.printf(" D4 %d \n", digitalRead(ENCODER_PIN2));
+  Serial.println("Encoder count = " + String((int32_t)encoder.getCount()));
 
   // loop only every 50ms
   delay(50);
 
   // functions to run every loop
   btn.tick();
+
+
 
   display.clearDisplay();
   drawHeader();
@@ -398,7 +450,9 @@ void loop() {
   }
 
   // message from S2
-  if (mySerial2.available()) {
+  if (mySerial2.available() && displayIdSerial2 != -1) {
+
+
     Serial.println("");
     Serial.println("--- Available message in Serial 2 ---");
 
@@ -477,7 +531,7 @@ void loop() {
   }
 
   // message from S1
-  if (mySerial1.available()) {
+  if (mySerial1.available() && displayIdSerial1 != -1) {
     Serial.println("");
     Serial.println("--- Available message in Serial 1 ---");
 
@@ -604,7 +658,7 @@ void loop() {
 
 
         // update the display with this machine's information
-        if (id == displayId && serialSource == 1) {  // serial1
+        if (id == displayIdSerial1 && serialSource == 1) {  // serial1
           // Message m =
           savedData = { id, state, strategy, reading1, thres1, reading2, thres2 };
           hasReceivedData = true;
@@ -653,7 +707,7 @@ void loop() {
         // // serial2Messages[serial2Count] = m;
 
         // update the display with this machine's information
-        if (id == displayId && serialSource == 2) {  // serial1
+        if (id == displayIdSerial2 && serialSource == 2) {  // serial1
           savedData = { id, state, strategy, reading1, thres1, reading2, thres2 };
           hasReceivedData = true;
         }
