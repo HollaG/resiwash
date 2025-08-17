@@ -12,7 +12,7 @@ export const getRooms = asyncHandler(async (req: Request, res: Response) => {
   // only rooms with :areaId
   if (!areaId || Number(areaId) <= 0) {
     console.log("getRooms: areaId is not valid", areaId);
-    return sendErrorResponse(res, "Area ID is required", 400);
+    return sendErrorResponse(res, { message: "Area ID is required" }, 400);
   }
   const rooms = await roomRepository.find({
     where: {
@@ -38,10 +38,10 @@ export const createRoom = async (req: Request, res: Response) => {
   const { name, location, description, imageUrl, shortName } = req.body;
 
   if (!name) {
-    return sendErrorResponse(res, "Name is required", 400);
+    return sendErrorResponse(res, { message: "Name is required" }, 400);
   }
   if (!areaId || Number(areaId) <= 0) {
-    return sendErrorResponse(res, "Area ID is required", 400);
+    return sendErrorResponse(res, { message: "Area ID is required" }, 400);
   }
 
   const room = new Room();
@@ -61,14 +61,14 @@ export const createRoom = async (req: Request, res: Response) => {
 export const deleteRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomId = parseInt(req.params.id, 10);
   if (isNaN(roomId)) {
-    return sendErrorResponse(res, "Invalid room ID", 400);
+    return sendErrorResponse(res, { message: "Invalid room ID" }, 400);
   }
 
   const roomRepository = AppDataSource.getRepository(Room);
   const room = await roomRepository.findOneBy({ roomId });
 
   if (!room) {
-    return sendErrorResponse(res, "Room not found", 404);
+    return sendErrorResponse(res, { message: "Room not found" }, 404);
   }
 
   await roomRepository.remove(room);

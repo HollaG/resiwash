@@ -17,7 +17,7 @@ export const getMachines = asyncHandler(async (req: Request, res: Response) => {
   // only rooms with :areaId
   if (!areaId || Number(areaId) <= 0) {
     console.log("getRooms: areaId is not valid", areaId);
-    return sendErrorResponse(res, "Area ID is required", 400);
+    return sendErrorResponse(res, { message: "Area ID is required" }, 400);
   }
 
   const machines = await AppDataSource.getRepository(Machine)
@@ -83,18 +83,18 @@ export const createMachine = async (req: Request, res: Response) => {
   const { name, label, type, imageUrl } = req.body;
 
   if (!name) {
-    return sendErrorResponse(res, "Name is required", 400);
+    return sendErrorResponse(res, { message: "Name is required" }, 400);
   }
   if (!roomId || Number(roomId) <= 0) {
-    return sendErrorResponse(res, "Room ID is required", 400);
+    return sendErrorResponse(res, { message: "Room ID is required" }, 400);
   }
   if (!type) {
-    return sendErrorResponse(res, "Type is required", 400);
+    return sendErrorResponse(res, { message: "Type is required" }, 400);
   }
 
   // type must be one of the MachineType enum values
   if (!Object.values(MachineType).includes(type)) {
-    return sendErrorResponse(res, "Type is not valid", 400);
+    return sendErrorResponse(res, { message: "Type is not valid" }, 400);
   }
 
   const machine = new Machine();
@@ -121,14 +121,14 @@ export const getOneMachine = asyncHandler(
     // only rooms with :areaId
     if (!areaId || Number(areaId) <= 0) {
       console.log("getRooms: areaId is not valid", areaId);
-      return sendErrorResponse(res, "Area ID is required", 400);
+      return sendErrorResponse(res, { message: "Area ID is required" }, 400);
     }
     const machine = await AppDataSource.getRepository(Machine).findOneBy({
       machineId,
     });
 
     if (!machine) {
-      return sendErrorResponse(res, "Machine not found", 404);
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
     }
 
     const events = await AppDataSource.getRepository(UpdateEvent)
@@ -165,14 +165,14 @@ export const deleteMachine = asyncHandler(
     const roomId = req.params.roomId;
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
-      return sendErrorResponse(res, "Invalid machine ID", 400);
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
     }
 
     const machineRepository = AppDataSource.getRepository(Machine);
     const machine = await machineRepository.findOneBy({ machineId });
 
     if (!machine) {
-      return sendErrorResponse(res, "Machine not found", 404);
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
     }
 
     await machineRepository.remove(machine);

@@ -53,6 +53,8 @@ export const getMachines = asyncHandler(
     machines = machines.orderBy("machine.name", "ASC");
 
     const machinesList = await machines.getMany();
+
+    console.log({ machinesList });
     sendOkResponse(res, machinesList);
 
     // // // only rooms with :areaId
@@ -122,7 +124,7 @@ export const getMachine = asyncHandler(
   ) => {
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
-      return sendErrorResponse(res, "Invalid machine ID", 400);
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
     }
 
     const { extra = false, depth = 0 } = req.query; // nothing to do with this yet
@@ -132,7 +134,7 @@ export const getMachine = asyncHandler(
     });
 
     if (!machine) {
-      return sendErrorResponse(res, "Machine not found", 404);
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
     }
 
     const events = await AppDataSource.getRepository(UpdateEvent)
@@ -168,18 +170,18 @@ export const createMachine = async (req: Request, res: Response) => {
   const { name, label, type, imageUrl } = machineToCreate;
 
   if (!name) {
-    return sendErrorResponse(res, "Name is required", 400);
+    return sendErrorResponse(res, { message: "Name is required" }, 400);
   }
   if (!roomId || Number(roomId) <= 0) {
-    return sendErrorResponse(res, "Room ID is required", 400);
+    return sendErrorResponse(res, { message: "Room ID is required" }, 400);
   }
   if (!type) {
-    return sendErrorResponse(res, "Type is required", 400);
+    return sendErrorResponse(res, { message: "Type is required" }, 400);
   }
 
   // type must be one of the MachineType enum values
   if (!Object.values(MachineType).includes(type)) {
-    return sendErrorResponse(res, "Type is not valid", 400);
+    return sendErrorResponse(res, { message: "Type is not valid" }, 400);
   }
 
   const machine = new Machine();
@@ -199,14 +201,14 @@ export const deleteMachine = asyncHandler(
   async (req: Request, res: Response) => {
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
-      return sendErrorResponse(res, "Invalid machine ID", 400);
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
     }
 
     const machineRepository = AppDataSource.getRepository(Machine);
     const machine = await machineRepository.findOneBy({ machineId });
 
     if (!machine) {
-      return sendErrorResponse(res, "Machine not found", 404);
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
     }
 
     await machineRepository.remove(machine);
@@ -219,7 +221,7 @@ export const updateMachine = asyncHandler(
   async (req: Request, res: Response) => {
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
-      return sendErrorResponse(res, "Invalid machine ID", 400);
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
     }
 
     const { machine: machineToUpdate } = req.body as { machine: Machine };
@@ -227,22 +229,22 @@ export const updateMachine = asyncHandler(
     const { name, label, type, imageUrl } = machineToUpdate;
 
     if (!name) {
-      return sendErrorResponse(res, "Name is required", 400);
+      return sendErrorResponse(res, { message: "Name is required" }, 400);
     }
     if (!type) {
-      return sendErrorResponse(res, "Type is required", 400);
+      return sendErrorResponse(res, { message: "Type is required" }, 400);
     }
 
     // type must be one of the MachineType enum values
     if (!Object.values(MachineType).includes(type)) {
-      return sendErrorResponse(res, "Type is not valid", 400);
+      return sendErrorResponse(res, { message: "Type is not valid" }, 400);
     }
 
     const machineRepository = AppDataSource.getRepository(Machine);
     const machine = await machineRepository.findOneBy({ machineId });
 
     if (!machine) {
-      return sendErrorResponse(res, "Machine not found", 404);
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
     }
 
     machine.name = name;

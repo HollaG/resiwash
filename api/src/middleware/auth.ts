@@ -6,11 +6,11 @@ export const VerifyToken = async (req, res, next) => {
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer ")
   ) {
-    return sendErrorResponse(res, "Unauthorized", 401);
+    return sendErrorResponse(res, { message: "Unauthorized" }, 401);
   }
   const split = req.headers.authorization.split(" ");
   if (split.length !== 2 || split[0] !== "Bearer") {
-    return sendErrorResponse(res, "Unauthorized", 401);
+    return sendErrorResponse(res, { message: "Unauthorized" }, 401);
   }
   const token = req.headers.authorization.split(" ")[1];
 
@@ -21,6 +21,6 @@ export const VerifyToken = async (req, res, next) => {
       return next();
     }
   } catch (e) {
-    return sendErrorResponse(res, "Unauthorized", 401);
+    return sendErrorResponse(res, { message: "Unauthorized" }, 401);
   }
 };

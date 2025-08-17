@@ -37,7 +37,7 @@ export const createArea = async (req: Request, res: Response) => {
   const { name, location, description, imageUrl, shortName } = req.body;
 
   if (!name) {
-    return sendErrorResponse(res, "Name is required", 400);
+    return sendErrorResponse(res, { message: "Name is required" }, 400);
   }
 
   const area = new Area();
@@ -56,14 +56,14 @@ export const createArea = async (req: Request, res: Response) => {
 export const deleteArea = asyncHandler(async (req: Request, res: Response) => {
   const areaId = parseInt(req.params.id, 10);
   if (isNaN(areaId)) {
-    return sendErrorResponse(res, "Invalid area ID", 400);
+    return sendErrorResponse(res, { message: "Invalid area ID" }, 400);
   }
 
   const areaRepository = AppDataSource.getRepository(Area);
   const area = await areaRepository.findOneBy({ areaId });
 
   if (!area) {
-    return sendErrorResponse(res, "Area not found", 404);
+    return sendErrorResponse(res, { message: "Area not found" }, 404);
   }
 
   await areaRepository.remove(area);

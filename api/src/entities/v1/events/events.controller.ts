@@ -114,7 +114,11 @@ export const createMultipleEvents = asyncHandler(
     const macAddress = req.body.macAddress as string;
 
     if (!macAddress) {
-      return sendErrorResponse(res, "MAC address is required", 400);
+      return sendErrorResponse(
+        res,
+        { message: "MAC address is required" },
+        400
+      );
     }
 
     // check to see if valid macAddress exists
@@ -123,11 +127,11 @@ export const createMultipleEvents = asyncHandler(
     });
 
     if (!sensor) {
-      return sendErrorResponse(res, "Sensor not found", 404);
+      return sendErrorResponse(res, { message: "Sensor not found" }, 404);
     }
 
     if (!data || !Array.isArray(data)) {
-      return sendErrorResponse(res, "Data is required", 400);
+      return sendErrorResponse(res, { message: "Data is required" }, 400);
     }
 
     // console.log("createMultipleEvents debug sensor", sensor);
@@ -143,7 +147,7 @@ export const createMultipleEvents = asyncHandler(
     if (sensorLinks.length === 0) {
       return sendErrorResponse(
         res,
-        "No machine links found for the sensor",
+        { message: "No machine links found for the sensor" },
         404
       );
     }

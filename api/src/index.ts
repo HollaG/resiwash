@@ -15,6 +15,7 @@ dotenv.config();
 
 import { AppDataSource } from "./data-source";
 import { VerifyToken } from "./middleware/auth";
+import { sendErrorResponse } from "./core/responses";
 
 // TypeORM
 AppDataSource.initialize()
@@ -123,6 +124,11 @@ app.get("/api", (req: Request, res: Response) => {
 });
 app.get("/api/checkAuth", VerifyToken, (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Auth works");
+});
+
+// catch-all, return error: invalid url
+app.get("*", (req: Request, res: Response) => {
+  sendErrorResponse(res, { message: "invalid url" }, 404);
 });
 
 app.listen(port, () => {
