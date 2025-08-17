@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 HomeHeader(username: "Marcus"),
-                RoomOverviewWrapper(roomIds: ["2", "3", "4", "5"]),
+                RoomOverviewWrapper(roomIds: ["3"]),
               ],
             ),
           );

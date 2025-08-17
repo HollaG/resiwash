@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 
@@ -26,8 +27,8 @@ class RoomOverview extends StatelessWidget {
                   : Column(
                       children:
                           state.machinesByRoom[roomId]?.map((machine) {
-                            return Text(
-                              "Machine ID: ${machine.machineId}, Status: ${machine.currentStatus}",
+                            return MachineStatusIndicator(
+                              status: machine.currentStatus,
                             );
                           }).toList() ??
                           [Text("No machines found for this room")],

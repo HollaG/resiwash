@@ -13,7 +13,8 @@ class DioClient {
     final dio = Dio(
       BaseOptions(
         baseUrl:
-            "http://192.168.1.10:3000/api/v2", //Jsonplaceholder is a great place for getting dummy data.
+            "https://resiwash.marcussoh.com/api/v2", //Jsonplaceholder is a great place for getting dummy data.
+        // "http://192.168.1.10:3000/api/v2", //Jsonplaceholder is a great place for getting dummy data.
         validateStatus: (status) {
           // Allow all status codes so the interceptor can handle them
           return true;

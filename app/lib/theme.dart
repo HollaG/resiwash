@@ -431,7 +431,49 @@ class MaterialTheme {
     ),
   );
 
-  List<ExtendedColor> get extendedColors => [success, reserved];
+  /// inUse
+  static const inUse = ExtendedColor(
+    seed: Color(0xffFF6B6B),
+    value: Color(0xffFF6B6B),
+    light: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    lightMediumContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    lightHighContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    dark: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    darkMediumContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    darkHighContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+  );
+
+  List<ExtendedColor> get extendedColors => [success, reserved, inUse];
 }
 
 class ExtendedColor {

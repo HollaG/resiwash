@@ -68,7 +68,7 @@ const _$MachineTypeEnumMap = {
 };
 
 const _$MachineStatusEnumMap = {
-  MachineStatus.available: 'available',
-  MachineStatus.inUse: 'inUse',
-  MachineStatus.hasIssues: 'hasIssues',
+  MachineStatus.available: 'AVAILABLE',
+  MachineStatus.inUse: 'IN_USE',
+  MachineStatus.hasIssues: 'HAS_ISSUES',
 };
