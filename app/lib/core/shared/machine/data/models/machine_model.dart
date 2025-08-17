@@ -18,37 +18,39 @@ class MachineModel {
   final String label;
   final MachineType type;
 
-  final String imageUrl;
+  final String? imageUrl;
 
   final RoomModel? room;
+  final int roomId;
   final List<Map<String, dynamic>>? events;
   final List<Map<String, dynamic>>? rawEvents;
   final Map<String, dynamic>? sensorToMachine;
 
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime lastUpdated;
-  final DateTime lastChangeTime;
+  final DateTime? lastUpdated;
+  final DateTime? lastChangeTime;
 
-  final MachineStatus currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
-  final MachineStatus previousStatus;
+  final MachineStatus? currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
+  final MachineStatus? previousStatus;
 
   const MachineModel({
     required this.machineId,
     required this.name,
     required this.label,
     required this.type,
-    required this.imageUrl,
+    this.imageUrl,
+    required this.roomId,
     this.room,
     this.events,
     this.rawEvents,
     this.sensorToMachine,
     required this.createdAt,
     required this.updatedAt,
-    required this.lastUpdated,
-    required this.lastChangeTime,
-    required this.currentStatus,
-    required this.previousStatus,
+    this.lastUpdated,
+    this.lastChangeTime,
+    this.currentStatus,
+    this.previousStatus,
   });
 
   factory MachineModel.fromJson(Map<String, dynamic> json) =>
@@ -57,11 +59,12 @@ class MachineModel {
 
   // domain mapping
   MachineEntity toEntity() => MachineEntity(
-    machineId: machineId,
+    machineId: machineId.toString(),
     name: name,
     label: label,
     type: type,
     imageUrl: imageUrl,
+    roomId: roomId.toString(),
     room: room?.toEntity(),
     events: events,
     rawEvents: rawEvents,

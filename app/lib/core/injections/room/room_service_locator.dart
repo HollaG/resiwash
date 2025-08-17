@@ -4,12 +4,6 @@ import 'package:resiwash/core/shared/room/data/repository/room_repository_impl.d
 import 'package:resiwash/core/shared/room/domain/repositories/room_repository.dart';
 import 'package:resiwash/core/shared/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
-// import your room-related classes here
-// import 'package:resiwash/core/shared/room/data/datasources/room_remote_datasource.dart';
-// import 'package:resiwash/core/shared/room/data/repositories/room_repository_impl.dart';
-// import 'package:resiwash/core/shared/room/domain/repositories/room_repository.dart';
-// import 'package:resiwash/core/shared/room/domain/usecases/get_room_usecase.dart';
-// import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
 
 final GetIt sl = GetIt.instance;
 

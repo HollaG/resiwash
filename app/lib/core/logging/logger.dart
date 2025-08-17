@@ -15,4 +15,4 @@ Logger createLogger() => Logger(
 );
 
 // Export a shared instance if you prefer:
-final log = createLogger();
+final appLog = createLogger();

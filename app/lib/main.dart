@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
+import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
 import 'util.dart';
@@ -32,8 +33,11 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: brightness == Brightness.light ? theme.light() : theme.dark(),
     );
+
+    // only for global dependencies
     return MultiBlocProvider(
       providers: [
+        // todo: remove this one
         BlocProvider(
           create: (context) => sl<RoomCubit>(instanceName: 'roomCubit'),
         ),
