@@ -9,10 +9,10 @@ part of 'room_model.dart';
 RoomModel _$RoomModelFromJson(Map<String, dynamic> json) => RoomModel(
   roomId: (json['roomId'] as num).toInt(),
   name: json['name'] as String,
-  location: json['location'] as String,
-  description: json['description'] as String,
-  imageUrl: json['imageUrl'] as String,
-  shortName: json['shortName'] as String,
+  location: json['location'] as String?,
+  description: json['description'] as String?,
+  imageUrl: json['imageUrl'] as String?,
+  shortName: json['shortName'] as String?,
   area: json['area'] == null
       ? null
       : AreaModel.fromJson(json['area'] as Map<String, dynamic>),

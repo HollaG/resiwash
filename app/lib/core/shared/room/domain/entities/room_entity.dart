@@ -1,12 +1,12 @@
-import 'package:resiwash/core/shared/area/domain/entities/area_entity.dart';
+import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 
 class RoomEntity {
   final int roomId;
   final String name;
-  final String location;
-  final String description;
-  final String imageUrl;
-  final String shortName;
+  final String? location;
+  final String? description;
+  final String? imageUrl;
+  final String? shortName;
 
   // If you have the Area model, keep this as Area? and import it.
   // Otherwise, change to Map<String, dynamic>?.
@@ -22,10 +22,10 @@ class RoomEntity {
   RoomEntity({
     required this.roomId,
     required this.name,
-    required this.location,
-    required this.description,
-    required this.imageUrl,
-    required this.shortName,
+    this.location,
+    this.description,
+    this.imageUrl,
+    this.shortName,
     this.area,
     this.machines,
     this.sensors,

@@ -1,6 +1,5 @@
-// lib/core/shared/area/data/models/area_model.dart
 import 'package:json_annotation/json_annotation.dart';
-import 'package:resiwash/core/shared/area/domain/entities/area_entity.dart';
+import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/core/shared/room/data/models/room_model.dart';
 
 part 'area_model.g.dart';
@@ -9,10 +8,10 @@ part 'area_model.g.dart';
 class AreaModel {
   final int areaId;
   final String name;
-  final String location;
-  final String description;
-  final String imageUrl;
-  final String shortName;
+  final String? location;
+  final String? description;
+  final String? imageUrl;
+  final String? shortName;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -22,10 +21,10 @@ class AreaModel {
   const AreaModel({
     required this.areaId,
     required this.name,
-    required this.location,
-    required this.description,
-    required this.imageUrl,
-    required this.shortName,
+    this.location,
+    this.description,
+    this.imageUrl,
+    this.shortName,
     required this.createdAt,
     required this.updatedAt,
     this.rooms,

@@ -8,7 +8,17 @@ part 'machine_model.g.dart';
 
 enum MachineType { unknown, washer, dryer }
 
-enum MachineStatus { available, inUse, hasIssues }
+enum MachineStatus {
+  @JsonValue('AVAILABLE')
+  available('AVAILABLE'),
+  @JsonValue('IN_USE')
+  inUse('IN_USE'),
+  @JsonValue('HAS_ISSUES')
+  hasIssues('HAS_ISSUES');
+
+  final String value;
+  const MachineStatus(this.value);
+}
 
 // Model ----------------------------------------------------------------------
 @JsonSerializable()

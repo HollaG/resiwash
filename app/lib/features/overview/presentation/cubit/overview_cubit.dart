@@ -2,21 +2,28 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
 
-import 'package:resiwash/core/shared/machine/domain/usecases/get_machines_usecase.dart';
+import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 
 class OverviewCubit extends Cubit<OverviewState> {
-  final GetMachinesUseCase getMachinesUseCase; // <-- depend on the use case
-  OverviewCubit({required this.getMachinesUseCase}) : super(OverviewInitial());
+  final ListMachinesUseCase listMachinesUseCase; // <-- depend on the use case
+  final ListLocationsUseCase listLocationsUseCase;
+
+  OverviewCubit({
+    required this.listMachinesUseCase,
+    required this.listLocationsUseCase,
+  }) : super(OverviewInitial());
 
   Future<void> load({List<String>? roomIds}) async {
     emit(OverviewLoading());
 
-    final either = await getMachinesUseCase.call(roomIds: roomIds);
+    final listMachinesEither = await listMachinesUseCase.call(roomIds: roomIds);
+    final listLocationsEither = await listLocationsUseCase.call();
 
     print("either");
-    appLog.d("either: $either");
-    either.match(
+    appLog.d("either: $listMachinesEither");
+    listMachinesEither.match(
       (failure) =>
           emit(OverviewError(failure.message ?? 'Something went wrong')),
       (machines) {

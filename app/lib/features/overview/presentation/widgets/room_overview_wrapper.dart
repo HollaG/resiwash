@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class RoomOverviewWrapper extends StatelessWidget {
   final List<String> roomIds;
@@ -33,15 +34,25 @@ class RoomOverviewWrapper extends StatelessWidget {
           //     .toList();
 
           return Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Rooms"),
-                ...roomIds.map((roomId) {
-                  return RoomOverview(roomId: roomId);
-                }),
-              ],
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 10.0,
+                children: [
+                  Text(
+                    "Rooms",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  ...roomIds.map((roomId) {
+                    return RoomOverview(roomId: roomId);
+                  }),
+                ],
+              ),
             ),
           );
         }

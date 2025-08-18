@@ -1,7 +1,7 @@
 // data/models/room_model.dart
 import 'package:json_annotation/json_annotation.dart';
 import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
-import 'package:resiwash/core/shared/area/data/models/area_model.dart';
+import 'package:resiwash/features/area/data/models/area_model.dart';
 
 part 'room_model.g.dart';
 
@@ -9,10 +9,10 @@ part 'room_model.g.dart';
 class RoomModel {
   final int roomId;
   final String name;
-  final String location;
-  final String description;
-  final String imageUrl;
-  final String shortName;
+  final String? location;
+  final String? description;
+  final String? imageUrl;
+  final String? shortName;
 
   final AreaModel? area;
   final List<Map<String, dynamic>>? machines;
@@ -24,10 +24,10 @@ class RoomModel {
   const RoomModel({
     required this.roomId,
     required this.name,
-    required this.location,
-    required this.description,
-    required this.imageUrl,
-    required this.shortName,
+    this.location,
+    this.description,
+    this.imageUrl,
+    this.shortName,
     this.area,
     this.machines,
     this.sensors,

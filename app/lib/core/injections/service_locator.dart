@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 
@@ -11,4 +12,5 @@ void setupServiceLocator() {
 
   setupRoomServiceLocator();
   setupMachineServiceLocator();
+  setupAreaServiceLocator();
 }

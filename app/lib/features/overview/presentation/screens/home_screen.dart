@@ -1,11 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
-import 'package:resiwash/core/shared/machine/domain/usecases/get_machines_usecase.dart';
+import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/core/shared/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
 import 'package:resiwash/core/shared/room/presentation/cubit/room_state.dart';
+import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/features/overview/presentation/widgets/homeHeader.dart';
@@ -24,9 +25,10 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          OverviewCubit(getMachinesUseCase: sl<GetMachinesUseCase>())
-            ..load(roomIds: ["2", "3"]),
+      create: (context) => OverviewCubit(
+        listMachinesUseCase: sl<ListMachinesUseCase>(),
+        listLocationsUseCase: sl<ListLocationsUseCase>(),
+      )..load(roomIds: ["2", "3"]),
 
       child: BlocConsumer<OverviewCubit, OverviewState>(
         listener: (context, state) {
