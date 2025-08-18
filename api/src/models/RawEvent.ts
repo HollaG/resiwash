@@ -32,7 +32,7 @@ export class RawEvent {
   @Column({ nullable: true })
   statusCode: number;
 
-  @Column({ type: "json" })
+  @Column({ type: "json", nullable: true })
   readings: Reading[];
 
   @ManyToOne(() => Machine, (machine) => machine.events)
