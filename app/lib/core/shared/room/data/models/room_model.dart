@@ -40,7 +40,7 @@ class RoomModel {
   Map<String, dynamic> toJson() => _$RoomModelToJson(this);
 
   RoomEntity toEntity() => RoomEntity(
-    roomId: roomId,
+    roomId: roomId.toString(),
     name: name,
     location: location,
     description: description,

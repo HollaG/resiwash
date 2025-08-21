@@ -52,32 +52,58 @@ class HomeHeader extends StatelessWidget {
                           // fontFamily: "Open Sans",
                         ),
                   ),
+                  Text(
+                    "Marcus",
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.bold,
+                      // fontFamily: "Open Sans",
+                    ),
+                  ),
                 ],
               ),
 
               BlocBuilder<OverviewCubit, OverviewState>(
                 builder: (context, state) {
-                  // Calculate counts based on actual data
-                  int washerCount = 0;
-                  int dryerCount = 0;
-                  int totalWashers = 0;
-                  int totalDryers = 0;
-
                   if (state is OverviewLoaded) {
-                    // Count available/total washers and dryers
-                    for (var machine in state.machines) {
-                      if (machine.type == MachineType.washer) {
-                        totalWashers++;
-                        if (machine.currentStatus == MachineStatus.available) {
-                          washerCount++;
-                        }
-                      } else if (machine.type == MachineType.dryer) {
-                        totalDryers++;
-                        if (machine.currentStatus == MachineStatus.available) {
-                          dryerCount++;
-                        }
-                      }
-                    }
+                    // Calculate counts based on actual data
+                    Map<CountKey, int> washerInfo = state.getTypeCount(
+                      MachineType.washer,
+                    );
+                    int washerCount = washerInfo[CountKey.available] ?? 0;
+                    int totalWashers = washerInfo[CountKey.total] ?? 0;
+
+                    Map<CountKey, int> dryerInfo = state.getTypeCount(
+                      MachineType.dryer,
+                    );
+                    int dryerCount = dryerInfo[CountKey.available] ?? 0;
+                    int totalDryers = dryerInfo[CountKey.total] ?? 0;
+
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: HomeMainCard(
+                            leading: AssetIcons.washerIcon(context),
+                            title: "Washers",
+                            count: "$washerCount/$totalWashers",
+
+                            actionText: "View",
+                            onAction: () {},
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: HomeMainCard(
+                            leading: AssetIcons.dryerIcon(context),
+                            title: "Dryers",
+                            count: "$dryerCount/$totalDryers",
+
+                            actionText: "View",
+                            onAction: () {},
+                          ),
+                        ),
+                      ],
+                    );
                   }
 
                   return Row(
@@ -86,9 +112,8 @@ class HomeHeader extends StatelessWidget {
                         child: HomeMainCard(
                           leading: AssetIcons.washerIcon(context),
                           title: "Washers",
-                          count: state is OverviewLoaded
-                              ? "$washerCount/$totalWashers"
-                              : "0/0",
+                          count: "Loading...",
+
                           actionText: "View",
                           onAction: () {},
                         ),
@@ -98,9 +123,8 @@ class HomeHeader extends StatelessWidget {
                         child: HomeMainCard(
                           leading: AssetIcons.dryerIcon(context),
                           title: "Dryers",
-                          count: state is OverviewLoaded
-                              ? "$dryerCount/$totalDryers"
-                              : "0/0",
+                          count: "Loading...",
+
                           actionText: "View",
                           onAction: () {},
                         ),

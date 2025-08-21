@@ -3,6 +3,7 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
 
 import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 
@@ -21,20 +22,33 @@ class OverviewCubit extends Cubit<OverviewState> {
     final listMachinesEither = await listMachinesUseCase.call(roomIds: roomIds);
     final listLocationsEither = await listLocationsUseCase.call();
 
-    print("either");
-    appLog.d("either: $listMachinesEither");
-    listMachinesEither.match(
-      (failure) =>
-          emit(OverviewError(failure.message ?? 'Something went wrong')),
-      (machines) {
-        emit(
-          OverviewLoaded(
-            machines: machines,
-            machinesByRoom: _groupMachinesByRoom(machines),
-          ),
-        );
-      },
-    );
+    appLog.d("listMachinesEither: $listMachinesEither");
+    appLog.d("listLocationsEither: $listLocationsEither");
+
+    if (listMachinesEither.isRight() && listLocationsEither.isRight()) {
+      final machines = listMachinesEither.fold(
+        (l) => <MachineEntity>[],
+        (r) => r,
+      );
+      final locations = listLocationsEither.fold(
+        (l) => <AreaEntity>[],
+        (r) => r,
+      ); // Replace dynamic with your LocationEntity if you have one
+      emit(
+        OverviewLoaded(
+          machines: machines,
+          machinesByRoom: _groupMachinesByRoom(machines),
+          locations: locations,
+        ),
+      );
+    } else {
+      final machineFailure = listMachinesEither.swap().getLeft().toNullable();
+      final locationFailure = listLocationsEither.swap().getLeft().toNullable();
+      appLog.e("Machine failure: $machineFailure");
+      appLog.e("Location failure: $locationFailure");
+
+      emit(OverviewError("Failed to load overview data"));
+    }
   }
 
   Future<void> refresh({List<String>? roomIds}) => load(roomIds: roomIds);

@@ -38,7 +38,7 @@ class AreaModel {
 
   // Domain mapping
   AreaEntity toEntity() => AreaEntity(
-    areaId: areaId,
+    areaId: areaId.toString(),
     name: name,
     location: location,
     description: description,

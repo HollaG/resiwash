@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
@@ -26,6 +27,7 @@ class RoomOverviewWrapper extends StatelessWidget {
         } else if (state is OverviewLoaded) {
           // Use the machinesByRoom from the state
           final machinesByRoom = state.machinesByRoom;
+          final locations = state.locations;
 
           // // Filter machines for the provided roomIds
           // final filteredMachines = roomIds
@@ -42,12 +44,25 @@ class RoomOverviewWrapper extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 10.0,
                 children: [
-                  Text(
-                    "Rooms",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w900,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        "Rooms",
+                        style: GoogleFonts.poppinsTextTheme(
+                          Theme.of(context).textTheme,
+                        ).headlineSmall?.copyWith(),
+                      ),
+                      Spacer(),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          showChangeRoomSheet(context, locations);
+                        },
+                        label: Text("Edit"),
+                        icon: Icon(Icons.edit),
+                      ),
+                    ],
                   ),
+
                   ...roomIds.map((roomId) {
                     return RoomOverview(roomId: roomId);
                   }),
@@ -57,6 +72,36 @@ class RoomOverviewWrapper extends StatelessWidget {
           );
         }
         return Container();
+      },
+    );
+  }
+
+  void showChangeRoomSheet(BuildContext context, List<AreaEntity> locations) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SizedBox(
+          width: double.infinity,
+          height: 400,
+          child: Container(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              // mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  'Select rooms',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                ElevatedButton(
+                  child: const Text('Close BottomSheet'),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

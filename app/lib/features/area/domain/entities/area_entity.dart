@@ -1,7 +1,7 @@
 import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
 
 class AreaEntity {
-  final int areaId;
+  final String areaId;
   final String name;
   final String? location;
   final String? description;

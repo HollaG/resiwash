@@ -18,8 +18,6 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    final brightness = View.of(context).platformDispatcher.platformBrightness;
-
     // Retrieves the default theme for the platform
     //TextTheme textTheme = Theme.of(context).textTheme;
 
@@ -31,7 +29,9 @@ class MyApp extends StatelessWidget {
     final routerBuild = MaterialApp.router(
       routerConfig: router,
       title: 'Flutter Demo',
-      theme: brightness == Brightness.light ? theme.light() : theme.dark(),
+      theme: theme.light().copyWith(textTheme: textTheme),
+      darkTheme: theme.dark().copyWith(textTheme: textTheme),
+      themeMode: ThemeMode.system,
     );
 
     // only for global dependencies

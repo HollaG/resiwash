@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
+import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
@@ -17,28 +21,77 @@ class RoomOverview extends StatelessWidget {
       builder: (context, state) {
         if (state is OverviewLoaded) {
           final machines = state.getMachinesInRoom(roomId);
+          final room = state.getRoomById(roomId);
+          final area = state.getAreaOfRoom(roomId);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Room ID: $roomId"),
+              Text(
+                '${area.shortName != null ? "${area.shortName} " : ""}${room.name}',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               // Display machines in this room
-              machines.isEmpty
-                  ? Text("No machines found in this room.")
-                  : Column(
-                      children:
-                          state.machinesByRoom[roomId]?.map((machine) {
-                            return MachineStatusIndicator(
-                              status: machine.currentStatus,
-                            );
-                          }).toList() ??
-                          [Text("No machines found for this room")],
-                    ),
+              RoomRow(
+                label: "Washers",
+                machines: machines
+                    .filter((machine) => machine.type == MachineType.washer)
+                    .toList(),
+              ),
+              RoomRow(
+                label: "Dryers",
+                machines: machines
+                    .filter((machine) => machine.type == MachineType.dryer)
+                    .toList(),
+              ),
             ],
           );
         }
 
         return Container();
       },
+    );
+  }
+}
+
+class RoomRow extends StatelessWidget {
+  // a subset of machines to display
+  final List<MachineEntity> machines;
+  final String label;
+
+  const RoomRow({required this.label, required this.machines});
+
+  @override
+  Widget build(BuildContext context) {
+    int totalCount = machines.length;
+    int availableCount = machines
+        .where((machine) => machine.currentStatus == MachineStatus.available)
+        .length;
+
+    return Container(
+      padding: EdgeInsets.all(10),
+      child: Row(
+        spacing: 10,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          Spacer(),
+          Row(
+            spacing: 2,
+
+            children: machines
+                .map(
+                  (machine) =>
+                      MachineStatusIndicator(status: machine.currentStatus),
+                )
+                .toList(),
+          ),
+          Text(
+            "$availableCount/$totalCount",
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+        ],
+      ),
     );
   }
 }
