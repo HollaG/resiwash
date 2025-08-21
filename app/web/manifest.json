@@ -1,6 +1,6 @@
 {
-    "name": "app",
-    "short_name": "app",
+    "name": "ResiWash",
+    "short_name": "ResiWash",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

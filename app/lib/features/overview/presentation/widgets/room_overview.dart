@@ -23,29 +23,39 @@ class RoomOverview extends StatelessWidget {
           final machines = state.getMachinesInRoom(roomId);
           final room = state.getRoomById(roomId);
           final area = state.getAreaOfRoom(roomId);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${area.shortName != null ? "${area.shortName} " : ""}${room.name}',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
+          return Container(
+            padding: EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
+              children: [
+                Text(
+                  '${area.shortName != null ? "${area.shortName} " : ""}${room.name}',
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
-              ),
-              // Display machines in this room
-              RoomRow(
-                label: "Washers",
-                machines: machines
-                    .filter((machine) => machine.type == MachineType.washer)
-                    .toList(),
-              ),
-              RoomRow(
-                label: "Dryers",
-                machines: machines
-                    .filter((machine) => machine.type == MachineType.dryer)
-                    .toList(),
-              ),
-            ],
+                // Display machines in this room
+                Column(
+                  children: [
+                    RoomRow(
+                      label: "Washers",
+                      machines: machines
+                          .filter(
+                            (machine) => machine.type == MachineType.washer,
+                          )
+                          .toList(),
+                    ),
+                    RoomRow(
+                      label: "Dryers",
+                      machines: machines
+                          .filter(
+                            (machine) => machine.type == MachineType.dryer,
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           );
         }
 

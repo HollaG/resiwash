@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
+import 'package:resiwash/features/overview/presentation/widgets/location_tree_select.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class RoomOverviewWrapper extends StatelessWidget {
+class RoomOverviewWrapper extends StatefulWidget {
   final List<String> roomIds;
 
   RoomOverviewWrapper({required this.roomIds});
 
-  // already fetched in the parent widget
-  // so we can use the machines by room
+  @override
+  State<RoomOverviewWrapper> createState() => _RoomOverviewWrapperState();
+}
 
+class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
+  SavedLocations loadedLocations = SavedLocations({});
   @override
   Widget build(BuildContext context) {
     // This widget would typically use the roomIds to fetch and display
@@ -50,7 +58,7 @@ class RoomOverviewWrapper extends StatelessWidget {
                         "Rooms",
                         style: GoogleFonts.poppinsTextTheme(
                           Theme.of(context).textTheme,
-                        ).headlineSmall?.copyWith(),
+                        ).headlineSmall,
                       ),
                       Spacer(),
                       OutlinedButton.icon(
@@ -62,10 +70,11 @@ class RoomOverviewWrapper extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  ...roomIds.map((roomId) {
-                    return RoomOverview(roomId: roomId);
-                  }),
+                  Column(
+                    children: loadedLocations.getAllRoomIds().map((roomId) {
+                      return RoomOverview(roomId: roomId);
+                    }).toList(),
+                  ),
                 ],
               ),
             ),
@@ -77,8 +86,17 @@ class RoomOverviewWrapper extends StatelessWidget {
   }
 
   void showChangeRoomSheet(BuildContext context, List<AreaEntity> locations) {
+    // set the current room ids
+    SavedLocations savedLocations = sl<SharedPreferencesService>()
+        .getSavedLocations();
+
+    setState(() {
+      loadedLocations = savedLocations;
+    });
+
     showModalBottomSheet(
       context: context,
+
       builder: (context) {
         return SizedBox(
           width: double.infinity,
@@ -94,14 +112,24 @@ class RoomOverviewWrapper extends StatelessWidget {
                   'Select rooms',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                ElevatedButton(
-                  child: const Text('Close BottomSheet'),
-                  onPressed: () => Navigator.pop(context),
+                LocationTreeSelect(
+                  areas: locations,
+                  selectedLocations: savedLocations,
+                  onSelectionChanged: (newSelectedLocations) {
+                    setState(() {
+                      loadedLocations = newSelectedLocations;
+                    });
+                  },
                 ),
               ],
             ),
           ),
         );
+      },
+    ).then(
+      (result) => {
+        // save the selectedRoomIds to SharedPrefs
+        sl<SharedPreferencesService>().setSavedLocations(loadedLocations),
       },
     );
   }
