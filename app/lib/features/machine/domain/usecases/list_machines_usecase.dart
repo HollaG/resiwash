@@ -3,6 +3,7 @@ import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
 
+// TODO: add the other areaId / machineIds etc
 class ListMachinesUseCase {
   final MachineRepository repository;
 

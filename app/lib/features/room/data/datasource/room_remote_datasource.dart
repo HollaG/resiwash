@@ -2,27 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/models/api_response.dart';
 import 'package:resiwash/core/network/dio_client.dart';
-import 'package:resiwash/core/shared/room/data/models/room_model.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/data/models/room_model.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 
 Dio http = DioClient.instance();
 
 class RoomRemoteDatasource {
-  Future<RoomEntity> getRoomById(String areaId, String roomId) async {
+  Future<RoomEntity> getRoomById({required String roomId}) async {
     try {
-      print("get room by id");
-      print("$areaId $roomId");
-      final Response<dynamic> response = await http.get(
-        "/areas/$areaId/$roomId",
-      );
-      print(response);
+      final Response<dynamic> response = await http.get("/rooms/$roomId");
 
       final apiResponse = ApiResponse<RoomModel>.fromJson(
         response.data,
         (json) => RoomModel.fromJson(json as Map<String, dynamic>),
       );
-
-      print(apiResponse);
 
       return apiResponse.data.toEntity();
     } on DioException catch (e) {

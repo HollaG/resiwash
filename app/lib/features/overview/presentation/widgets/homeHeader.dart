@@ -34,30 +34,16 @@ class HomeHeader extends StatelessWidget {
                 children: [
                   Text(
                     "Welcome back,",
-                    style:
-                        GoogleFonts.poppinsTextTheme(
-                          Theme.of(context).textTheme,
-                        ).headlineSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.normal,
+                    ),
                   ),
                   Text(
                     "Marcus!",
-                    style:
-                        GoogleFonts.poppinsTextTheme(
-                          Theme.of(context).textTheme,
-                        ).headlineMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                          // fontFamily: "Open Sans",
-                        ),
-                  ),
-                  Text(
-                    "Marcus",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                      // fontFamily: "Open Sans",
+                      // fontWeight is already bold from theme
                     ),
                   ),
                 ],

@@ -14,15 +14,17 @@ class AppBarComponent extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(title),
+      title: Text(
+        title,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Theme.of(context).colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       actions: actions,
       backgroundColor: Theme.of(context).colorScheme.primary,
       foregroundColor: Theme.of(context).colorScheme.onPrimary,
-      titleTextStyle: Theme.of(context).textTheme.headlineSmall?.copyWith(
-        fontWeight: FontWeight.w900,
-        color: Theme.of(context).colorScheme.onPrimary,
-        fontFamily: "Poppins",
-      ),
+      // titleTextStyle: Theme.of(context).textTheme.headlineSmall,
       // titleTextStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
       //   fontWeight: FontWeight.bold,
       //   color: Theme.of(context).colorScheme.onPrimary,

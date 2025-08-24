@@ -1,4 +1,4 @@
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 
 class AreaEntity {
   final String areaId;

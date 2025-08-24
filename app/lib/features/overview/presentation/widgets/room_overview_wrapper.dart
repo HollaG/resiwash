@@ -73,9 +73,7 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
                     children: [
                       Text(
                         "Rooms ($numberOfRooms)",
-                        style: GoogleFonts.poppinsTextTheme(
-                          Theme.of(context).textTheme,
-                        ).headlineSmall,
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
                       Spacer(),
                       OutlinedButton.icon(

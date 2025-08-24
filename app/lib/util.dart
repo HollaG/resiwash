@@ -2,45 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 TextTheme createTextTheme(
-  BuildContext context,
-  String bodyFontString,
-  String displayFontString,
-) {
-  TextTheme baseTextTheme = Theme.of(context).textTheme;
-  // TextTheme bodyTextTheme = GoogleFonts.getTextTheme(
-  //   bodyFontString,
-  //   baseTextTheme,
-  // );
-  // TextTheme displayTextTheme = GoogleFonts.getTextTheme(
-  //   displayFontString,
-  //   baseTextTheme,
-  // );
-  TextTheme bodyTextTheme = GoogleFonts.openSansTextTheme(baseTextTheme);
-  TextTheme displayTextTheme = GoogleFonts.poppinsTextTheme(baseTextTheme);
-  TextTheme textTheme = displayTextTheme.copyWith(
-    bodyLarge: bodyTextTheme.bodyLarge,
-    bodyMedium: bodyTextTheme.bodyMedium,
-    bodySmall: bodyTextTheme.bodySmall,
-    labelLarge: bodyTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+  BuildContext context, {
+  String bodyFont = 'Open Sans',
+  String displayFont = 'Poppins',
+}) {
+  final baseTextTheme = Theme.of(context).textTheme;
+  final bodyTextTheme = GoogleFonts.openSansTextTheme(baseTextTheme);
+  // final displayTextTheme = GoogleFonts.poppinsTextTheme(baseTextTheme);
+
+  return baseTextTheme.copyWith(
+    // Body text styles (Open Sans)
+    bodyLarge: baseTextTheme.bodyLarge?.copyWith(fontFamily: "Open Sans"),
+    bodyMedium: bodyTextTheme.bodyMedium?.copyWith(fontFamily: "Open Sans"),
+    bodySmall: bodyTextTheme.bodySmall?.copyWith(fontFamily: "Open Sans"),
+
+    // Label styles with consistent bold weights
+    labelLarge: bodyTextTheme.labelLarge?.copyWith(
+      fontFamily: "Open Sans",
+      fontWeight: FontWeight.bold,
+      fontSize: 16,
+    ),
     labelMedium: bodyTextTheme.labelMedium?.copyWith(
+      fontFamily: "Open Sans",
       fontWeight: FontWeight.bold,
+      fontSize: 16,
     ),
-    labelSmall: bodyTextTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
-
-    displayLarge: displayTextTheme.displayLarge,
-    displayMedium: displayTextTheme.displayMedium,
-    displaySmall: displayTextTheme.displaySmall,
-
-    headlineLarge: displayTextTheme.headlineLarge,
-    headlineMedium: displayTextTheme.headlineMedium?.copyWith(
-      fontSize: 28,
-      fontWeight: FontWeight.bold,
+    labelSmall: bodyTextTheme.labelSmall?.copyWith(
+      fontFamily: "Open Sans",
+      fontWeight: FontWeight.w600,
+      fontSize: 14,
     ),
-    headlineSmall: displayTextTheme.headlineSmall?.copyWith(
-      fontSize: 22,
+
+    // Display styles (Poppins)
+    displayLarge: baseTextTheme.displayLarge?.copyWith(fontFamily: "Poppins"),
+    displayMedium: baseTextTheme.displayMedium?.copyWith(fontFamily: "Poppins"),
+    displaySmall: baseTextTheme.displaySmall?.copyWith(fontFamily: "Poppins"),
+
+    // Headline styles with bold weight by default
+    headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontFamily: "Poppins"),
+    headlineMedium: baseTextTheme.headlineMedium?.copyWith(
+      fontWeight: FontWeight.bold, // Bold by default
+      fontFamily: "Poppins",
+    ),
+    headlineSmall: baseTextTheme.headlineSmall?.copyWith(
       fontWeight: FontWeight.bold,
+      fontFamily: "Poppins",
     ),
   );
-
-  return textTheme;
 }

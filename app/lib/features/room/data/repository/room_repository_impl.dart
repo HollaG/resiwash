@@ -1,8 +1,8 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
-import 'package:resiwash/core/shared/room/data/datasource/room_remote_datasource.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
-import 'package:resiwash/core/shared/room/domain/repositories/room_repository.dart';
+import 'package:resiwash/features/room/data/datasource/room_remote_datasource.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/repositories/room_repository.dart';
 
 class RoomRepositoryImpl implements RoomRepository {
   RoomRemoteDatasource dataSource;
@@ -14,12 +14,11 @@ class RoomRepositoryImpl implements RoomRepository {
   }
 
   @override
-  Future<Either<Failure, RoomEntity>> getRoomById(
-    String areaId,
-    String roomId,
-  ) async {
+  Future<Either<Failure, RoomEntity>> getRoomById({
+    required String roomId,
+  }) async {
     try {
-      final room = await dataSource.getRoomById(areaId, roomId);
+      final room = await dataSource.getRoomById(roomId: roomId);
       return Right(room);
     } on Failure catch (e) {
       return Left(Failure(message: e.message));

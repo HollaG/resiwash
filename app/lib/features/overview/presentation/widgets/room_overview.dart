@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:go_router/go_router.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
+import 'package:resiwash/router.dart';
 
 class RoomOverview extends StatelessWidget {
   final String roomId;
@@ -23,38 +25,55 @@ class RoomOverview extends StatelessWidget {
           final machines = state.getMachinesInRoom(roomId);
           final room = state.getRoomById(roomId);
           final area = state.getAreaOfRoom(roomId);
-          return Container(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 10,
-              children: [
-                Text(
-                  '${area.shortName != null ? "${area.shortName} " : ""}${room.name}',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                // Display machines in this room
-                Column(
-                  children: [
-                    RoomRow(
-                      label: "Washers",
-                      machines: machines
-                          .filter(
-                            (machine) => machine.type == MachineType.washer,
-                          )
-                          .toList(),
-                    ),
-                    RoomRow(
-                      label: "Dryers",
-                      machines: machines
-                          .filter(
-                            (machine) => machine.type == MachineType.dryer,
-                          )
-                          .toList(),
-                    ),
-                  ],
-                ),
-              ],
+          return InkWell(
+            onTap: () => {
+              // navigate to specific room page
+              context.push(
+                Uri(
+                  path: AppRoutes.machineList,
+                  queryParameters: {
+                    'roomIds[]': [roomId],
+                  },
+                ).toString(),
+                extra: {
+                  'title': room.name,
+                  'count': machines.length.toString(),
+                },
+              ),
+            },
+            child: Container(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 10,
+                children: [
+                  Text(
+                    '${area.shortName != null ? "${area.shortName} " : ""}${room.name}',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  // Display machines in this room
+                  Column(
+                    children: [
+                      RoomRow(
+                        label: "Washers",
+                        machines: machines
+                            .filter(
+                              (machine) => machine.type == MachineType.washer,
+                            )
+                            .toList(),
+                      ),
+                      RoomRow(
+                        label: "Dryers",
+                        machines: machines
+                            .filter(
+                              (machine) => machine.type == MachineType.dryer,
+                            )
+                            .toList(),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -84,7 +103,7 @@ class RoomRow extends StatelessWidget {
       child: Row(
         spacing: 10,
         children: [
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          Text(label, style: Theme.of(context).textTheme.labelMedium),
           Spacer(),
           Row(
             spacing: 2,
@@ -98,7 +117,7 @@ class RoomRow extends StatelessWidget {
           ),
           Text(
             "$availableCount/$totalCount",
-            style: Theme.of(context).textTheme.labelLarge,
+            style: Theme.of(context).textTheme.labelMedium,
           ),
         ],
       ),

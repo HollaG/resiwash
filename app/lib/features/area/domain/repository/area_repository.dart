@@ -11,4 +11,6 @@ abstract interface class AreaRepository {
     List<String>? roomIds = const [],
     List<String>? areaIds = const [],
   });
+
+  Future<Either<Failure, AreaEntity>> getAreaById({required String areaId});
 }

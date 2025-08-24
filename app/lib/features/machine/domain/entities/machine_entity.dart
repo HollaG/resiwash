@@ -1,5 +1,5 @@
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 
 class MachineEntity {
   final String machineId;

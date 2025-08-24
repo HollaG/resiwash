@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 

@@ -1,6 +1,6 @@
 // data/models/room_model.dart
 import 'package:json_annotation/json_annotation.dart';
-import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
+import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 import 'package:resiwash/features/area/data/models/area_model.dart';
 
 part 'room_model.g.dart';

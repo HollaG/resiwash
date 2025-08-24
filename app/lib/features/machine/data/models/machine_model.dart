@@ -2,7 +2,7 @@
 
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:resiwash/core/shared/room/data/models/room_model.dart';
+import 'package:resiwash/features/room/data/models/room_model.dart';
 
 part 'machine_model.g.dart';
 

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
-import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';
+import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
     //TextTheme textTheme = Theme.of(context).textTheme;
 
     // Use with Google Fonts package to use downloadable fonts
-    TextTheme textTheme = createTextTheme(context, "Open Sans", "Poppins");
+    TextTheme textTheme = createTextTheme(context);
 
     MaterialTheme theme = MaterialTheme(textTheme);
 
@@ -40,7 +41,7 @@ class MyApp extends StatelessWidget {
       providers: [
         // todo: remove this one
         BlocProvider(
-          create: (context) => sl<RoomCubit>(instanceName: 'roomCubit'),
+          create: (context) => sl<RoomDetailCubit>(instanceName: 'roomCubit'),
         ),
       ],
       child: routerBuild,

@@ -64,4 +64,23 @@ class AreaRemoteDatasource {
       return [];
     }
   }
+
+  Future<AreaEntity> getAreaById({required String areaId}) async {
+    try {
+      appLog.d('[api] GetAreaById: $areaId');
+      final Response<Map<String, dynamic>> response = await http.get(
+        "/areas/$areaId",
+      );
+      appLog.d('[api] GetAreaById response: ${response.data}');
+      final apiResponse = ApiResponse<AreaModel>.fromJson(
+        response.data!,
+        (json) => AreaModel.fromJson(json as Map<String, dynamic>),
+      );
+
+      return apiResponse.data.toEntity();
+    } on DioException catch (e) {
+      appLog.e('[api] GetAreaById error: ${e.message}');
+      throw Failure(message: e.message ?? 'Unknown error');
+    }
+  }
 }

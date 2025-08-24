@@ -34,8 +34,21 @@ class AreaRepositoryImpl implements AreaRepository {
         roomIds: roomIds,
       );
 
-      print("after datasource");
       return Right(areas);
+    } on Failure catch (e) {
+      return Left(Failure(message: e.message));
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, AreaEntity>> getAreaById({
+    required String areaId,
+  }) async {
+    try {
+      final area = await dataSource.getAreaById(areaId: areaId);
+      return Right(area);
     } on Failure catch (e) {
       return Left(Failure(message: e.message));
     } catch (e) {
