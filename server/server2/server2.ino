@@ -328,7 +328,7 @@ void setup() {
 
 
   // Bring up UARTs *before* Wi-Fi so they aren't initialized during RF spikes
-  mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
+  // mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
   mySerial1.begin(BAUD, SERIAL_8N1, RXD1, TXD1);
   safeFlushSerial(mySerial1);
   safeFlushSerial(mySerial2);
@@ -410,7 +410,7 @@ void loop() {
 
   // Serial.printf("D2 %d", digitalRead(ENCODER_PIN1));
   // Serial.printf(" D4 %d \n", digitalRead(ENCODER_PIN2));
-  Serial.println("Encoder count = " + String((int32_t)encoder.getCount()));
+  // Serial.println("Encoder count = " + String((int32_t)encoder.getCount()));
 
   // loop only every 50ms
   delay(50);

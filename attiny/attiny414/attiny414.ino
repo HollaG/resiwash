@@ -47,7 +47,7 @@ void setup() {
   int trigger = digitalRead(TRIG_PIN);
   if (trigger) {
     sender = true;
-  } else { 
+  } else {
     sender = false;
   }
 
@@ -183,7 +183,7 @@ void loop() {
         buffer[i + 7] = END_BYTE;
         i = i + 8;
 
-     
+
 
         Serial.write(buffer, i);  // send in one go
 
@@ -191,11 +191,11 @@ void loop() {
         // delay(50);
         // Serial.write(END_BYTE);
 
-        Serial.flush(); // waits for output buffer to finish sending
+        Serial.flush();  // waits for output buffer to finish sending
 
         // clear the buffer
         i = 0;
-        byteCount = 0; // technically not needed...?
+        byteCount = 0;  // technically not needed...?
         break;
       }
 
@@ -208,7 +208,10 @@ void loop() {
 
   if (sender == true) {
 
+
     if (currentMillis - previousMillis >= interval) {
+      digitalWrite(LED1_PIN, HIGH);
+      digitalWrite(LED2_PIN, HIGH);
       previousMillis = currentMillis;
       // Do something here (non-blocking)
 
@@ -220,6 +223,9 @@ void loop() {
       Serial.write(END_BYTE);
 
 
+      // delay(1000);
+      // digitalWrite(LED1_PIN, LOW);
+      // digitalWrite(LED2_PIN, LOW);
 
       // delay(1000);  // every 10 seconds
     }
