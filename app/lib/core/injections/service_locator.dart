@@ -12,14 +12,15 @@ Future<void> setupServiceLocator() async {
   // Register your services, repositories, and use cases here.
   // Example:
   // serviceLocator.registerLazySingleton<SomeService>(() => SomeServiceImpl());
-
-  setupRoomServiceLocator();
-  setupMachineServiceLocator();
-  setupAreaServiceLocator();
   sl.registerSingletonAsync<SharedPreferences>(
     () async => await SharedPreferences.getInstance(),
   );
   await sl.allReady();
+
+  setupRoomServiceLocator();
+  setupMachineServiceLocator();
+  setupAreaServiceLocator();
+
   sl.registerSingleton<SharedPreferencesService>(
     SharedPreferencesService(sl<SharedPreferences>()),
   );

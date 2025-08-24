@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
-import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';

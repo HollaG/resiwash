@@ -1,8 +1,8 @@
 import 'package:get_it/get_it.dart';
-import 'package:resiwash/core/shared/machine/data/datasource/machine_remote_datasource.dart';
-import 'package:resiwash/core/shared/machine/data/repository/machine_repository_impl.dart';
-import 'package:resiwash/core/shared/machine/domain/repository/machine_repository.dart';
-import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/machine/data/datasource/machine_remote_datasource.dart';
+import 'package:resiwash/features/machine/data/repository/machine_repository_impl.dart';
+import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
+import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 
 final GetIt sl = GetIt.instance;
 

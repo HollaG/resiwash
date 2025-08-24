@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
-import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/core/shared/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/core/shared/room/presentation/cubit/room_cubit.dart';

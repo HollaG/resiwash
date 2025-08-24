@@ -1,5 +1,5 @@
 import '../datasource/preferences_datasource.dart';
-import '../domain/preferences_repository.dart';
+import '../../domain/repository/preferences_repository.dart';
 
 class PreferencesRepositoryImpl implements PreferencesRepository {
   final PreferencesDatasource datasource;

@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/logging/logger.dart';
-import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 
-import 'package:resiwash/core/shared/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';

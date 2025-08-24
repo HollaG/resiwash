@@ -1,5 +1,5 @@
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
-import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:equatable/equatable.dart';
 import 'package:resiwash/core/shared/room/domain/entities/room_entity.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';

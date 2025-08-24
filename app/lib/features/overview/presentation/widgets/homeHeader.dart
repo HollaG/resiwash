@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/homeMainCard.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';

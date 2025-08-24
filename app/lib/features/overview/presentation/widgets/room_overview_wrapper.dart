@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
-import 'package:resiwash/features/overview/presentation/widgets/location_tree_select.dart';
+import 'package:resiwash/features/preferences/presentation/widgets/location_tree_select.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +22,21 @@ class RoomOverviewWrapper extends StatefulWidget {
 
 class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
   SavedLocations loadedLocations = SavedLocations({});
+
+  // on init,
+  @override
+  void initState() {
+    super.initState();
+    // Load saved locations
+    // set the current room ids
+    SavedLocations savedLocations = sl<SharedPreferencesService>()
+        .getSavedLocations();
+
+    setState(() {
+      loadedLocations = savedLocations;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     // This widget would typically use the roomIds to fetch and display
@@ -43,6 +58,8 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
           //     .expand((machines) => machines)
           //     .toList();
 
+          final numberOfRooms = loadedLocations.getAllRoomIds().length;
+
           return Expanded(
             child: Container(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
@@ -55,7 +72,7 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
                   Row(
                     children: [
                       Text(
-                        "Rooms",
+                        "Rooms ($numberOfRooms)",
                         style: GoogleFonts.poppinsTextTheme(
                           Theme.of(context).textTheme,
                         ).headlineSmall,
@@ -87,39 +104,42 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
 
   void showChangeRoomSheet(BuildContext context, List<AreaEntity> locations) {
     // set the current room ids
+    // don't update the home page until the bottom sheet is closed
     SavedLocations savedLocations = sl<SharedPreferencesService>()
         .getSavedLocations();
 
-    setState(() {
-      loadedLocations = savedLocations;
-    });
-
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
 
       builder: (context) {
         return SizedBox(
           width: double.infinity,
-          height: 400,
+          height: 375,
           child: Container(
             padding: const EdgeInsets.all(24.0),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              // mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 Text(
                   'Select rooms',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
-                LocationTreeSelect(
-                  areas: locations,
-                  selectedLocations: savedLocations,
-                  onSelectionChanged: (newSelectedLocations) {
-                    setState(() {
-                      loadedLocations = newSelectedLocations;
-                    });
-                  },
+                SizedBox(height: 16),
+                Expanded(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: [
+                      LocationTreeSelect(
+                        areas: locations,
+                        selectedLocations: savedLocations,
+                        onSelectionChanged: (newSelectedLocations) {
+                          setState(() {
+                            loadedLocations = newSelectedLocations;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

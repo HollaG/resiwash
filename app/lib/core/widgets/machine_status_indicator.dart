@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/theme.dart';
 
 class MachineStatusIndicator extends StatelessWidget {

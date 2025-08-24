@@ -7,8 +7,9 @@ import 'package:flutter/material.dart';
 import 'util.dart';
 import 'theme.dart';
 
-void main() {
-  setupServiceLocator();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await setupServiceLocator();
   runApp(const MyApp());
 }
 

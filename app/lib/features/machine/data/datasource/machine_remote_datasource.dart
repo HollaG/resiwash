@@ -4,8 +4,8 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/models/api_response.dart';
 import 'package:resiwash/core/network/dio_client.dart';
 import 'package:resiwash/core/network/paths.dart';
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
-import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 
 Dio http = DioClient.instance();
 

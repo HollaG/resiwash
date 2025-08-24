@@ -62,8 +62,8 @@ class _LocationTreeSelectState extends State<LocationTreeSelect> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      shrinkWrap: true,
+    return Column(
+      // shrinkWrap: true,
       children: widget.areas.map((area) {
         final areaState = _getAreaCheckboxState(area);
         return Column(
