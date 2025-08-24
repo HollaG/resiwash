@@ -38,8 +38,8 @@ flutter:
   fonts:
     - family: Open Sans
       fonts:
-        - asset: OpenSans-VariableFont_wdth,wght.ttf
-        - asset: OpenSans-Italic-VariableFont_wdth,wght.ttf
+        - asset: fonts/OpenSans-VariableFont_wdth,wght.ttf
+        - asset: fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf
           style: italic
     - family: Poppins
       fonts:

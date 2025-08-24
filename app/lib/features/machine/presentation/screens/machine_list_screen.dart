@@ -5,13 +5,17 @@ import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/features/area/domain/usecases/get_area_use_case.dart';
 import 'package:resiwash/features/area/presentation/cubit/area_detail_cubit.dart';
 import 'package:resiwash/features/area/presentation/cubit/area_detail_state.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_list_cubit.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_list_state.dart';
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_list_app_bar.dart';
+import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 import 'package:resiwash/features/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
+
+enum ChipSelectionType { machine, room, status }
 
 class MachineListScreen extends StatefulWidget {
   final String? query;
@@ -54,20 +58,6 @@ class _MachineListScreenState extends State<MachineListScreen>
               MachineListCubit(listMachinesUseCase: sl<ListMachinesUseCase>())
                 ..load(roomIds: widget.roomIds),
         ),
-
-        if (widget.roomIds?.length == 1)
-          BlocProvider<RoomDetailCubit>(
-            create: (context) =>
-                RoomDetailCubit(getRoomUsecase: sl<GetRoomUsecase>())
-                  ..load(roomId: widget.roomIds!.first),
-          ),
-
-        if (widget.areaIds?.length == 1)
-          BlocProvider<AreaDetailCubit>(
-            create: (context) =>
-                AreaDetailCubit(getAreaUsecase: sl<GetAreaUseCase>())
-                  ..load(areaId: widget.areaIds!.first),
-          ),
       ],
       child: Scaffold(
         appBar: MachineListAppBar(
@@ -87,9 +77,12 @@ class _MachineListScreenState extends State<MachineListScreen>
             if (state is MachineListLoading) {
               return Center(child: CircularProgressIndicator());
             } else if (state is MachineListLoaded) {
-              return Center(
-                child: Text(
-                  "List of Machines for room ${widget.roomIds?.toString()}",
+              return Container(
+                padding: EdgeInsets.all(16),
+                child: ListView(
+                  children: state.machines.map((machine) {
+                    return MachineRow(machine: machine);
+                  }).toList(),
                 ),
               );
             }

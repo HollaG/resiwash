@@ -32,6 +32,8 @@ class MachineStatusIndicator extends StatelessWidget {
         return const Color(0xff495057);
       case null:
         return const Color(0xff495057);
+      default:
+        return const Color(0xff495057);
     }
   }
 }

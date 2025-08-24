@@ -14,7 +14,9 @@ enum MachineStatus {
   @JsonValue('IN_USE')
   inUse('IN_USE'),
   @JsonValue('HAS_ISSUES')
-  hasIssues('HAS_ISSUES');
+  hasIssues('HAS_ISSUES'),
+  @JsonValue("UNKNOWN")
+  unknown('UNKNOWN');
 
   final String value;
   const MachineStatus(this.value);
