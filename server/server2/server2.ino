@@ -32,11 +32,11 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
 // == if HTTPS, use Secure, if HTTP (local dev), use non-secure
-// #include <WifiClientSecure.h>
-#include <WifiClient.h>
+#include <WifiClientSecure.h>
+// #include <WifiClient.h>
 
-// WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
-WiFiClient client;  // or WiFiClientSecure for HTTPS
+WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
+// WiFiClient client;  // or WiFiClientSecure for HTTPS
 
 HTTPClient http;
 
@@ -44,10 +44,10 @@ HTTPClient http;
 #define pass "bvtx4675"
 // #define ssid "SINGTEL-C6A8"
 // #define pass "wkskgx37k7tW"
-const char *serverName = "https://resiwash.marcussoh.com/api/v1/events/bulk";
+const char *serverName = "https://resiwash.marcussoh.com/api/v2/events/bulk";
 // const char *serverName = "http://192.168.1.3:3000/api/v1/events/bulk";
 // const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
-const char *registerName = "https://resiwash.marcussoh.com/api/v1/sensors/register";
+const char *registerName = "https://resiwash.marcussoh.com/api/v2/sensors/register";
 
 #define BAUD 9600
 #define RXD2 16
@@ -106,7 +106,7 @@ void onConnectWifi() {
     ESP.restart();
     return;
   }
-
+  client.setInsecure();
   http.setTimeout(8000);
   http.addHeader("Content-Type", "application/json");
 
@@ -118,6 +118,8 @@ void onConnectWifi() {
 
   Serial.println("POST /sensors/register");
   httpResponseCode = http.POST((uint8_t *)payload, strlen(payload));
+
+  Serial.println(payload);
 
   Serial.printf("HTTP code: %d\n", httpResponseCode);
   if (httpResponseCode > 0) {
@@ -722,7 +724,7 @@ void loop() {
     serializeJson(doc, jsonPost);
 
     Serial.println("Sending post request...");
-    // client.setInsecure();
+    client.setInsecure();
     Serial.printf("Sending post request to %s\n", serverName);
     http.begin(client, serverName);
     http.addHeader("Content-Type", "application/json");
