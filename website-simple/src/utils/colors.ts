@@ -12,8 +12,10 @@ export const getColorForMachineStatus = (status: MachineStatus): string => {
 
     case MachineStatus.UNKNOWN:
       return "var(--mantine-color-gray-5)";
+    case MachineStatus.FINISHING:
+      return "var(--mantine-color-teal-5)";
 
     default:
       return "var(--mantine-color-gray-5)"; // Fallback color
   }
-}
+};

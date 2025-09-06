@@ -117,8 +117,9 @@ export enum MachineType {
 export enum MachineStatus {
   AVAILABLE = "AVAILABLE",
   IN_USE = "IN_USE",
+  FINISHING = "FINISHING",
   HAS_ISSUES = "HAS_ISSUES",
-  UNKNOWN = "UNKNOWN", // For any status that doesn't fit the above
+  UNKNOWN = "UNKNOWN",
 }
 
 export const convertMachineStatusToString = (status: MachineStatus): string => {
@@ -131,6 +132,8 @@ export const convertMachineStatusToString = (status: MachineStatus): string => {
       return "Has Issues";
     case MachineStatus.UNKNOWN:
       return "Unknown";
+    case MachineStatus.FINISHING:
+      return "Finishing";
     default:
       return "Unknown Status";
   }
