@@ -117,7 +117,7 @@ export type Reading = {
  */
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("createMultipleEvents", req.body);
+    console.log("createMultipleEvents", JSON.stringify(req.body, null, 2));
 
     const data = req.body.data as EspEvent[];
     const macAddress = req.body.macAddress as string;
