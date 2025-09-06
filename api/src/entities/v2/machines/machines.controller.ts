@@ -4,16 +4,17 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Machine } from "../../../models/Machine";
-import { MachineType } from "../../../core/types";
+import { GetQueryBoolean, MachineType } from "../../../core/types";
 import { UpdateEvent } from "../../../models/UpdateEvent";
 import { RawEvent } from "../../../models/RawEvent";
+import { machine } from "os";
 
 interface GetMachinesRequest {
   areaIds?: string[]; // todo, we don't need to filter by this anyway
   roomIds?: string[];
-  min?: boolean;
+  min?: GetQueryBoolean; // actually boolean
   machineIds?: string[];
-  extra?: boolean; // include room and area info
+  extra?: GetQueryBoolean; // actually boolean
 }
 
 // get all machines. but only
@@ -28,14 +29,14 @@ export const getMachines = asyncHandler(
       roomIds = [],
       min,
       machineIds = [],
-      extra = false,
+      extra = GetQueryBoolean.FALSE,
     } = req.query;
 
     let machines =
       AppDataSource.getRepository(Machine).createQueryBuilder("machine");
 
-    if (extra) {
-      // left join room
+    if (GetQueryBoolean.parse(extra)) {
+      // left join room and area
       machines = machines
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area");
