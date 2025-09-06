@@ -33,6 +33,9 @@ export const getMachines = asyncHandler(
     //   });
     // }
 
+    // left join room
+    machines = machines.leftJoinAndSelect("machine.room", "room");
+
     if (roomIds.length > 0) {
       machines = machines.where("machine.roomId IN (:...roomIds)", {
         roomIds: roomIds.map(Number),
