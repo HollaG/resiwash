@@ -37,10 +37,14 @@ export const getMachines = asyncHandler(
 
     if (GetQueryBoolean.parse(extra)) {
       // left join room and area
+      console.log("including room and area info");
       machines = machines
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area");
     }
+
+    console.log("SQL Query:", machines.getSql());
+    console.log("Query parameters:", machines.getParameters());
     // if (areaId && !Number.isNaN(Number(areaId))) {
     //   machines = machines.where("area.areaId = :areaId", {
     //     areaId: Number(areaId),
@@ -66,8 +70,12 @@ export const getMachines = asyncHandler(
 
     machines = machines.orderBy("machine.name", "ASC");
 
+    console.log("Final SQL Query:", machines.getSql());
+    console.log("Final Query parameters:", machines.getParameters());
+
     const machinesList = await machines.getMany();
 
+    console.log("Query result count:", machinesList.length);
     console.log({ machinesList });
     sendOkResponse(res, machinesList);
 
