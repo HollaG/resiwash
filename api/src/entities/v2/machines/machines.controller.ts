@@ -13,6 +13,7 @@ interface GetMachinesRequest {
   roomIds?: string[];
   min?: boolean;
   machineIds?: string[];
+  extra?: boolean; // include room and area info
 }
 
 // get all machines. but only
@@ -22,19 +23,28 @@ export const getMachines = asyncHandler(
     res: Response
   ) => {
     console.log("getMachines", req.query);
-    const { areaIds = [], roomIds = [], min, machineIds = [] } = req.query;
+    const {
+      areaIds = [],
+      roomIds = [],
+      min,
+      machineIds = [],
+      extra = false,
+    } = req.query;
 
     let machines =
       AppDataSource.getRepository(Machine).createQueryBuilder("machine");
 
+    if (extra) {
+      // left join room
+      machines = machines
+        .leftJoinAndSelect("machine.room", "room")
+        .leftJoinAndSelect("room.area", "area");
+    }
     // if (areaId && !Number.isNaN(Number(areaId))) {
     //   machines = machines.where("area.areaId = :areaId", {
     //     areaId: Number(areaId),
     //   });
     // }
-
-    // left join room
-    machines = machines.leftJoinAndSelect("machine.room", "room");
 
     if (roomIds.length > 0) {
       machines = machines.where("machine.roomId IN (:...roomIds)", {
