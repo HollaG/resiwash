@@ -62,13 +62,23 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
         builder: (context, state) {
           return Scaffold(
             // appBar: AppBarComponent(actions: [], title: "ResiWash"),
-            body: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                HomeHeader(username: "Marcus"),
-                RoomOverviewWrapper(roomIds: []),
-              ],
+            body: RefreshIndicator(
+              onRefresh: () {
+                return Future.delayed(Duration(seconds: 1), () {});
+                // return context
+                //     .read<OverviewCubit>()
+                //     .refresh(roomIds: loadedLocations.getAllRoomIds());
+              },
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeHeader(username: "Marcus"),
+                    RoomOverviewWrapper(roomIds: []),
+                  ],
+                ),
+              ),
             ),
           );
         },

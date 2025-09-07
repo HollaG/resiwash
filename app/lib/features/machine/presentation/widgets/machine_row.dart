@@ -46,7 +46,17 @@ class MachineRow extends StatelessWidget {
       subtitle: Column(
         spacing: 2,
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [Text(time)],
+        children: [
+          Text(
+            time,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: MachineStatusIndicator.getTextColor(
+                context,
+                machine.currentStatus,
+              ),
+            ),
+          ),
+        ],
       ),
       trailing: machine.type == MachineType.washer
           ? AssetIcons.washerIcon(context)

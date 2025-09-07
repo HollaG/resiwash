@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/widgets/detail_row.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/usecases/get_machine_usecase.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_cubit.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_state.dart';
 import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
+import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 
 class MachineDetailScreen extends StatefulWidget {
   final String machineId;
@@ -25,7 +30,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
         BlocProvider(
           create: (context) =>
               MachineDetailCubit(getMachineUseCase: sl<GetMachineUseCase>())
-                ..load(machineId: widget.machineId),
+                ..load(machineId: widget.machineId, extra: true),
         ),
       ],
       child: Scaffold(
@@ -44,49 +49,76 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
               return Container(
                 padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
                 child: Column(
-                  spacing: 10,
+                  spacing: 16,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // TODO: some image here
+
+                    // rounded pill box that displays machine status
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
+                      decoration: BoxDecoration(
+                        color: MachineStatusIndicator.getBackgroundColor(
+                          context,
+                          machine.currentStatus,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+
+                        children: [
+                          MachineStatusIndicator(
+                            status: machine.currentStatus,
+                            size: BoxSize.large,
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            MachineDisplayUtils.getStatusLabel(machine),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color:
+                                      MachineStatusIndicator.getOnContainerColor(
+                                        context,
+                                        machine.currentStatus,
+                                      ),
+                                ),
+                          ),
+                          // box to take up the rest of the space
+                          Spacer(),
+                        ],
+                      ),
+                    ),
+
                     Row(
+                      spacing: 8,
                       children: [
                         Text(
                           machine.name,
-                          style: Theme.of(context).textTheme.headlineMedium,
+                          style: Theme.of(context).textTheme.headlineLarge,
                         ),
+                        machine.type == MachineType.washer
+                            ? AssetIcons.washerIcon(context)
+                            : AssetIcons.dryerIcon(context),
                       ],
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          "Location",
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                        ),
-                        Spacer(flex: 1),
-                        Text(
-                          MachineDisplayUtils.getLocationLabel(machine),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+                    DetailRow(
+                      label: "Type",
+                      content: MachineDisplayUtils.getType(machine),
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          "Last change",
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                        ),
-                        Spacer(flex: 1),
-                        Text(
-                          MachineDisplayUtils.getStatusLabel(machine),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+                    DetailRow(
+                      label: "Label",
+                      content: MachineDisplayUtils.getLabel(machine),
                     ),
+                    DetailRow(
+                      label: "Location",
+                      content: MachineDisplayUtils.getLocationLabel(machine),
+                    ),
+
+                    Divider(),
                     Column(
                       children: [
                         Row(

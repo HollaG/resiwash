@@ -42,7 +42,10 @@ TextTheme createTextTheme(
     displaySmall: baseTextTheme.displaySmall?.copyWith(fontFamily: "Poppins"),
 
     // Headline styles with bold weight by default
-    headlineLarge: baseTextTheme.headlineLarge?.copyWith(fontFamily: "Poppins"),
+    headlineLarge: baseTextTheme.headlineLarge?.copyWith(
+      fontFamily: "Poppins",
+      fontWeight: FontWeight.bold,
+    ),
     headlineMedium: baseTextTheme.headlineMedium?.copyWith(
       fontWeight: FontWeight.bold, // Bold by default
       fontFamily: "Poppins",
@@ -50,6 +53,7 @@ TextTheme createTextTheme(
     headlineSmall: baseTextTheme.headlineSmall?.copyWith(
       fontWeight: FontWeight.bold,
       fontFamily: "Poppins",
+      fontSize: 20,
     ),
   );
 }

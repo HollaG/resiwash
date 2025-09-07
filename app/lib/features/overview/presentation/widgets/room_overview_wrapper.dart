@@ -60,38 +60,53 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
 
           final numberOfRooms = loadedLocations.getAllRoomIds().length;
 
-          return Expanded(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+          return Container(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
 
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 10.0,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        "Rooms ($numberOfRooms)",
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      Spacer(),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          showChangeRoomSheet(context, locations);
-                        },
-                        label: Text("Edit"),
-                        icon: Icon(Icons.edit),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    children: loadedLocations.getAllRoomIds().map((roomId) {
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10.0,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      "Rooms ($numberOfRooms)",
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Spacer(),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showChangeRoomSheet(context, locations);
+                      },
+                      label: Text("Edit"),
+                      icon: Icon(Icons.edit),
+                    ),
+                  ],
+                ),
+                RefreshIndicator(
+                  onRefresh: () {
+                    return Future.delayed(Duration(seconds: 1), () {});
+                  },
+                  child: ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(0),
+                    shrinkWrap: true,
+                    itemCount: loadedLocations.getAllRoomIds().length * 2,
+                    scrollDirection: Axis.vertical,
+                    itemBuilder: (context, index) {
+                      String roomId = loadedLocations
+                          .getAllRoomIds()[index ~/ 2];
                       return RoomOverview(roomId: roomId);
-                    }).toList(),
+                    },
                   ),
-                ],
-              ),
+                ),
+                // Column(
+                //   children: loadedLocations.getAllRoomIds().map((roomId) {
+                //     return RoomOverview(roomId: roomId);
+                //   }).toList(),
+                // ),
+              ],
             ),
           );
         }

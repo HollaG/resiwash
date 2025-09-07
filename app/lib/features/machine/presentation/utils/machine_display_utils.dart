@@ -8,34 +8,40 @@ class MachineDisplayUtils {
   ///
   /// Examples:
   /// - "Available since 2 minutes ago"
-  /// - "In use since 30 seconds ago"
+  /// - "In use for 30 seconds"
   /// - "Available" (if no lastChangeTime)
   /// - "Has issues" (regardless of time)
+  ///
+  ///
+
   static String getStatusLabel(MachineEntity machine) {
-    final relativeTime = DateTimeUtils.formatRelativeTime(
-      machine.lastChangeTime,
-    );
+    final status = machine.currentStatus;
+    final lastChangeTime = machine.lastChangeTime;
 
-    switch (machine.currentStatus) {
+    String timePart = '';
+    if (lastChangeTime != null) {
+      final relativeTime = DateTimeUtils.formatRelativeTime(
+        machine.lastChangeTime,
+      );
+      if (status == MachineStatus.available) {
+        timePart = ' since $relativeTime';
+      } else if (status == MachineStatus.inUse) {
+        timePart = ' for $relativeTime';
+      }
+    }
+
+    switch (status) {
       case MachineStatus.available:
-        return relativeTime != null
-            ? 'Available since $relativeTime'
-            : 'Available';
-
+        return 'Available$timePart';
       case MachineStatus.inUse:
-        return relativeTime != null ? 'In use since $relativeTime' : 'In use';
-
-      case MachineStatus.finishing:
-        return relativeTime != null
-            ? 'Finishing since $relativeTime'
-            : 'Finishing';
-
+        // replace the " ago"
+        return 'In use${timePart.replaceFirst(" ago", "")}';
       case MachineStatus.hasIssues:
         return 'Has issues';
-
-      case MachineStatus.unknown:
       case null:
-        return 'Status unknown';
+        return 'Unknown status';
+      default:
+        return 'Unknown status';
     }
   }
 
@@ -69,5 +75,21 @@ class MachineDisplayUtils {
     final location = getLocationLabel(machine);
     final status = getStatusLabel(machine);
     return '$location\n$status';
+  }
+
+  static String getLabel(MachineEntity machine) {
+    return machine.label.isEmpty ? 'Unknown label' : machine.label;
+  }
+
+  static String getType(MachineEntity machine) {
+    switch (machine.type) {
+      case MachineType.washer:
+        return 'Washer';
+      case MachineType.dryer:
+        return 'Dryer';
+      case MachineType.unknown:
+      default:
+        return 'Unknown type';
+    }
   }
 }

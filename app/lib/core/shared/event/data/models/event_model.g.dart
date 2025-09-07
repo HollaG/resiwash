@@ -34,4 +34,6 @@ const _$MachineStatusEnumMap = {
   MachineStatus.available: 'AVAILABLE',
   MachineStatus.inUse: 'IN_USE',
   MachineStatus.hasIssues: 'HAS_ISSUES',
+  MachineStatus.unknown: 'UNKNOWN',
+  MachineStatus.finishing: 'FINISHING',
 };
