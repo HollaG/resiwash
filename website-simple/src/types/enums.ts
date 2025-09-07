@@ -26,5 +26,5 @@ export enum Pages {
   ADMIN = "admin",
 }
 
-export const BASE_URL = "http://localhost:3000/api/v2";
-// export const BASE_URL = "https://resiwash.marcussoh.com/api/v2";
+export const BASE_URL =
+  import.meta.env.VITE_BASE_URL || "http://localhost:3000/api/v2";
