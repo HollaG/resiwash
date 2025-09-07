@@ -6,17 +6,19 @@ import 'package:resiwash/core/network/dio_client.dart';
 import 'package:resiwash/core/network/paths.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 
 Dio http = DioClient.instance();
 
 class MachineRemoteDatasource {
-  Future<List<MachineEntity>> getMachines({List<String>? roomIds}) async {
+  Future<List<MachineEntity>> getMachines(ListMachinesParams params) async {
     try {
-      appLog.d('[api] fetching machines with roomIds: $roomIds');
+      appLog.d('[api] fetching machines with params: $params');
       final Response<Map<String, dynamic>> response = await http
           .get<Map<String, dynamic>>(
             Paths.machines,
-            queryParameters: {"roomIds[]": roomIds},
+            queryParameters: params.toQueryParameters(),
           );
 
       final apiResponse = ApiResponse<List<MachineModel>>.fromJson(
@@ -57,10 +59,14 @@ class MachineRemoteDatasource {
     }
   }
 
-  Future<MachineEntity> getMachineById({required String machineId}) async {
+  Future<MachineEntity> getMachineById({
+    required String machineId,
+    GetMachineParams? params,
+  }) async {
     try {
       final Response<dynamic> response = await http.get(
         "${Paths.machines}/$machineId",
+        queryParameters: params?.toQueryParameters(),
       );
 
       // Use ApiResponse for single machine response

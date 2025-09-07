@@ -1,3 +1,4 @@
+import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
 import 'package:resiwash/features/overview/presentation/screens/home_screen.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_list_screen.dart';
 import 'package:resiwash/main.dart';
@@ -49,6 +50,14 @@ final router = GoRouter(
                 );
               },
             ),
+            GoRoute(
+              path: AppRoutes.machineDetail,
+              name: 'machineDetail',
+              builder: (context, state) {
+                final machineId = state.pathParameters['machineId']!;
+                return MachineDetailScreen(machineId: machineId);
+              },
+            ),
           ],
         ),
         StatefulShellBranch(
@@ -80,6 +89,7 @@ class AppRoutes {
   // -- routes for Home page -- //
   static const String home = '/';
   static const String machineList = '/machines';
+  static const String machineDetail = '/machines/:machineId';
 
   static const String myMachines = '/me';
   static const String profile = '/profile';
@@ -100,5 +110,9 @@ class AppRoutes {
       },
     );
     return uri.toString();
+  }
+
+  static String buildMachineDetailRoute(String machineId) {
+    return machineDetail.replaceFirst(':machineId', machineId);
   }
 }

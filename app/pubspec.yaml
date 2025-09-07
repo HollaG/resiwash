@@ -19,6 +19,7 @@ dependencies:
   go_router: ^16.1.0
   google_fonts: ^6.2.1
   json_annotation: ^4.0.1
+  timeago: ^3.6.1
   logger: ^2.6.1
   shared_preferences: ^2.5.3
 

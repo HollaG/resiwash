@@ -56,7 +56,7 @@ class _MachineListScreenState extends State<MachineListScreen>
         BlocProvider<MachineListCubit>(
           create: (context) =>
               MachineListCubit(listMachinesUseCase: sl<ListMachinesUseCase>())
-                ..load(roomIds: widget.roomIds),
+                ..load(roomIds: widget.roomIds, extra: true),
         ),
       ],
       child: Scaffold(

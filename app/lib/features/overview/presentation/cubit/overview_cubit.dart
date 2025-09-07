@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
@@ -19,7 +20,12 @@ class OverviewCubit extends Cubit<OverviewState> {
   Future<void> load({List<String>? roomIds}) async {
     emit(OverviewLoading());
 
-    final listMachinesEither = await listMachinesUseCase.call(roomIds: roomIds);
+    appLog.d("Loading overview for roomIds: $roomIds");
+
+    final listMachineParams = ListMachinesParams(roomIds: roomIds);
+    final listMachinesEither = await listMachinesUseCase.call(
+      listMachineParams,
+    );
     final listLocationsEither = await listLocationsUseCase.call();
 
     appLog.d("listMachinesEither: $listMachinesEither");

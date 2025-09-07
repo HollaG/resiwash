@@ -19,18 +19,21 @@ TextTheme createTextTheme(
     // Label styles with consistent bold weights
     labelLarge: bodyTextTheme.labelLarge?.copyWith(
       fontFamily: "Open Sans",
-      fontWeight: FontWeight.bold,
+      // fontWeight: FontWeight.bold,
       fontSize: 16,
+      fontVariations: [FontVariation.weight(700)],
     ),
     labelMedium: bodyTextTheme.labelMedium?.copyWith(
       fontFamily: "Open Sans",
-      fontWeight: FontWeight.bold,
+      // fontWeight: FontWeight.bold,
       fontSize: 16,
+      fontVariations: [FontVariation.weight(700)],
     ),
     labelSmall: bodyTextTheme.labelSmall?.copyWith(
       fontFamily: "Open Sans",
-      fontWeight: FontWeight.w600,
+      // fontWeight: FontWeight.w600,
       fontSize: 14,
+      fontVariations: [FontVariation.weight(600)],
     ),
 
     // Display styles (Poppins)

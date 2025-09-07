@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:resiwash/core/logging/logger.dart';
+
 class SavedLocations {
   final Map<String, List<String>> locations;
 
@@ -44,7 +46,11 @@ class SavedLocations {
   }
 
   List<String> getAllRoomIds() {
-    return locations.values.expand((roomIds) => roomIds).toList();
+    List<String> roomIds = locations.values
+        .expand((roomIds) => roomIds)
+        .toList();
+    appLog.d("[SharedPreferencesService] getAllRoomIds: $roomIds");
+    return roomIds;
   }
 
   bool isAreaSaved(String areaId) {

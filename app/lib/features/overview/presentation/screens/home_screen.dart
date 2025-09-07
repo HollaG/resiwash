@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/features/room/domain/usecase/get_room_usecase.dart';
@@ -21,6 +23,21 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
   final getRoomUsecase = sl<GetRoomUsecase>();
+  SavedLocations loadedLocations = SavedLocations({});
+
+  // on init,
+  @override
+  void initState() {
+    super.initState();
+    // Load saved locations
+    // set the current room ids
+    SavedLocations savedLocations = sl<SharedPreferencesService>()
+        .getSavedLocations();
+
+    setState(() {
+      loadedLocations = savedLocations;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
       create: (context) => OverviewCubit(
         listMachinesUseCase: sl<ListMachinesUseCase>(),
         listLocationsUseCase: sl<ListLocationsUseCase>(),
-      )..load(roomIds: ["2", "3"]),
+      )..load(roomIds: loadedLocations.getAllRoomIds()),
 
       child: BlocConsumer<OverviewCubit, OverviewState>(
         listener: (context, state) {
@@ -50,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 HomeHeader(username: "Marcus"),
-                RoomOverviewWrapper(roomIds: ["3"]),
+                RoomOverviewWrapper(roomIds: []),
               ],
             ),
           );
