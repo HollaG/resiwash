@@ -135,7 +135,7 @@ export const getMachines = asyncHandler(
 );
 
 interface GetMachineRequest {
-  extra?: boolean;
+  extra?: GetQueryBoolean;
   depth?: number; // for future use, to control how much data to return
 }
 
@@ -149,11 +149,24 @@ export const getMachine = asyncHandler(
       return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
     }
 
-    const { extra = false, depth = 0 } = req.query; // nothing to do with this yet
+    const { extra = GetQueryBoolean.FALSE, depth = 0 } = req.query;
 
-    const machine = await AppDataSource.getRepository(Machine).findOneBy({
-      machineId,
-    });
+    // const machine = await AppDataSource.getRepository(Machine).findOneBy({
+    //   machineId,
+    // });
+
+    // get machine and join room and area
+    let machineQuery =
+      AppDataSource.getRepository(Machine).createQueryBuilder("machine");
+    if (GetQueryBoolean.parse(extra)) {
+      machineQuery = machineQuery
+        .leftJoinAndSelect("machine.room", "room")
+        .leftJoinAndSelect("room.area", "area");
+    }
+
+    const machine = await machineQuery
+      .where("machine.machineId = :id", { id: machineId })
+      .getOne();
 
     if (!machine) {
       return sendErrorResponse(res, { message: "Machine not found" }, 404);
