@@ -25,6 +25,10 @@ class MachineListLoaded extends MachineListState {
   List<Object?> get props => [machines];
 }
 
+class MachineListRefreshing extends MachineListLoaded {
+  const MachineListRefreshing(super.machines);
+}
+
 class MachineListError extends MachineListState {
   final String message;
 

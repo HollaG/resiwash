@@ -18,7 +18,18 @@ class OverviewCubit extends Cubit<OverviewState> {
   }) : super(OverviewInitial());
 
   Future<void> load({List<String>? roomIds}) async {
-    emit(OverviewLoading());
+    // emit(OverviewLoading());
+    if (state is OverviewLoaded) {
+      emit(
+        OverviewRefreshing(
+          machines: (state as OverviewLoaded).machines,
+          machinesByRoom: (state as OverviewLoaded).machinesByRoom,
+          locations: (state as OverviewLoaded).locations,
+        ),
+      );
+    } else {
+      emit(OverviewLoading());
+    }
 
     appLog.d("Loading overview for roomIds: $roomIds");
 
@@ -57,7 +68,7 @@ class OverviewCubit extends Cubit<OverviewState> {
     }
   }
 
-  Future<void> refresh({List<String>? roomIds}) => load(roomIds: roomIds);
+  Future<void> internalLoad({List<String>? roomIds}) async {}
 }
 
 Map<String, List<MachineEntity>> _groupMachinesByRoom(

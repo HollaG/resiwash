@@ -25,6 +25,10 @@ class MachineDetailLoaded extends MachineDetailState {
   List<Object?> get props => [machine];
 }
 
+class MachineDetailRefreshing extends MachineDetailLoaded {
+  const MachineDetailRefreshing(super.machine);
+}
+
 class MachineDetailError extends MachineDetailState {
   final String message;
 

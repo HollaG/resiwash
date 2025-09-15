@@ -69,6 +69,14 @@ class OverviewLoaded extends OverviewState {
   });
 }
 
+class OverviewRefreshing extends OverviewLoaded {
+  const OverviewRefreshing({
+    required super.machines,
+    required super.machinesByRoom,
+    required super.locations,
+  });
+}
+
 class OverviewError extends OverviewState {
   final String message;
 

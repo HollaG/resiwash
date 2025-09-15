@@ -13,7 +13,11 @@ class MachineDetailCubit extends Cubit<MachineDetailState> {
     : super(const MachineDetailInitial());
 
   Future<void> load({required String machineId, bool? min, bool? extra}) async {
-    emit(const MachineDetailLoading());
+    if (state is MachineDetailLoaded) {
+      emit(MachineDetailRefreshing((state as MachineDetailLoaded).machine));
+    } else {
+      emit(const MachineDetailLoading());
+    }
 
     final params = GetMachineParams(extra: extra ?? false);
 
@@ -22,9 +26,9 @@ class MachineDetailCubit extends Cubit<MachineDetailState> {
       params: params,
     );
 
-    appLog.d('[MachineListCubit] Loaded machines: $result');
+    appLog.d('[MachineDetailCubit] Loaded machines: $result');
     result.fold(
-      (failure) => emit(MachineDetailError(failure.toString())),
+      (failure) => emit(MachineDetailError(failure.message)),
       (machine) => emit(MachineDetailLoaded(machine)),
     );
   }

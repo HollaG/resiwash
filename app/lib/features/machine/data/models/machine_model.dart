@@ -1,5 +1,7 @@
 // Enums ----------------------------------------------------------------------
 
+import 'package:resiwash/features/machine/data/models/event_model.dart';
+import 'package:resiwash/features/machine/domain/entities/event_entity.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:resiwash/features/room/data/models/room_model.dart';
@@ -36,7 +38,7 @@ class MachineModel {
 
   final RoomModel? room;
   final int roomId;
-  final List<Map<String, dynamic>>? events;
+  final List<EventModel>? events;
   final List<Map<String, dynamic>>? rawEvents;
   final Map<String, dynamic>? sensorToMachine;
 
@@ -80,7 +82,7 @@ class MachineModel {
     imageUrl: imageUrl,
     roomId: roomId.toString(),
     room: room?.toEntity(),
-    events: events,
+    events: events?.map((e) => e.toEntity()).toList(),
     rawEvents: rawEvents,
     sensorToMachine: sensorToMachine,
     createdAt: createdAt,

@@ -35,12 +35,12 @@ class MachineStatusIndicator extends StatelessWidget {
       width: dimension,
       height: dimension,
       decoration: BoxDecoration(
-        color: _getIndicatorColor(context, status),
+        color: getIndicatorColor(context, status),
         // color: context.success.color,
         borderRadius: BorderRadius.circular(4),
         border: status == MachineStatus.finishing
             ? Border.all(
-                color: _getIndicatorColor(context, MachineStatus.available),
+                color: getIndicatorColor(context, MachineStatus.available),
                 width: 2,
               )
             : null,
@@ -48,7 +48,7 @@ class MachineStatusIndicator extends StatelessWidget {
     );
   }
 
-  static Color _getIndicatorColor(BuildContext context, MachineStatus? status) {
+  static Color getIndicatorColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
         // Use theme.success color

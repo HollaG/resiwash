@@ -54,7 +54,9 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
             showErrorMessage(
               state.message,
               onRetry: () {
-                context.read<OverviewCubit>().refresh(roomIds: ["2", "3"]);
+                context.read<OverviewCubit>().load(
+                  roomIds: loadedLocations.getAllRoomIds(),
+                );
               },
             );
           }

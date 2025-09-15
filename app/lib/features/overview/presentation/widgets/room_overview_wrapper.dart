@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
@@ -47,10 +48,10 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
           return Center(child: CircularProgressIndicator());
         } else if (state is OverviewError) {
           return Center(child: Text(state.message));
-        } else if (state is OverviewLoaded) {
+        } else if (state is OverviewLoaded || state is OverviewRefreshing) {
           // Use the machinesByRoom from the state
-          final machinesByRoom = state.machinesByRoom;
-          final locations = state.locations;
+          // final machinesByRoom = (state as dynamic).machinesByRoom;
+          final locations = (state as dynamic).locations;
 
           // // Filter machines for the provided roomIds
           // final filteredMachines = roomIds
@@ -85,18 +86,39 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
                   ],
                 ),
                 RefreshIndicator(
-                  onRefresh: () {
-                    return Future.delayed(Duration(seconds: 1), () {});
+                  onRefresh: () async {
+                    // wait for 1s first
+
+                    // Create a completer to wait for the loading to complete
+                    final completer = Completer<void>();
+
+                    // Listen for state changes
+                    late StreamSubscription subscription;
+                    subscription = context.read<OverviewCubit>().stream.listen((
+                      state,
+                    ) {
+                      if (state is OverviewLoaded || state is OverviewError) {
+                        subscription.cancel();
+                        completer.complete();
+                      }
+                    });
+
+                    // Trigger the refresh
+                    context.read<OverviewCubit>().load(
+                      roomIds: loadedLocations.getAllRoomIds(),
+                    );
+
+                    // Wait for completion
+                    return completer.future;
                   },
                   child: ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(0),
                     shrinkWrap: true,
-                    itemCount: loadedLocations.getAllRoomIds().length * 2,
+                    itemCount: loadedLocations.getAllRoomIds().length,
                     scrollDirection: Axis.vertical,
                     itemBuilder: (context, index) {
-                      String roomId = loadedLocations
-                          .getAllRoomIds()[index ~/ 2];
+                      String roomId = loadedLocations.getAllRoomIds()[index];
                       return RoomOverview(roomId: roomId);
                     },
                   ),

@@ -17,8 +17,11 @@ class MachineListCubit extends Cubit<MachineListState> {
     bool? min,
     bool? extra,
   }) async {
-    emit(const MachineListLoading());
-
+    if (state is MachineListLoaded) {
+      emit(MachineListRefreshing((state as MachineListLoaded).machines));
+    } else {
+      emit(const MachineListLoading());
+    }
     final params = ListMachinesParams(
       roomIds: roomIds,
       areaIds: areaIds,

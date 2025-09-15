@@ -1,4 +1,5 @@
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/event_entity.dart';
 import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 
 class MachineEntity {
@@ -11,7 +12,7 @@ class MachineEntity {
 
   final String roomId;
   final RoomEntity? room;
-  final List<Map<String, dynamic>>? events;
+  final List<EventEntity>? events;
   final List<Map<String, dynamic>>? rawEvents;
   final Map<String, dynamic>? sensorToMachine;
 

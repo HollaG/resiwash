@@ -69,6 +69,8 @@ class MachineRemoteDatasource {
         queryParameters: params?.toQueryParameters(),
       );
 
+      appLog.d('[api] ${response.data}');
+
       // Use ApiResponse for single machine response
       final apiResponse = ApiResponse<MachineModel>.fromJson(
         response.data,

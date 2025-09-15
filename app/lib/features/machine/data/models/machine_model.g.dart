@@ -17,7 +17,7 @@ MachineModel _$MachineModelFromJson(Map<String, dynamic> json) => MachineModel(
       ? null
       : RoomModel.fromJson(json['room'] as Map<String, dynamic>),
   events: (json['events'] as List<dynamic>?)
-      ?.map((e) => e as Map<String, dynamic>)
+      ?.map((e) => EventModel.fromJson(e as Map<String, dynamic>))
       .toList(),
   rawEvents: (json['rawEvents'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)

@@ -1,4 +1,5 @@
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:intl/intl.dart';
 
 /// Utility class for date and time operations
 class DateTimeUtils {
@@ -40,5 +41,13 @@ class DateTimeUtils {
     return dateTime.year == now.year &&
         dateTime.month == now.month &&
         dateTime.day == now.day;
+  }
+
+  static String formatReadableDate(DateTime? dateTime) {
+    if (dateTime == null) return 'Unknown';
+    // return in the format of: dd MMM yyyy
+    // e.g., 01 Jan 2023
+    final dateFormat = DateFormat("dd MMM yyyy, HH:mm:ss a");
+    return dateFormat.format(dateTime);
   }
 }

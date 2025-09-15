@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/common/views/AppBar.dart';
@@ -79,10 +81,20 @@ class _MachineListScreenState extends State<MachineListScreen>
             } else if (state is MachineListLoaded) {
               return Container(
                 padding: EdgeInsets.all(16),
-                child: ListView(
-                  children: state.machines.map((machine) {
-                    return MachineRow(machine: machine);
-                  }).toList(),
+                child: RefreshIndicator(
+                  onRefresh: () {
+                    final completer = Completer<void>();
+                    context
+                        .read<MachineListCubit>()
+                        .load(roomIds: widget.roomIds, extra: true)
+                        .then((_) => completer.complete());
+                    return completer.future;
+                  },
+                  child: ListView(
+                    children: state.machines.map((machine) {
+                      return MachineRow(machine: machine);
+                    }).toList(),
+                  ),
                 ),
               );
             }

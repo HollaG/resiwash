@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/asset-export.dart';
@@ -11,6 +13,7 @@ import 'package:resiwash/features/machine/presentation/cubit/machine_detail_cubi
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_state.dart';
 import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
+import 'package:resiwash/features/machine/presentation/widgets/machine_timeline.dart';
 
 class MachineDetailScreen extends StatefulWidget {
   final String machineId;
@@ -46,134 +49,165 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
               return Center(child: CircularProgressIndicator());
             } else if (state is MachineDetailLoaded) {
               final machine = state.machine;
-              return Container(
-                padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
-                child: Column(
-                  spacing: 16,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // TODO: some image here
+              return RefreshIndicator(
+                onRefresh: () {
+                  // do a 1s test delay first
+                  late Completer<void> completer;
+                  completer = Completer<void>();
+                  context
+                      .read<MachineDetailCubit>()
+                      .load(machineId: widget.machineId, extra: true)
+                      .then((_) => completer.complete());
+                  return completer.future;
+                },
+                child: SingleChildScrollView(
+                  physics: AlwaysScrollableScrollPhysics(),
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
+                    width: double.infinity,
+                    child: Column(
+                      spacing: 16,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // TODO: some image here
 
-                    // rounded pill box that displays machine status
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: MachineStatusIndicator.getBackgroundColor(
-                          context,
-                          machine.currentStatus,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-
-                        children: [
-                          MachineStatusIndicator(
-                            status: machine.currentStatus,
-                            size: BoxSize.large,
+                        // rounded pill box that displays machine status
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 16,
                           ),
-                          SizedBox(width: 12),
-                          Text(
-                            MachineDisplayUtils.getStatusLabel(machine),
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color:
-                                      MachineStatusIndicator.getOnContainerColor(
-                                        context,
-                                        machine.currentStatus,
+                          decoration: BoxDecoration(
+                            color: MachineStatusIndicator.getBackgroundColor(
+                              context,
+                              machine.currentStatus,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+
+                            children: [
+                              MachineStatusIndicator(
+                                status: machine.currentStatus,
+                                size: BoxSize.large,
+                              ),
+                              SizedBox(width: 12),
+                              Text(
+                                MachineDisplayUtils.getStatusLabel(machine),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color:
+                                          MachineStatusIndicator.getOnContainerColor(
+                                            context,
+                                            machine.currentStatus,
+                                          ),
+                                    ),
+                              ),
+                              // box to take up the rest of the space
+                              Spacer(),
+                            ],
+                          ),
+                        ),
+
+                        Row(
+                          spacing: 8,
+                          children: [
+                            Text(
+                              machine.name,
+                              style: Theme.of(context).textTheme.headlineLarge,
+                            ),
+                            machine.type == MachineType.washer
+                                ? AssetIcons.washerIcon(context)
+                                : AssetIcons.dryerIcon(context),
+                          ],
+                        ),
+                        DetailRow(
+                          label: "Type",
+                          content: MachineDisplayUtils.getType(machine),
+                        ),
+                        DetailRow(
+                          label: "Label",
+                          content: MachineDisplayUtils.getLabel(machine),
+                        ),
+                        DetailRow(
+                          label: "Location",
+                          content: MachineDisplayUtils.getLocationLabel(
+                            machine,
+                          ),
+                        ),
+                        DetailRow(
+                          label: "Last updated",
+                          content: MachineDisplayUtils.getLastUpdatedLabel(
+                            machine,
+                          ),
+                        ),
+
+                        Divider(),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  "Usage history",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiary,
                                       ),
                                 ),
-                          ),
-                          // box to take up the rest of the space
-                          Spacer(),
-                        ],
-                      ),
-                    ),
-
-                    Row(
-                      spacing: 8,
-                      children: [
-                        Text(
-                          machine.name,
-                          style: Theme.of(context).textTheme.headlineLarge,
-                        ),
-                        machine.type == MachineType.washer
-                            ? AssetIcons.washerIcon(context)
-                            : AssetIcons.dryerIcon(context),
-                      ],
-                    ),
-                    DetailRow(
-                      label: "Type",
-                      content: MachineDisplayUtils.getType(machine),
-                    ),
-                    DetailRow(
-                      label: "Label",
-                      content: MachineDisplayUtils.getLabel(machine),
-                    ),
-                    DetailRow(
-                      label: "Location",
-                      content: MachineDisplayUtils.getLocationLabel(machine),
-                    ),
-
-                    Divider(),
-                    Column(
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              "Usage history",
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiary,
-                                  ),
+                              ],
                             ),
+                            MachineTimeline(machine: machine),
                           ],
                         ),
-                        Column(children: [Text("Feature coming soon!")]),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Row(
+                        Column(
                           children: [
-                            Text(
-                              "Active issues (0)",
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiary,
-                                  ),
+                            Row(
+                              children: [
+                                Text(
+                                  "Active issues (0)",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiary,
+                                      ),
+                                ),
+                              ],
                             ),
+                            Column(children: [Text("Feature coming soon!")]),
                           ],
                         ),
-                        Column(children: [Text("Feature coming soon!")]),
-                      ],
-                    ),
-                    Column(
-                      children: [
-                        Row(
+                        Column(
                           children: [
-                            Text(
-                              "Issue history",
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiary,
-                                  ),
+                            Row(
+                              children: [
+                                Text(
+                                  "Issue history",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiary,
+                                      ),
+                                ),
+                              ],
                             ),
+                            Column(children: [Text("Feature coming soon!")]),
                           ],
                         ),
-                        Column(children: [Text("Feature coming soon!")]),
                       ],
                     ),
-                  ],
+                  ),
                 ),
               );
             }

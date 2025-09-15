@@ -92,4 +92,17 @@ class MachineDisplayUtils {
         return 'Unknown type';
     }
   }
+
+  static String getLastUpdatedLabel(MachineEntity machine) {
+    if (machine.lastUpdated == null) {
+      return 'Unknown';
+    }
+
+    // return the date in:
+    // dd MMM yyyy, HH:mm:ss
+    // return DateTimeUtils.formatDateTime(machine.lastUpdated!) ?? 'Unknown';
+    return DateTimeUtils.formatReadableDate(machine.lastUpdated!);
+
+    // return DateTimeUtils.formatRelativeTime(machine.lastUpdated) ?? 'Unknown';
+  }
 }
