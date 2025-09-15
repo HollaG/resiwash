@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: theme.light().copyWith(textTheme: textTheme),
       darkTheme: theme.dark().copyWith(textTheme: textTheme),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light, // TODO: enable system dark mode
     );
 
     // only for global dependencies

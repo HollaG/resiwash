@@ -25,7 +25,7 @@ class EventModel {
   EventEntity toEntity() {
     return EventEntity(
       eventId: eventId,
-      timestamp: DateTime.parse(timestamp),
+      timestamp: DateTime.parse(timestamp).toLocal(),
       status: status,
       reading: reading,
     );
