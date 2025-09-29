@@ -29,16 +29,7 @@ class HomeHeader extends StatelessWidget {
                 spacing: 4,
                 children: [
                   Text(
-                    "Welcome back,",
-                    style:
-                        GoogleFonts.poppinsTextTheme(
-                          Theme.of(context).textTheme,
-                        ).headlineSmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                  ),
-                  Text(
-                    "Marcus!",
+                    "Welcome back!",
                     style:
                         GoogleFonts.poppinsTextTheme(
                           Theme.of(context).textTheme,
@@ -48,6 +39,26 @@ class HomeHeader extends StatelessWidget {
                           // fontFamily: "Open Sans",
                         ),
                   ),
+                  // Text(
+                  //   "Welcome back,",
+                  //   style:
+                  //       GoogleFonts.poppinsTextTheme(
+                  //         Theme.of(context).textTheme,
+                  //       ).headlineSmall?.copyWith(
+                  //         color: Theme.of(context).colorScheme.onPrimary,
+                  //       ),
+                  // ),
+                  // Text(
+                  //   "Marcus!",
+                  //   style:
+                  //       GoogleFonts.poppinsTextTheme(
+                  //         Theme.of(context).textTheme,
+                  //       ).headlineMedium?.copyWith(
+                  //         color: Theme.of(context).colorScheme.onPrimary,
+                  //         fontWeight: FontWeight.bold,
+                  //         // fontFamily: "Open Sans",
+                  //       ),
+                  // ),
                 ],
               ),
 
