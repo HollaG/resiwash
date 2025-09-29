@@ -292,7 +292,9 @@ void setup() {
 
   // Display static text
   display.println("Initializing...");
-  display.display();
+  display.display();  
+
+
 
   // initalize buttons
   btn.attachPress(onClick);
@@ -304,8 +306,14 @@ void setup() {
   mySerial1.begin(BAUD, SERIAL_8N1, RXD1, TXD1);
   safeFlushSerial(mySerial1);
   safeFlushSerial(mySerial2);
+
+    // initialize pull up on RX lines
+  // pinMode(RXD1, INPUT_PULLUP);
+  // pinMode(RXD2, INPUT_PULLUP);
   display.println("Connecting Wi-Fi...");
   display.display();
+
+  
 
   Serial.println("\nConnecting to Wi-Fi…");
   WiFi.persistent(false);
