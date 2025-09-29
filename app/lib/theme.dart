@@ -345,6 +345,9 @@ class MaterialTheme {
     ),
     scaffoldBackgroundColor: colorScheme.background,
     canvasColor: colorScheme.surface,
+    extensions: [
+      AppColors.forBrightness(colorScheme.brightness, contrast: "normal"),
+    ],
   );
 
   /// success
@@ -390,7 +393,7 @@ class MaterialTheme {
   );
 
   /// reserved
-  static const reserved = ExtendedColor(
+  static const inUse = ExtendedColor(
     seed: Color(0xfffcc419),
     value: Color(0xfffcc419),
     light: ColorFamily(
@@ -431,7 +434,49 @@ class MaterialTheme {
     ),
   );
 
-  List<ExtendedColor> get extendedColors => [success, reserved];
+  /// inUse
+  static const reserved = ExtendedColor(
+    seed: Color(0xffFF6B6B),
+    value: Color(0xffFF6B6B),
+    light: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    lightMediumContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    lightHighContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    dark: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    darkMediumContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+    darkHighContrast: ColorFamily(
+      color: Color(0xffFF6B6B),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffFF6B6B),
+      onColorContainer: Color(0xffffffff),
+    ),
+  );
+
+  List<ExtendedColor> get extendedColors => [success, reserved, inUse];
 }
 
 class ExtendedColor {
@@ -467,4 +512,91 @@ class ColorFamily {
   final Color onColor;
   final Color colorContainer;
   final Color onColorContainer;
+}
+
+/// ---------- 3) ThemeExtension that stores the *active* families ----------
+@immutable
+class AppColors extends ThemeExtension<AppColors> {
+  final ColorFamily success;
+  final ColorFamily reserved;
+  final ColorFamily inUse;
+
+  const AppColors({
+    required this.success,
+    required this.reserved,
+    required this.inUse,
+  });
+
+  /// Create a theme-ready set for a given brightness (and optional contrast).
+  factory AppColors.forBrightness(
+    Brightness brightness, {
+    String contrast = 'normal', // 'normal' | 'medium' | 'high'
+  }) {
+    ColorFamily pick(ExtendedColor c) {
+      if (brightness == Brightness.light) {
+        switch (contrast) {
+          case 'medium':
+            return c.lightMediumContrast;
+          case 'high':
+            return c.lightHighContrast;
+          default:
+            return c.light;
+        }
+      } else {
+        switch (contrast) {
+          case 'medium':
+            return c.darkMediumContrast;
+          case 'high':
+            return c.darkHighContrast;
+          default:
+            return c.dark;
+        }
+      }
+    }
+
+    return AppColors(
+      success: pick(MaterialTheme.success),
+      reserved: pick(MaterialTheme.reserved),
+      inUse: pick(MaterialTheme.inUse),
+    );
+  }
+
+  @override
+  AppColors copyWith({
+    ColorFamily? success,
+    ColorFamily? reserved,
+    ColorFamily? inUse,
+  }) => AppColors(
+    success: success ?? this.success,
+    reserved: reserved ?? this.reserved,
+    inUse: inUse ?? this.inUse,
+  );
+
+  @override
+  AppColors lerp(ThemeExtension<AppColors>? other, double t) {
+    if (other is! AppColors) return this;
+
+    Color lerpC(Color a, Color b) => Color.lerp(a, b, t)!;
+
+    ColorFamily lerpFam(ColorFamily a, ColorFamily b) => ColorFamily(
+      color: lerpC(a.color, b.color),
+      onColor: lerpC(a.onColor, b.onColor),
+      colorContainer: lerpC(a.colorContainer, b.colorContainer),
+      onColorContainer: lerpC(a.onColorContainer, b.onColorContainer),
+    );
+
+    return AppColors(
+      success: lerpFam(success, other.success),
+      reserved: lerpFam(reserved, other.reserved),
+      inUse: lerpFam(inUse, other.inUse),
+    );
+  }
+}
+
+/// ---------- 5) Convenience getters ----------
+extension AppColorsX on BuildContext {
+  AppColors get appColors => Theme.of(this).extension<AppColors>()!;
+  ColorFamily get success => appColors.success;
+  ColorFamily get reserved => appColors.reserved;
+  ColorFamily get inUse => appColors.inUse;
 }

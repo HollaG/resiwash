@@ -11,11 +11,11 @@ const getAreasUrl = () => {
 }
 
 const getRoomsUrl = (areaId: number) => {
-  return `/areas/${areaId}`;
+  return `/rooms/?areaIds[]=${areaId}`;
 }
 
 const getMachinesUrl = (areaId: number, roomId: number) => {
-  return `/areas/${areaId}/${roomId}`;
+  return `/machines/?areaIds[]=${areaId}&roomIds[]=${roomId}`;
 }
 
 const getSensorsUrl = () => {
@@ -23,7 +23,7 @@ const getSensorsUrl = () => {
 }
 
 const getSensorToMachineUrl = (sensorId: number) => {
-  return `/sensors/link/${sensorId}`;
+  return `/sensors/${sensorId}/link`;
 }
 
 export const AdminPage = () => {
@@ -72,7 +72,9 @@ export const AdminPage = () => {
     try {
       const data = await crudAreaData({
         method: "POST",
-        body: newArea,
+        body: {
+          area: newArea,
+        },
       });
       console.log('Area added:', data);
       refetch();
@@ -132,7 +134,7 @@ export const AdminPage = () => {
     try {
       const data = await crudRoomData({
         method: "POST",
-        body: newRoom,
+        body: { room: newRoom, areaId: selectedAreaId },
       });
       console.log('Room added:', data);
       refetchRooms();
@@ -185,10 +187,10 @@ export const AdminPage = () => {
     label: string;
     required?: boolean;
   }[] = [
-      { value: 'machine.machineId', label: 'Machine ID' },
-      { value: 'machine.name', label: 'Name', required: true },
-      { value: 'machine.type', label: 'Type', required: true },
-      { value: 'machine.label', label: 'Label', required: true },
+      { value: 'machineId', label: 'Machine ID' },
+      { value: 'name', label: 'Name', required: true },
+      { value: 'type', label: 'Type', required: true },
+      { value: 'label', label: 'Label', required: true },
     ]
 
   const onAddMachine = async (newMachine: Machine) => {
@@ -196,7 +198,11 @@ export const AdminPage = () => {
     try {
       const data = await crudMachineData({
         method: "POST",
-        body: newMachine,
+        body: {
+          areaId: selectedAreaId,
+          roomId: selectedRoomId,
+          machine: newMachine
+        },
       });
       console.log('Machine added:', data);
       return data

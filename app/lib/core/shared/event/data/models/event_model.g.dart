@@ -31,7 +31,9 @@ Map<String, dynamic> _$EventToJson(Event instance) => <String, dynamic>{
 };
 
 const _$MachineStatusEnumMap = {
-  MachineStatus.available: 'available',
-  MachineStatus.inUse: 'inUse',
-  MachineStatus.hasIssues: 'hasIssues',
+  MachineStatus.available: 'AVAILABLE',
+  MachineStatus.inUse: 'IN_USE',
+  MachineStatus.hasIssues: 'HAS_ISSUES',
+  MachineStatus.unknown: 'UNKNOWN',
+  MachineStatus.finishing: 'FINISHING',
 };

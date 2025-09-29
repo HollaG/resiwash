@@ -6,8 +6,10 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from "typeorm";
 import { Room } from "./Room";
+import { SensorToMachine } from "./SensorToMachine";
 
 @Entity()
 export class Sensor {
@@ -18,10 +20,13 @@ export class Sensor {
   @JoinColumn({ name: "roomId" })
   room: Room;
 
+  @OneToMany(() => SensorToMachine, (sensorToMachine) => sensorToMachine.sensor)
+  sensorToMachines: SensorToMachine[];
+
   @Column()
   macAddress: string;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   apiKey: string; // hashed
 
   @CreateDateColumn()

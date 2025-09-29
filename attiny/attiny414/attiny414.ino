@@ -2,6 +2,10 @@
 #define LDR2_PIN 6
 #define LED1_PIN 2
 #define LED2_PIN 3
+#define LED_IND1 8
+#define LED_IND2 9
+#define LED_IND3 10
+
 #define POT_PIN 0
 #define TRIG_PIN 1
 
@@ -43,11 +47,14 @@ void setup() {
   pinMode(TRIG_PIN, INPUT);
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
+  pinMode(LED_IND1, OUTPUT);
+  pinMode(LED_IND2, OUTPUT);
+  pinMode(LED_IND3, OUTPUT);
 
   int trigger = digitalRead(TRIG_PIN);
   if (trigger) {
     sender = true;
-  } else { 
+  } else {
     sender = false;
   }
 
@@ -58,33 +65,46 @@ void setup() {
     Serial.read();
   }
 
+  int leds[] = { LED1_PIN, LED2_PIN, LED_IND1, LED_IND2, LED_IND3 };
+  int numLeds = sizeof(leds) / sizeof(leds[0]);
+
+  for (int i = 0; i < numLeds; i++) {
+    digitalWrite(leds[i], HIGH);  // turn on LED
+    delay(250);                   // wait 250 ms
+    digitalWrite(leds[i], LOW);   // turn off LED
+  }
+
   // configure lights to flash
-  digitalWrite(LED1_PIN, HIGH);
+  // digitalWrite(LED1_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED2_PIN, HIGH);
+  // digitalWrite(LED1_PIN, LOW);
+  // delay(1000);
+  // digitalWrite(LED2_PIN, LOW);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, HIGH);
+  // digitalWrite(LED2_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, LOW);
+  // digitalWrite(LED2_PIN, LOW);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, HIGH);
+  // digitalWrite(LED2_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, LOW);
+  // digitalWrite(LED2_PIN, LOW);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, HIGH);
+  // digitalWrite(LED2_PIN, HIGH);
+  // delay(1000);
+  // digitalWrite(LED1_PIN, LOW);
+  // digitalWrite(LED2_PIN, LOW);
+  // delay(100);
+  // delay(1000);
+
   delay(1000);
-  digitalWrite(LED2_PIN, HIGH);
-  digitalWrite(LED1_PIN, LOW);
-  delay(1000);
-  digitalWrite(LED2_PIN, LOW);
-  delay(1000);
-  digitalWrite(LED1_PIN, HIGH);
-  digitalWrite(LED2_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LED1_PIN, LOW);
-  digitalWrite(LED2_PIN, LOW);
-  delay(1000);
-  digitalWrite(LED1_PIN, HIGH);
-  digitalWrite(LED2_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LED1_PIN, LOW);
-  digitalWrite(LED2_PIN, LOW);
-  delay(1000);
-  digitalWrite(LED1_PIN, HIGH);
-  digitalWrite(LED2_PIN, HIGH);
-  delay(1000);
-  digitalWrite(LED1_PIN, LOW);
-  digitalWrite(LED2_PIN, LOW);
-  delay(100);
-  delay(1000);
+  // turn on indicator led 3
+  digitalWrite(LED_IND1, 1);
 }
 
 int state = 0;
@@ -130,6 +150,7 @@ void loop() {
   bool isCurrentlyReading = false;
   int byteCount = 0;
   if (Serial.available() && sender == false) {
+    digitalWrite(LED_IND2, 1);
     // start reading into array until no more bytes left to read
 
     // while (Serial.available()) {
@@ -183,7 +204,7 @@ void loop() {
         buffer[i + 7] = END_BYTE;
         i = i + 8;
 
-     
+
 
         Serial.write(buffer, i);  // send in one go
 
@@ -191,11 +212,11 @@ void loop() {
         // delay(50);
         // Serial.write(END_BYTE);
 
-        Serial.flush(); // waits for output buffer to finish sending
+        Serial.flush();  // waits for output buffer to finish sending
 
         // clear the buffer
         i = 0;
-        byteCount = 0; // technically not needed...?
+        byteCount = 0;  // technically not needed...?
         break;
       }
 
@@ -204,11 +225,17 @@ void loop() {
       buffer[i] = incomingByte;
       i = i + 1;
     }
+
+    delay(500);
+    digitalWrite(LED_IND2, 0);
   }
 
   if (sender == true) {
 
+
     if (currentMillis - previousMillis >= interval) {
+      digitalWrite(LED_IND2, 1);
+
       previousMillis = currentMillis;
       // Do something here (non-blocking)
 
@@ -220,8 +247,13 @@ void loop() {
       Serial.write(END_BYTE);
 
 
+      // delay(1000);
+      // digitalWrite(LED1_PIN, LOW);
+      // digitalWrite(LED2_PIN, LOW);
 
       // delay(1000);  // every 10 seconds
+      delay(500);
+      digitalWrite(LED_IND2, 0);
     }
   }
 

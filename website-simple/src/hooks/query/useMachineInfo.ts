@@ -4,24 +4,21 @@ import { MachineWithRoomAndEvents } from "../../types/datatypes";
 
 /**
  * Get detailed information about a specific machine in a room and area.
- * @param param0 
+ * @param param0
  */
 export const useMachineInfo = ({
-  areaId,
-  roomId,
   machineId,
-  load = false
+  load = false,
 }: {
-  areaId: number;
   roomId: number;
   machineId: number;
   load?: boolean;
 }) => {
   const { data, isLoading, error } = useQuery<MachineWithRoomAndEvents>({
-    queryKey: ["machineInfo", areaId, roomId, machineId],
+    queryKey: ["machineInfo", machineId],
     queryFn: async ({ queryKey }) => {
-      const [_, areaId, roomId, machineId] = queryKey;
-      const response = await fetch(urlBuilder(`areas/${areaId}/${roomId}/${machineId}`));
+      const [_, machineId] = queryKey;
+      const response = await fetch(urlBuilder(`machines/${machineId}`));
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -35,4 +32,4 @@ export const useMachineInfo = ({
     enabled: load, // Only run this query if load is true
   });
   return { data, isLoading, error };
-}
+};

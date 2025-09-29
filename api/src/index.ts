@@ -15,6 +15,7 @@ dotenv.config();
 
 import { AppDataSource } from "./data-source";
 import { VerifyToken } from "./middleware/auth";
+import { sendErrorResponse } from "./core/responses";
 
 // TypeORM
 AppDataSource.initialize()
@@ -57,42 +58,63 @@ app.get("/", (req: Request, res: Response) => {
 
 const API_VERSION = process.env.API_VERSION || "v1";
 
+const API_VERSIONS = ["v1", "v2"];
+
+// ------ API v1 Routes ------
+
 // Machines
 app.use(
-  `/api/${API_VERSION}/areas/:areaId/:roomId`,
-  require("./entities/machines/machines.routes")
+  `/api/v1/areas/:areaId/:roomId`,
+  require("./entities/v1/machines/machines.routes")
 );
 
 // Rooms
-app.use(
-  `/api/${API_VERSION}/areas/:areaId`,
-  require("./entities/rooms/rooms.routes")
-);
+app.use(`/api/v1/areas/:areaId`, require("./entities/v1/rooms/rooms.routes"));
 
 // Areas
 app.use(
-  `/api/${API_VERSION}/areas`,
+  `/api/v1/areas`,
   VerifyToken,
-  require("./entities/areas/areas.routes")
+  require("./entities/v1/areas/areas.routes")
 );
 
 // Locations
 app.use(
-  `/api/${API_VERSION}/locations`,
-  require("./entities/locations/locations.routes")
+  `/api/v1/locations`,
+  require("./entities/v1/locations/locations.routes")
 );
 
 // Events
-app.use(
-  `/api/${API_VERSION}/events`,
-  require("./entities/events/events.routes")
-);
+app.use(`/api/v1/events`, require("./entities/v1/events/events.routes"));
 
 // Sensors
+app.use(`/api/v1/sensors`, require("./entities/v1/sensors/sensors.routes"));
+
+// API v2 Routes
+// Areas
 app.use(
-  `/api/${API_VERSION}/sensors`,
-  require("./entities/sensors/sensors.routes")
+  `/api/v2/areas`,
+  VerifyToken,
+  require("./entities/v2/areas/areas.routes")
 );
+
+// Rooms
+app.use(`/api/v2/rooms`, require("./entities/v2/rooms/rooms.routes"));
+
+// Machines
+app.use(`/api/v2/machines`, require("./entities/v2/machines/machines.routes"));
+
+// Locations
+app.use(
+  `/api/v2/locations`,
+  require("./entities/v2/locations/locations.routes")
+);
+
+// Events
+app.use(`/api/v2/events`, require("./entities/v2/events/events.routes"));
+
+// Sensors
+app.use(`/api/v2/sensors`, require("./entities/v2/sensors/sensors.routes"));
 
 // error handler (last)
 app.use(errorHandler);
@@ -102,6 +124,11 @@ app.get("/api", (req: Request, res: Response) => {
 });
 app.get("/api/checkAuth", VerifyToken, (req: Request, res: Response) => {
   res.send("Express + TypeScript Server Auth works");
+});
+
+// catch-all, return error: invalid url
+app.get("*", (req: Request, res: Response) => {
+  sendErrorResponse(res, { message: "invalid url" }, 404);
 });
 
 app.listen(port, () => {

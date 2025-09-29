@@ -1,6 +1,6 @@
 import 'package:resiwash/core/shared/event/data/models/event_model.dart';
-import 'package:resiwash/core/shared/machine/data/models/machine_model.dart';
-import 'package:resiwash/core/shared/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 
 class EventEntity {
   int eventId;

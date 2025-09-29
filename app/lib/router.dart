@@ -1,4 +1,6 @@
-import 'package:resiwash/features/Summary/presentation/screens/home_screen.dart';
+import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
+import 'package:resiwash/features/overview/presentation/screens/home_screen.dart';
+import 'package:resiwash/features/machine/presentation/screens/machine_list_screen.dart';
 import 'package:resiwash/main.dart';
 import 'package:resiwash/views/base-view.dart';
 
@@ -21,6 +23,40 @@ final router = GoRouter(
             GoRoute(
               path: AppRoutes.home,
               builder: (context, state) => HomeScreen(),
+            ),
+            GoRoute(
+              path: AppRoutes.machineList,
+              name: 'machines', // Add name for easier navigation
+              builder: (context, state) {
+                print(
+                  'Machine route hit with URI: ${state.uri}',
+                ); // Debug print
+                final roomIds = state.uri.queryParametersAll['roomIds[]'] ?? [];
+                final areaIds = state.uri.queryParametersAll['areaIds[]'] ?? [];
+                final machineIds =
+                    state.uri.queryParametersAll['machineIds[]'] ?? [];
+
+                print('Parsed roomIds: $roomIds'); // Debug print
+
+                Map<String, dynamic> extra =
+                    state.extra as Map<String, dynamic>;
+
+                return MachineListScreen(
+                  areaIds: areaIds,
+                  roomIds: roomIds,
+                  machineIds: machineIds,
+                  title: extra['title'] as String?,
+                  count: extra['count'] as String?,
+                );
+              },
+            ),
+            GoRoute(
+              path: AppRoutes.machineDetail,
+              name: 'machineDetail',
+              builder: (context, state) {
+                final machineId = state.pathParameters['machineId']!;
+                return MachineDetailScreen(machineId: machineId);
+              },
             ),
           ],
         ),
@@ -50,7 +86,33 @@ final _routerKey = GlobalKey<NavigatorState>();
 class AppRoutes {
   AppRoutes._();
 
+  // -- routes for Home page -- //
   static const String home = '/';
+  static const String machineList = '/machines';
+  static const String machineDetail = '/machines/:machineId';
+
   static const String myMachines = '/me';
   static const String profile = '/profile';
+
+  // Helper methods for navigation
+  static String buildMachineListRoute({
+    List<String>? roomIds,
+    List<String>? areaIds,
+    List<String>? machineIds,
+  }) {
+    final uri = Uri(
+      path: machineList,
+      queryParameters: {
+        if (roomIds != null && roomIds.isNotEmpty) 'roomIds[]': roomIds,
+        if (areaIds != null && areaIds.isNotEmpty) 'areaIds[]': areaIds,
+        if (machineIds != null && machineIds.isNotEmpty)
+          'machineIds[]': machineIds,
+      },
+    );
+    return uri.toString();
+  }
+
+  static String buildMachineDetailRoute(String machineId) {
+    return machineDetail.replaceFirst(':machineId', machineId);
+  }
 }

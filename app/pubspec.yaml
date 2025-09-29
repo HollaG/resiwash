@@ -9,6 +9,7 @@ environment:
 dependencies:
   dio: ^5.9.0
   dio_cache_interceptor: ^4.0.3
+  equatable: ^2.0.7
   flutter:
     sdk: flutter
   flutter_bloc: ^9.1.1
@@ -18,6 +19,7 @@ dependencies:
   go_router: ^16.1.0
   google_fonts: ^6.2.1
   json_annotation: ^4.0.1
+  timeago: ^3.6.1
   logger: ^2.6.1
   shared_preferences: ^2.5.3
   flutter_launcher_icons: ^0.14.4
@@ -36,4 +38,56 @@ flutter:
   assets:
     - assets/dryer.svg
     - assets/washer.svg
-
+  fonts:
+    - family: Open Sans
+      fonts:
+        - asset: fonts/OpenSans-VariableFont_wdth,wght.ttf
+        - asset: fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf
+          style: italic
+    - family: Poppins
+      fonts:
+        - asset: fonts/Poppins-Thin.ttf
+          weight: 100
+        - asset: fonts/Poppins-ThinItalic.ttf
+          weight: 100
+          style: italic
+        - asset: fonts/Poppins-ExtraLight.ttf
+          weight: 200
+        - asset: fonts/Poppins-ExtraLightItalic.ttf
+          weight: 200
+          style: italic
+        - asset: fonts/Poppins-Light.ttf
+          weight: 300
+        - asset: fonts/Poppins-LightItalic.ttf
+          weight: 300
+          style: italic
+        - asset: fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: fonts/Poppins-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: fonts/Poppins-MediumItalic.ttf
+          weight: 500
+          style: italic
+        - asset: fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Poppins-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset: fonts/Poppins-BoldItalic.ttf
+          weight: 700
+          style: italic
+        - asset: fonts/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: fonts/Poppins-ExtraBoldItalic.ttf
+          weight: 800
+          style: italic
+        - asset: fonts/Poppins-Black.ttf
+          weight: 900
+        - asset: fonts/Poppins-BlackItalic.ttf
+          weight: 900
+          style: italic

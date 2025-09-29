@@ -13,7 +13,7 @@ type DetailViewProps = {
 const SavedLocation = (props: DetailViewProps) => {
   const { areaId, roomId } = props;
 
-  const { data: machineData, isLoading } = useLocationMachines({ areaId, roomId });
+  const { data: machineData, isLoading } = useLocationMachines({ roomId });
   const { data: locationData } = useLocationInfo()
 
   const area = locationData?.find(location => location.areaId === areaId);

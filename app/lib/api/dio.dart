@@ -38,7 +38,7 @@ class DioClient {
         responseHeader: false,
         responseBody: !kReleaseMode,
         error: true,
-        logPrint: (obj) => log.d(obj),
+        logPrint: (obj) => appLog.d(obj),
       ),
     );
   }
