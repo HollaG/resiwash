@@ -18,24 +18,80 @@ import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
 
-// const debounceMachineMap: {
-//   [machineId: number]: SensorStabilizer;
-// } = {};
 
+// saves IN-MEMORY which machines have been sending data
+// TODO: migrate to Redis in future
 const activeMachines: { [machineId: number]: AbstractMachine } = {};
 
-export const getEvents = asyncHandler(async (req: Request, res: Response) => {
-  const eventRepository = AppDataSource.getRepository(UpdateEvent);
+interface GetEventsRequest {
+  machineIds?: string[],
+  raw?: boolean;
+  // PageReq: PageReq  // future pagination
+}
 
-  // last 100 events
-  const events = await eventRepository.find({
-    order: {
-      timestamp: "DESC",
-    },
-    take: 100,
-  });
+export const getEvents = asyncHandler(async (req: Request<unknown, unknown, unknown, GetEventsRequest>, res: Response) => {
+  console.log("getEvents", req.query);
 
-  sendOkResponse(res, events);
+
+  const {
+    machineIds = [],
+    raw = false,
+  } = req.query;
+
+
+  if (raw) {
+    const rawEventRepository = AppDataSource.getRepository(RawEvent);
+    let events: RawEvent[] = [];
+    if (!machineIds || machineIds.length === 0) {
+      // last 24 hours
+      events = await rawEventRepository.find({
+        order: {
+          timestamp: "DESC",
+        },
+        take: 10000,
+      });
+    } else {
+      events = await rawEventRepository.find({
+        where: {
+          machine: { machineId: In(machineIds.map(Number)) },
+        },
+        order: {
+          timestamp: "DESC",
+        },
+        take: 10000,
+      });
+    }
+    sendOkResponse(res, events);
+
+  } else {
+    const eventRepository = AppDataSource.getRepository(UpdateEvent);
+    let events: UpdateEvent[] = [];
+    if (!machineIds || machineIds.length === 0) {
+      // last 100 events
+      events = await eventRepository.find({
+        order: {
+          timestamp: "DESC",
+        },
+        take: 100,
+      });
+
+    } else {
+      events = await eventRepository.find({
+        where: {
+          machine: { machineId: In(machineIds.map(Number)) },
+        },
+        order: {
+          timestamp: "DESC",
+        },
+        take: 100,
+      });
+    }
+    sendOkResponse(res, events);
+
+  }
+
+
+
 });
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
