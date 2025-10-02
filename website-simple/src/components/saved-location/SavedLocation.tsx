@@ -9,9 +9,10 @@ import { MachineDetails } from "../machine-details/MachineDetails";
 type DetailViewProps = {
   areaId: number;
   roomId: number;
+  debug?: boolean;
 }
 const SavedLocation = (props: DetailViewProps) => {
-  const { areaId, roomId } = props;
+  const { areaId, roomId, debug = false } = props;
 
   const { data: machineData, isLoading } = useLocationMachines({ roomId });
   const { data: locationData } = useLocationInfo()

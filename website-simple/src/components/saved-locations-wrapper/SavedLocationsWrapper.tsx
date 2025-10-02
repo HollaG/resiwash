@@ -7,7 +7,7 @@ import classes from "./index.module.css"
 import { useState } from "react"
 import { DetailView } from "../saved-location/SavedLocation"
 
-export const SavedLocationsWrapper = () => {
+export const SavedLocationsWrapper = ({ debug = false }: { debug?: boolean }) => {
   const { savedLocations } = useSavedLocations()
   const { tabListReference } = useScrollableTabs();
 
@@ -62,38 +62,12 @@ export const SavedLocationsWrapper = () => {
     </MantineTabs.Panel>
     {flattened.map(({ areaId, roomId }) => (
       <MantineTabs.Panel key={`${areaId}-${roomId}`} value={`${areaId}-${roomId}`} p={8}>
-        <DetailView key={`${areaId}-${roomId}`} areaId={areaId} roomId={roomId} />
+        <DetailView key={`${areaId}-${roomId}`} areaId={areaId} roomId={roomId} debug={debug} />
       </MantineTabs.Panel>
     ))}
 
 
-    <MantineTabs.Panel value="tab1" p={8}>
-      Tab 1 content
-    </MantineTabs.Panel>
 
-    <MantineTabs.Panel value="tab2" p={8}>
-      Tab 2 content
-    </MantineTabs.Panel>
-
-    <MantineTabs.Panel value="tab3" p={8}>
-      Tab 3 content
-    </MantineTabs.Panel>
-
-    <MantineTabs.Panel value="tab4" p={8}>
-      Tab 4 content
-    </MantineTabs.Panel>
-
-    <MantineTabs.Panel value="tab5" p={8}>
-      Tab 5 content
-    </MantineTabs.Panel>
-
-    <MantineTabs.Panel value="tab6" p={8}>
-      Tab 6 content
-    </MantineTabs.Panel>
-
-    <MantineTabs.Panel value="tab7" p={8}>
-      Tab 7 content
-    </MantineTabs.Panel>
   </MantineTabs>
   // <Tabs defaultValue="gallery">
   //   <Tabs.List>

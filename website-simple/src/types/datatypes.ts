@@ -14,6 +14,11 @@ export type Area = {
   updatedAt: string; // or Date
 };
 
+export type Reading = {
+  value: number;
+  threshold: number;
+};
+
 export type MachineEvent = {
   eventId: number;
   timestamp: string; // or `Date` if you parse it
@@ -23,8 +28,9 @@ export type MachineEvent = {
   // use status instead
   statusCode: number;
 
-  reading: number;
+  readings: Reading[];
 };
+
 
 export type Machine = {
   machineId: number;

@@ -33,19 +33,26 @@ class HomeHeader extends StatelessWidget {
                 spacing: 4,
                 children: [
                   Text(
-                    "Welcome back,",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      fontWeight: FontWeight.normal,
-                    ),
-                  ),
-                  Text(
-                    "Marcus!",
+                    "Welcome back!",
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimary,
                       // fontWeight is already bold from theme
                     ),
                   ),
+                  // Text(
+                  //   "Welcome back,",
+                  //   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  //     color: Theme.of(context).colorScheme.onPrimary,
+                  //     fontWeight: FontWeight.normal,
+                  //   ),
+                  // ),
+                  // Text(
+                  //   "Marcus!",
+                  //   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  //     color: Theme.of(context).colorScheme.onPrimary,
+                  //     // fontWeight is already bold from theme
+                  //   ),
+                  // ),
                 ],
               ),
 

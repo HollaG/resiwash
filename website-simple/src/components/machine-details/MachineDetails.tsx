@@ -5,11 +5,14 @@ import { MachineStatusOverview } from "../../types/datatypes"
 import { useState } from "react"
 import { useMachineInfo } from "../../hooks/query/useMachineInfo"
 import { CustomTimeline } from "../timeline/Timeline"
+import { useEventInfo } from "../../hooks/query/useEventInfo"
 
 export const MachineDetails = ({
   machineOverview,
+  debug = false
 }: {
   machineOverview: MachineStatusOverview
+  debug?: boolean
 }) => {
 
   const [showDetails, setShowDetails] = useState(false);
@@ -17,6 +20,12 @@ export const MachineDetails = ({
   const { data, isLoading } = useMachineInfo({
     roomId: machineOverview.roomId,
     machineId: machineOverview.machineId,
+    load: showDetails, // Load details only when showDetails is true
+  });
+
+  const { data: eventData, isLoading: eventLoading } = useEventInfo({
+    machineId: machineOverview.machineId,
+    raw: debug,
     load: showDetails, // Load details only when showDetails is true
   });
 
@@ -44,6 +53,10 @@ export const MachineDetails = ({
           <CustomTimeline events={data?.events || []} />
 
         }
+        {eventLoading ? <Text> Loading Events... </Text> :
+          <Box mt="md">
+            <Text fw={600} mb="xs"> Recent Events </Text>
+          </Box>}
       </Collapse>
     </div>
   </Card >
