@@ -46,7 +46,7 @@ const SavedLocation = (props: DetailViewProps) => {
 
     <Stack gap="sm">
       {machineData.map((machineOverview, index) => (
-        <MachineDetails key={index} machineOverview={machineOverview} />
+        <MachineDetails key={index} machineOverview={machineOverview} debug={debug} />
 
       ))}
     </Stack>
