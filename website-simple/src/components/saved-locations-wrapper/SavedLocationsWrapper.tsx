@@ -54,7 +54,7 @@ export const SavedLocationsWrapper = ({ debug = false }: { debug?: boolean }) =>
 
         {flattened.map(({ areaId, roomId }) => (
 
-          <DetailView key={`${areaId}-${roomId}`} areaId={areaId} roomId={roomId} />
+          <DetailView key={`${areaId}-${roomId}`} areaId={areaId} roomId={roomId} debug={debug} />
 
         ))}
       </Stack>

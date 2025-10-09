@@ -8,8 +8,9 @@ import SensorStabilizer from "../../../core/SensorStabilizer";
 import { RawEvent } from "../../../models/RawEvent";
 import { Sensor } from "../../../models/Sensor";
 import { SensorToMachine } from "../../../models/SensorToMachine";
-import { In } from "typeorm";
+import { In, MoreThanOrEqual } from "typeorm";
 import {
+  GetQueryBoolean,
   MachineStatus,
   MachineType,
   STATUS_CODE_MAP,
@@ -18,81 +19,241 @@ import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
 
-
 // saves IN-MEMORY which machines have been sending data
 // TODO: migrate to Redis in future
 const activeMachines: { [machineId: number]: AbstractMachine } = {};
 
 interface GetEventsRequest {
-  machineIds?: string[],
-  raw?: boolean;
+  machineIds?: string[];
+  raw?: GetQueryBoolean;
   // PageReq: PageReq  // future pagination
 }
 
-export const getEvents = asyncHandler(async (req: Request<unknown, unknown, unknown, GetEventsRequest>, res: Response) => {
-  console.log("getEvents", req.query);
+export const getEvents = asyncHandler(
+  async (
+    req: Request<unknown, unknown, unknown, GetEventsRequest>,
+    res: Response
+  ) => {
+    console.log("getEvents", req.query);
 
+    const { machineIds = [], raw = GetQueryBoolean.FALSE } = req.query;
 
-  const {
-    machineIds = [],
-    raw = false,
-  } = req.query;
+    // Calculate date one week ago
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-
-  if (raw) {
-    const rawEventRepository = AppDataSource.getRepository(RawEvent);
-    let events: RawEvent[] = [];
-    if (!machineIds || machineIds.length === 0) {
-      // last 24 hours
-      events = await rawEventRepository.find({
-        order: {
-          timestamp: "DESC",
-        },
-        take: 10000,
-      });
+    if (GetQueryBoolean.parse(raw)) {
+      const rawEventRepository = AppDataSource.getRepository(RawEvent);
+      let events: RawEvent[] = [];
+      if (!machineIds || machineIds.length === 0) {
+        // last week
+        events = await rawEventRepository.find({
+          where: {
+            timestamp: MoreThanOrEqual(oneWeekAgo),
+          },
+          order: {
+            timestamp: "ASC",
+          },
+        });
+      } else {
+        events = await rawEventRepository.find({
+          where: {
+            machine: { machineId: In(machineIds.map(Number)) },
+            timestamp: MoreThanOrEqual(oneWeekAgo),
+          },
+          order: {
+            timestamp: "ASC",
+          },
+        });
+      }
+      sendOkResponse(res, events);
     } else {
-      events = await rawEventRepository.find({
-        where: {
-          machine: { machineId: In(machineIds.map(Number)) },
-        },
-        order: {
-          timestamp: "DESC",
-        },
-        take: 10000,
-      });
+      const eventRepository = AppDataSource.getRepository(UpdateEvent);
+      let events: UpdateEvent[] = [];
+      if (!machineIds || machineIds.length === 0) {
+        // last week
+        events = await eventRepository.find({
+          where: {
+            timestamp: MoreThanOrEqual(oneWeekAgo),
+          },
+          order: {
+            timestamp: "ASC",
+          },
+        });
+      } else {
+        events = await eventRepository.find({
+          where: {
+            machine: { machineId: In(machineIds.map(Number)) },
+            timestamp: MoreThanOrEqual(oneWeekAgo),
+          },
+          order: {
+            timestamp: "ASC",
+          },
+        });
+      }
+      sendOkResponse(res, events);
     }
-    sendOkResponse(res, events);
-
-  } else {
-    const eventRepository = AppDataSource.getRepository(UpdateEvent);
-    let events: UpdateEvent[] = [];
-    if (!machineIds || machineIds.length === 0) {
-      // last 100 events
-      events = await eventRepository.find({
-        order: {
-          timestamp: "DESC",
-        },
-        take: 100,
-      });
-
-    } else {
-      events = await eventRepository.find({
-        where: {
-          machine: { machineId: In(machineIds.map(Number)) },
-        },
-        order: {
-          timestamp: "DESC",
-        },
-        take: 100,
-      });
-    }
-    sendOkResponse(res, events);
-
   }
+);
 
+/**
+ * Get the events formatted in uplot data format
+ * x-values: timestamps in ms
+ * y-values:
+ *   series (n): reading[0].threshold
+ *   series (n+1): reading[0].value
+ *
+ * expected format:
+ *   [
+ *     [timestamp1, timestamp2, ...],  // x values
+ *     [reading1[0].threshold, reading2[0].threshold, ...], // y values for series 1
+ *     [reading1[0].value, reading2[0].value, ...], // y values for series 2
+ *     [reading1[1].threshold, reading2[1].threshold, ...], // y values for series 3 (if exists)
+ *     [reading1[1].value, reading2[1].value, ...], // y values for series 4 (if exists)
+ *   ]
+ *
+ */
 
+interface GetEventsFormattedRequest {
+  machineIds?: string[];
+  raw?: GetQueryBoolean;
+}
+interface GetEventsFormattedResponse {
+  points: number[][];
+  series: string[];
+}
+export const getEventsFormatted = asyncHandler(
+  async (
+    req: Request<unknown, unknown, unknown, GetEventsFormattedRequest>,
+    res: Response<GetEventsFormattedResponse, unknown>
+  ) => {
+    console.log("getEventsFormatted", req.query);
+    try {
+      const { machineIds = [], raw = GetQueryBoolean.FALSE } =
+        req.query as GetEventsFormattedRequest;
 
-});
+      if (!machineIds || machineIds.length === 0) {
+        return sendErrorResponse(res, "Machine IDs are required", 400);
+      }
+
+      // Calculate date one week ago
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // convert events to uplot format
+      const data: number[][] = [];
+      if (GetQueryBoolean.parse(raw)) {
+        const rawEventRepository = AppDataSource.getRepository(RawEvent);
+        let events: RawEvent[] = [];
+        if (!machineIds || machineIds.length === 0) {
+          // last week
+          events = await rawEventRepository.find({
+            where: {
+              timestamp: MoreThanOrEqual(oneWeekAgo),
+            },
+            order: {
+              timestamp: "ASC",
+            },
+          });
+        } else {
+          events = await rawEventRepository.find({
+            where: {
+              machine: { machineId: In(machineIds.map(Number)) },
+              timestamp: MoreThanOrEqual(oneWeekAgo),
+            },
+            order: {
+              timestamp: "ASC",
+            },
+          });
+        }
+
+        // convert to uplot format
+        // x values: timestamps in ms
+        // y values: series (n): reading[0].threshold, series (n+1): reading[0].value
+        const xValues: number[] = [];
+        const yValuesThreshold: number[] = [];
+        const yValuesValue: number[] = [];
+        const yValuesThreshold2: number[] = [];
+        const yValuesValue2: number[] = [];
+
+        events.forEach((event) => {
+          xValues.push(Math.floor(event.timestamp.getTime() / 1000));
+          yValuesThreshold.push(event.readings[0].threshold);
+          yValuesValue.push(event.readings[0].value);
+          if (event.readings[1]) {
+            yValuesThreshold2.push(event.readings[1].threshold);
+            yValuesValue2.push(event.readings[1].value);
+          }
+        });
+
+        data.push(xValues, yValuesThreshold, yValuesValue);
+        if (yValuesThreshold2.length > 0 && yValuesValue2.length > 0) {
+          data.push(yValuesThreshold2, yValuesValue2);
+        }
+      } else {
+        const eventRepository = AppDataSource.getRepository(UpdateEvent);
+        let events: UpdateEvent[] = [];
+        if (!machineIds || machineIds.length === 0) {
+          // last week
+          events = await eventRepository.find({
+            where: {
+              timestamp: MoreThanOrEqual(oneWeekAgo),
+            },
+            order: {
+              timestamp: "ASC",
+            },
+          });
+        } else {
+          events = await eventRepository.find({
+            where: {
+              machine: { machineId: In(machineIds.map(Number)) },
+              timestamp: MoreThanOrEqual(oneWeekAgo),
+            },
+            order: {
+              timestamp: "ASC",
+            },
+          });
+        }
+
+        // convert to uplot format
+        // x values: timestamps in ms
+        // y values: series (n): reading[0].threshold, series (n+1): reading[0].value
+        const xValues: number[] = [];
+        const yValuesThreshold: number[] = [];
+        const yValuesValue: number[] = [];
+        const yValuesThreshold2: number[] = [];
+        const yValuesValue2: number[] = [];
+
+        console.log({ events });
+
+        events.forEach((event) => {
+          xValues.push(Math.floor(event.timestamp.getTime() / 1000));
+          yValuesThreshold.push(event.readings[0].threshold);
+          yValuesValue.push(event.readings[0].value);
+          if (event.readings[1]) {
+            yValuesThreshold2.push(event.readings[1].threshold);
+            yValuesValue2.push(event.readings[1].value);
+          }
+        });
+
+        data.push(xValues, yValuesThreshold, yValuesValue);
+        if (yValuesThreshold2.length > 0 && yValuesValue2.length > 0) {
+          data.push(yValuesThreshold2, yValuesValue2);
+        }
+      }
+
+      const response: GetEventsFormattedResponse = {
+        points: data,
+        // todo: this may not always be the case in the future if we ever have sensors with more than 2 / less than 1
+        series: ["Threshold 1", "Value 1", "Threshold 2", "Value 2"],
+      };
+      sendOkResponse(res, response);
+    } catch (err) {
+      console.error("Error in getEventsFormatted", err);
+      return sendErrorResponse(res, "Internal server error", 500);
+    }
+  }
+);
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   // to implement!
@@ -302,6 +463,7 @@ export const createMultipleEvents = asyncHandler(
           // const debouncedStatus =
           //   debounceMachineMap[machine.machineId].update(rawStatus);
           actualEvent.status = status;
+          actualEvent.readings = readings;
 
           // find the latest event for this machine
           const latestEvent = latestEvents.find(
