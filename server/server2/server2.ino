@@ -332,7 +332,7 @@ void setup() {
 
 
   // Bring up UARTs *before* Wi-Fi so they aren't initialized during RF spikes
-  // mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
+  mySerial2.begin(BAUD, SERIAL_8N1, RXD2, TXD2);
   mySerial1.begin(BAUD, SERIAL_8N1, RXD1, TXD1);
   safeFlushSerial(mySerial1);
   safeFlushSerial(mySerial2);
