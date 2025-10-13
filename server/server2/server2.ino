@@ -40,13 +40,12 @@ WiFiClientSecure client;  // or WiFiClientSecure for HTTPS
 
 HTTPClient http;
 
+#include "esp_timer.h"
+#include "esp_system.h"
+
 #define ssid "espspot"
 #define pass "bvtx4675"
-// #define ssid "SINGTEL-C6A8"
-// #define pass "wkskgx37k7tW"
 const char *serverName = "https://resiwash.marcussoh.com/api/v2/events/bulk";
-// const char *serverName = "http://192.168.1.3:3000/api/v1/events/bulk";
-// const char *registerName = "http://192.168.1.3:3000/api/v1/sensors/register";
 const char *registerName = "https://resiwash.marcussoh.com/api/v2/sensors/register";
 
 #define BAUD 9600
@@ -61,6 +60,8 @@ const char *registerName = "https://resiwash.marcussoh.com/api/v2/sensors/regist
 
 #define START_BYTE 251
 #define END_BYTE 252
+
+#define MAX_WIFI_CONNECTION_TRIES 400  // 100 seconds at 250ms per try
 
 std::unordered_map<int, int> serial1Map;
 std::unordered_map<int, int> serial2Map;
@@ -300,9 +301,34 @@ void drawMachineInfo() {
   }
 }
 
+void timer_restart_callback(void *arg) {
+  Serial.println("Restarting now... (scheduled)");
+  esp_restart();
+}
+
+void force_restart(const char *reason = "forced") {
+  Serial.print("Restarting now... (");
+  Serial.print(reason);
+  Serial.println(")");
+  esp_restart();
+}
+
 void setup() {
   Serial.begin(115200);
   delay(200);
+
+  // initialize restart timer
+  esp_timer_create_args_t timer_args = {
+    .callback = &timer_restart_callback,
+    .arg = NULL,
+    .dispatch_method = ESP_TIMER_TASK,
+    .name = "daily_restart"
+  };
+  esp_timer_handle_t daily_timer;
+  esp_timer_create(&timer_args, &daily_timer);
+  esp_timer_start_once(daily_timer, 24ULL * 60 * 60 * 1000000);  // once after 24h
+  // esp_timer_start_once(daily_timer, 30ULL * 1000000); // debug: 30 sec restart
+
 
   // initialize screen
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {  // Address 0x3D for 128x64
@@ -322,7 +348,7 @@ void setup() {
 
   // Display static text
   display.println("Initializing...");
-  display.display();  
+  display.display();
 
 
 
@@ -337,13 +363,13 @@ void setup() {
   safeFlushSerial(mySerial1);
   safeFlushSerial(mySerial2);
 
-    // initialize pull up on RX lines
+  // initialize pull up on RX lines
   // pinMode(RXD1, INPUT_PULLUP);
   // pinMode(RXD2, INPUT_PULLUP);
   display.println("Connecting Wi-Fi...");
   display.display();
 
-  
+
 
   Serial.println("\nConnecting to Wi-Fi…");
   WiFi.persistent(false);
@@ -353,9 +379,15 @@ void setup() {
   delay(200);
 
   WiFi.begin(ssid, pass);
+  long retries = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.print('.');
+    retries += 1;
+    if (retries > MAX_WIFI_CONNECTION_TRIES) {
+      // force restart
+      force_restart("WiFi");
+    }
   }
   Serial.println();
 
@@ -449,9 +481,15 @@ void loop() {
     display.setCursor(0, 0);
     display.println("Reconnecting...");
     display.display();
+
+    long retries = 0;
     while (WiFi.status() != WL_CONNECTED) {
       delay(250);
       Serial.print('.');
+      retries++;
+      if (retries > MAX_WIFI_CONNECTION_TRIES) { 
+        force_restart("WiFi");
+      }
     }
 
     Serial.println("[info] connection regained");
