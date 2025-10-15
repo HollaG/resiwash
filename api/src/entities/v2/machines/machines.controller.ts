@@ -187,7 +187,6 @@ export const getMachine = asyncHandler(
     //   .getMany();
 
     machine.events = events;
-    machine.rawEvents = []; // for performance, we just don't send this
 
     sendOkResponse(res, machine);
   }
