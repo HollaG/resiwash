@@ -134,8 +134,6 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(res, { message: "Data is required" }, 400);
     }
 
-    // console.log("createMultipleEvents debug sensor", sensor);
-
     // get all SensorToMachine links for the sensor
     const sensorToMachineRepository =
       AppDataSource.getRepository(SensorToMachine);
@@ -158,8 +156,6 @@ export const createMultipleEvents = asyncHandler(
     const machineIds = sensorLinks.map((link) => link.machineId);
     const machineRepository = AppDataSource.getRepository(Machine);
 
-    console.log("createMultipleEvents debug machineIds", machineIds);
-
     const latestEvents = await actualEventRepository
       .createQueryBuilder("event")
       .leftJoinAndSelect("event.machine", "machine")
@@ -168,8 +164,6 @@ export const createMultipleEvents = asyncHandler(
       .orderBy("event.machineId", "ASC")
       .addOrderBy("event.timestamp", "DESC")
       .getMany();
-
-    // console.log("createMultipleEvents debug latestEvents", latestEvents);
 
     const rawEvents: RawEvent[] = [];
     const actualEvents: UpdateEvent[] = [];
@@ -250,11 +244,6 @@ export const createMultipleEvents = asyncHandler(
     });
     await machineRepository.save(machinesToUpdate);
 
-    console.log("createMultipleEvents debug actualEvents", actualEvents);
-    console.log(
-      "createMultipleEvents debug machineIdsToUpdate",
-      machineIdsToUpdate
-    );
     const savedActualEvents = await actualEventRepository.save(actualEvents);
 
     // ------- actual events get saved only if there is a state change -------

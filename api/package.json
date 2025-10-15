@@ -21,12 +21,15 @@
       "firebase": "^11.9.0",
       "firebase-admin": "^13.4.0",
       "pg": "^8.14.1",
+      "pino-http": "^11.0.0",
       "reflect-metadata": "^0.2.2",
       "typeorm": "0.3.22"
    },
    "devDependencies": {
       "@types/express": "^5.0.0",
       "@types/node": "^22.13.9",
+      "@types/pino": "^7.0.4",
+      "@types/pino-http": "^5.8.4",
       "concurrently": "^9.1.2",
       "nodemon": "^3.1.9",
       "ts-node": "^10.9.2",

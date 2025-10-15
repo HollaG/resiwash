@@ -23,7 +23,7 @@ export const getMachines = asyncHandler(
     req: Request<unknown, unknown, unknown, GetMachinesRequest>,
     res: Response
   ) => {
-    console.log("getMachines", req.query);
+    req.log.info("getMachines", req.query);
     const {
       areaIds = [],
       roomIds = [],
@@ -37,14 +37,14 @@ export const getMachines = asyncHandler(
 
     if (GetQueryBoolean.parse(extra)) {
       // left join room and area
-      console.log("including room and area info");
+      req.log.debug("including room and area info");
       machines = machines
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area");
     }
 
-    console.log("SQL Query:", machines.getSql());
-    console.log("Query parameters:", machines.getParameters());
+    req.log.debug("SQL Query:", machines.getSql());
+    req.log.debug("Query parameters:", machines.getParameters());
     // if (areaId && !Number.isNaN(Number(areaId))) {
     //   machines = machines.where("area.areaId = :areaId", {
     //     areaId: Number(areaId),
@@ -61,27 +61,27 @@ export const getMachines = asyncHandler(
       machines =
         roomIds.length > 0
           ? machines.andWhere("machine.machineId IN (:...machineIds)", {
-              machineIds: machineIds.map(Number),
-            })
+            machineIds: machineIds.map(Number),
+          })
           : machines.where("machine.machineId IN (:...machineIds)", {
-              machineIds: machineIds.map(Number),
-            });
+            machineIds: machineIds.map(Number),
+          });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
 
-    console.log("Final SQL Query:", machines.getSql());
-    console.log("Final Query parameters:", machines.getParameters());
+    req.log.debug("Final SQL Query:", machines.getSql());
+    req.log.debug("Final Query parameters:", machines.getParameters());
 
     const machinesList = await machines.getMany();
 
-    console.log("Query result count:", machinesList.length);
-    console.log({ machinesList });
+    req.log.debug("Query result count:", machinesList.length);
+    req.log.debug({ machinesList });
     sendOkResponse(res, machinesList);
 
     // // // only rooms with :areaId
     // if (!areaId || Number(areaId) <= 0) {
-    //   console.log("getRooms: areaId is not valid", areaId);
+    //   req.log.debug("getRooms: areaId is not valid", areaId);
     //   return sendErrorResponse(res, "Area ID is required", 400);
     // }
 
@@ -179,15 +179,15 @@ export const getMachine = asyncHandler(
       .take(10)
       .getMany();
 
-    const rawEvents = await AppDataSource.getRepository(RawEvent)
-      .createQueryBuilder("event")
-      .where("event.machineId = :id", { id: machineId })
-      .orderBy("event.timestamp", "DESC")
-      .take(1000)
-      .getMany();
+    // const rawEvents = await AppDataSource.getRepository(RawEvent)
+    //   .createQueryBuilder("event")
+    //   .where("event.machineId = :id", { id: machineId })
+    //   .orderBy("event.timestamp", "DESC")
+    //   .take(1000)
+    //   .getMany();
 
     machine.events = events;
-    machine.rawEvents = rawEvents;
+    machine.rawEvents = []; // for performance, we just don't send this
 
     sendOkResponse(res, machine);
   }
@@ -199,7 +199,7 @@ export const createMachine = async (req: Request, res: Response) => {
 
   // todo: authentication and authorization
 
-  console.log("createMachine", req.body);
+  req.log.info("createMachine", req.body);
 
   const { areaId, roomId, machine: machineToCreate } = req.body;
   const { name, label, type, imageUrl } = machineToCreate;

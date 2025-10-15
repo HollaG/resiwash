@@ -34,7 +34,7 @@ export const getEvents = asyncHandler(
     req: Request<unknown, unknown, unknown, GetEventsRequest>,
     res: Response
   ) => {
-    console.log("getEvents", req.query);
+    req.log.info("getEvents", req.query);
 
     const { machineIds = [], raw = GetQueryBoolean.FALSE } = req.query;
 
@@ -127,7 +127,7 @@ export const getEventsFormatted = asyncHandler(
     req: Request<unknown, unknown, unknown, GetEventsFormattedRequest>,
     res: Response<GetEventsFormattedResponse, unknown>
   ) => {
-    console.log("getEventsFormatted", req.query);
+    req.log.info("getEventsFormatted", req.query);
     try {
       const { machineIds = [], raw = GetQueryBoolean.FALSE } =
         req.query as GetEventsFormattedRequest;
@@ -224,8 +224,6 @@ export const getEventsFormatted = asyncHandler(
         const yValuesThreshold2: number[] = [];
         const yValuesValue2: number[] = [];
 
-        console.log({ events });
-
         events.forEach((event) => {
           xValues.push(Math.floor(event.timestamp.getTime() / 1000));
           yValuesThreshold.push(event.readings[0].threshold);
@@ -260,7 +258,7 @@ export const createEvent = asyncHandler(async (req: Request, res: Response) => {
   // // expected fields: statusCode, machineId
   // // optional fields: status
   // // todo: authentication via API key
-  // console.log("createEvent", req.body);
+  // req.log.info("createEvent", req.body);
   // const { status, machineId, statusCode } = req.body;
   // try {
   //   const event = await saveEvent({ status, machineId, statusCode });
@@ -334,7 +332,7 @@ export type Reading = {
  */
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("createMultipleEvents", JSON.stringify(req.body, null, 2));
+    req.log.info("createMultipleEvents", req.body);
 
     const data = req.body.data as EspEvent[];
     const macAddress = req.body.macAddress as string;
@@ -356,7 +354,7 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(res, "Data is required", 400);
     }
 
-    // console.log("createMultipleEvents debug sensor", sensor);
+    // req.log.info("createMultipleEvents debug sensor", sensor);
 
     // get all SensorToMachine links for the sensor
     const sensorToMachineRepository =
@@ -380,7 +378,6 @@ export const createMultipleEvents = asyncHandler(
     const machineIds = sensorLinks.map((link) => link.machineId);
     const machineRepository = AppDataSource.getRepository(Machine);
 
-    console.log("createMultipleEvents debug machineIds", machineIds);
 
     const latestEvents = await actualEventRepository
       .createQueryBuilder("event")
@@ -390,8 +387,6 @@ export const createMultipleEvents = asyncHandler(
       .orderBy("event.machineId", "ASC")
       .addOrderBy("event.timestamp", "DESC")
       .getMany();
-
-    // console.log("createMultipleEvents debug latestEvents", latestEvents);
 
     const rawEvents: RawEvent[] = [];
     const actualEvents: UpdateEvent[] = [];
@@ -506,11 +501,6 @@ export const createMultipleEvents = asyncHandler(
     });
     await machineRepository.save(machinesToUpdate);
 
-    console.log("createMultipleEvents debug actualEvents", actualEvents);
-    console.log(
-      "createMultipleEvents debug machineIdsToUpdate",
-      machineIdsToUpdate
-    );
     const savedActualEvents = await actualEventRepository.save(actualEvents);
 
     // ------- actual events get saved only if there is a state change -------
@@ -552,7 +542,7 @@ export const createMultipleEvents = asyncHandler(
     //   const errors = events
     //     .filter((event) => event.status === "rejected")
     //     .map((event) => (event as PromiseRejectedResult).reason);
-    //   console.log("error: ", errors)
+    //   req.log.debug("error: ", errors)
     //   return sendErrorResponse(res, errors, 500);
     // }
     // sendOkResponse(

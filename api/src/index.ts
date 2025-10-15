@@ -2,6 +2,7 @@ import { User } from "./models/User";
 
 // src/index.ts
 import express, { Express, Request, Response } from "express";
+const pino = require('pino-http')()
 import dotenv from "dotenv";
 import fs from "fs";
 import session from "express-session";
@@ -49,6 +50,7 @@ app.use(
     saveUninitialized: true,
   })
 );
+app.use(pino);
 const port = process.env.PORT || 3000;
 
 // ROUTES

@@ -20,7 +20,7 @@ export const getRooms = asyncHandler(
     const roomRepository = AppDataSource.getRepository(Room);
     // only rooms with :areaId
     if (areaIds.length === 0) {
-      console.log("getRooms: areaIds is not valid", areaIds);
+      req.log.debug("getRooms: areaIds is not valid", areaIds);
       return sendErrorResponse(res, { message: "Area ID is required" }, 400);
     }
 
@@ -34,11 +34,11 @@ export const getRooms = asyncHandler(
       rooms =
         areaIds.length > 0
           ? rooms.andWhere("room.roomId IN (:...roomIds)", {
-              roomIds: roomIds.map(Number),
-            })
+            roomIds: roomIds.map(Number),
+          })
           : rooms.where("room.roomId IN (:...roomIds)", {
-              roomIds: roomIds.map(Number),
-            });
+            roomIds: roomIds.map(Number),
+          });
     }
 
     const roomList = await rooms.getMany();
@@ -68,7 +68,7 @@ export const createRoom = async (req: Request, res: Response) => {
 
   // todo: authentication and authorization
 
-  console.log("createRoom", req.body);
+  req.log.info("createRoom", req.body);
 
   const { areaId, room: roomToCreate } = req.body as {
     areaId: number;

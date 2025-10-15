@@ -44,7 +44,7 @@ export const createArea = async (req: Request, res: Response) => {
 
   // todo: authentication and authorization
 
-  console.log("createArea", req.body);
+  req.log.info("createArea", req.body);
 
   const { area: areaToCreate } = req.body as { area: Area };
 
