@@ -2,7 +2,7 @@ import { User } from "./models/User";
 
 // src/index.ts
 import express, { Express, Request, Response } from "express";
-const pino = require('pino-http')()
+const pino = require('pino-http')
 import dotenv from "dotenv";
 import fs from "fs";
 import session from "express-session";
@@ -17,6 +17,13 @@ dotenv.config();
 import { AppDataSource } from "./data-source";
 import { VerifyToken } from "./middleware/auth";
 import { sendErrorResponse } from "./core/responses";
+
+const logger = pino({
+  transport: {
+    target: 'pino-pretty'
+  },
+})
+
 
 // TypeORM
 AppDataSource.initialize()
@@ -50,7 +57,7 @@ app.use(
     saveUninitialized: true,
   })
 );
-app.use(pino);
+app.use(logger);
 const port = process.env.PORT || 3000;
 
 // ROUTES
