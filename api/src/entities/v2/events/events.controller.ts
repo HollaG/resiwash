@@ -460,6 +460,7 @@ export const createMultipleEvents = asyncHandler(
           //   debounceMachineMap[machine.machineId].update(rawStatus);
           actualEvent.status = status;
           actualEvent.readings = readings;
+          actualEvent.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
 
           // find the latest event for this machine
           const latestEvent = latestEvents.find(
