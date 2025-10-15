@@ -1,7 +1,6 @@
 import { Tabs as MantineTabs, Stack } from "@mantine/core"
 import { useSavedLocations } from "../../hooks/useSavedLocations"
 import { useLocationInfo } from "../../hooks/query/useLocationInfo"
-import { useScrollableTabs } from "../Tabs/base/useScrollableTabs"
 
 import classes from "./index.module.css"
 import { useState } from "react"
@@ -9,13 +8,13 @@ import { DetailView } from "../saved-location/SavedLocation"
 
 export const SavedLocationsWrapper = ({ debug = false }: { debug?: boolean }) => {
   const { savedLocations } = useSavedLocations()
-  const { tabListReference } = useScrollableTabs();
+  // const { tabListReference } = useScrollableTabs();
 
-  const [controlsRefs, setControlsRefs] = useState<Record<string, HTMLButtonElement | null>>({});
-  const setControlRef = (val: string) => (node: HTMLButtonElement) => {
-    controlsRefs[val] = node;
-    setControlsRefs(controlsRefs);
-  };
+  // const [controlsRefs, setControlsRefs] = useState<Record<string, HTMLButtonElement | null>>({});
+  // const setControlRef = (val: string) => (node: HTMLButtonElement) => {
+  //   controlsRefs[val] = node;
+  //   setControlsRefs(controlsRefs);
+  // };
 
   // todo: localstorage
   const [value, setValue] = useState<string | null>('all');
@@ -36,12 +35,12 @@ export const SavedLocationsWrapper = ({ debug = false }: { debug?: boolean }) =>
 
 
   return <MantineTabs classNames={{ list: classes.list, tab: classes.tab }} defaultValue="all" value={value} onChange={setValue}>
-    <MantineTabs.List ref={tabListReference}>
-      <MantineTabs.Tab value="all" disabled={!flattened.length} ref={setControlRef("all")}>
+    <MantineTabs.List >
+      <MantineTabs.Tab value="all" disabled={!flattened.length}>
         All Locations ({flattened.length})
       </MantineTabs.Tab>
       {flattened.map(({ areaId, roomId }) => (
-        <MantineTabs.Tab key={`${areaId}-${roomId}`} value={`${areaId}-${roomId}`} ref={setControlRef(`${areaId}-${roomId}`)}>
+        <MantineTabs.Tab key={`${areaId}-${roomId}`} value={`${areaId}-${roomId}`} >
           {getName(areaId, roomId)}
         </MantineTabs.Tab>
       ))}
