@@ -409,7 +409,8 @@ export const createMultipleEvents = asyncHandler(
           // continue;
         } else {
           const rawStatus = STATUS_CODE_MAP[statusCode] as MachineStatus;
-          rawEvent.status = rawStatus;
+          rawEvent.status = rawStatus; // note that the raw status will SOLELY be based on the ESP's data, which is 1 if any of the LDRs are above threshold
+          // todo: we can change this such that it is the processed status instead, maybe?
 
           rawEvent.readings = readings;
           rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
@@ -465,16 +466,9 @@ export const createMultipleEvents = asyncHandler(
             (event) => event.machine.machineId === machine.machineId
           );
 
-          if (!latestEvent || latestEvent.status !== rawStatus) {
-            const event = new UpdateEvent();
+          if (!latestEvent || latestEvent.status !== status) { // if there is a state change detected
 
-            event.status = rawStatus;
-            event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
-
-            // await actualEventRepository.save(event);
-
-            // return event;
-            actualEvents.push(event);
+            actualEvents.push(actualEvent);
           } else {
             // NO STATE CHANGE
             // machine's lastUpdated timestamp comes from latest event
