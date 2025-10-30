@@ -56,12 +56,12 @@ export const getMachines = asyncHandler(
 
     let isFirstCondition = true;
 
-    if (areaIds.length > 0) {
-      machines = machines.where("area.areaId IN (:...areaIds)", {
-        areaIds: areaIds.map(Number),
-      });
-      isFirstCondition = false;
-    }
+    // if (areaIds.length > 0) {
+    //   machines = machines.where("area.areaId IN (:...areaIds)", {
+    //     areaIds: areaIds.map(Number),
+    //   });
+    //   isFirstCondition = false;
+    // }
 
     if (types.length > 0) {
       machines =
