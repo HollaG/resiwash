@@ -8,6 +8,7 @@ import { GetQueryBoolean, MachineType } from "../../../core/types";
 import { UpdateEvent } from "../../../models/UpdateEvent";
 import { RawEvent } from "../../../models/RawEvent";
 import { machine } from "os";
+import { types } from "util";
 
 interface GetMachinesRequest {
   areaIds?: string[]; // todo, we don't need to filter by this anyway
@@ -15,6 +16,7 @@ interface GetMachinesRequest {
   min?: GetQueryBoolean; // actually boolean
   machineIds?: string[];
   extra?: GetQueryBoolean; // actually boolean
+  types?: MachineType[];
 }
 
 // get all machines. but only
@@ -30,6 +32,7 @@ export const getMachines = asyncHandler(
       min,
       machineIds = [],
       extra = GetQueryBoolean.FALSE,
+      types = [],
     } = req.query;
 
     let machines =
@@ -51,21 +54,43 @@ export const getMachines = asyncHandler(
     //   });
     // }
 
-    if (roomIds.length > 0) {
-      machines = machines.where("machine.roomId IN (:...roomIds)", {
-        roomIds: roomIds.map(Number),
+    let isFirstCondition = true;
+
+    if (areaIds.length > 0) {
+      machines = machines.where("area.areaId IN (:...areaIds)", {
+        areaIds: areaIds.map(Number),
       });
+      isFirstCondition = false;
+    }
+
+    if (types.length > 0) {
+      machines =
+        isFirstCondition
+          ? machines.where("machine.type IN (:...types)", { types })
+          : machines.andWhere("machine.type IN (:...types)", { types });
+      isFirstCondition = false;
+    }
+
+
+
+    if (roomIds.length > 0) {
+      machines = isFirstCondition
+        ? machines.where("room.roomId IN (:...roomIds)", {
+          roomIds: roomIds.map(Number),
+        })
+        : machines.andWhere("room.roomId IN (:...roomIds)", {
+          roomIds: roomIds.map(Number),
+        });
     }
 
     if (machineIds.length > 0) {
-      machines =
-        roomIds.length > 0
-          ? machines.andWhere("machine.machineId IN (:...machineIds)", {
-            machineIds: machineIds.map(Number),
-          })
-          : machines.where("machine.machineId IN (:...machineIds)", {
-            machineIds: machineIds.map(Number),
-          });
+      machines = isFirstCondition
+        ? machines.where("machine.machineId IN (:...machineIds)", {
+          machineIds: machineIds.map(Number),
+        })
+        : machines.andWhere("machine.machineId IN (:...machineIds)", {
+          machineIds: machineIds.map(Number),
+        });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
