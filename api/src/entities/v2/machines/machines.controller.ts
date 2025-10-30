@@ -38,12 +38,20 @@ export const getMachines = asyncHandler(
     let machines =
       AppDataSource.getRepository(Machine).createQueryBuilder("machine");
 
-    if (GetQueryBoolean.parse(extra)) {
-      // left join room and area
-      req.log.debug("including room and area info");
-      machines = machines
-        .leftJoinAndSelect("machine.room", "room")
-        .leftJoinAndSelect("room.area", "area");
+    // Join room if we need to filter by roomIds or if extra info is requested
+    const needsRoomJoin = roomIds.length > 0 || GetQueryBoolean.parse(extra);
+
+    if (needsRoomJoin) {
+      if (GetQueryBoolean.parse(extra)) {
+        // left join room and area with select
+        req.log.debug("including room and area info");
+        machines = machines
+          .leftJoinAndSelect("machine.room", "room")
+          .leftJoinAndSelect("room.area", "area");
+      } else {
+        // just join room without select (for filtering only)
+        machines = machines.leftJoin("machine.room", "room");
+      }
     }
 
     req.log.debug("SQL Query:", machines.getSql());
