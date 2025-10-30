@@ -25,7 +25,8 @@ class MachineDisplayUtils {
       );
       if (status == MachineStatus.available) {
         timePart = ' since $relativeTime';
-      } else if (status == MachineStatus.inUse) {
+      } else if (status == MachineStatus.inUse ||
+          status == MachineStatus.finishing) {
         timePart = ' for $relativeTime';
       }
     }
@@ -38,6 +39,8 @@ class MachineDisplayUtils {
         return 'In use${timePart.replaceFirst(" ago", "")}';
       case MachineStatus.hasIssues:
         return 'Has issues';
+      case MachineStatus.finishing:
+        return 'Finishing${timePart.replaceFirst(" ago", "")}';
       case null:
         return 'Unknown status';
       default:

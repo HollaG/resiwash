@@ -33,12 +33,17 @@ class MachineRow extends StatelessWidget {
         spacing: 8,
         children: [
           Text(machine.name, style: Theme.of(context).textTheme.labelMedium),
-          Text(
-            "@ $location",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(
-                context,
-              ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+          Expanded(
+            child: Text(
+              "@ $location",
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
             ),
           ),
         ],

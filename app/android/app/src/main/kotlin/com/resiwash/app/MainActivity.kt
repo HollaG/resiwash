@@ -1,4 +1,4 @@
-package com.example.resiwash
+package com.resiwash.app
 
 import io.flutter.embedding.android.FlutterActivity
 

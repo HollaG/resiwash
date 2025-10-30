@@ -1,3 +1,4 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/theme.dart';
@@ -40,7 +41,7 @@ class MachineStatusIndicator extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         border: status == MachineStatus.finishing
             ? Border.all(
-                color: getIndicatorColor(context, MachineStatus.available),
+                color: getIndicatorColor(context, MachineStatus.inUse),
                 width: 2,
               )
             : null,
@@ -59,6 +60,10 @@ class MachineStatusIndicator extends StatelessWidget {
       case MachineStatus.hasIssues:
         // Use the unknown/tertiary color (495057)
         return const Color(0xff495057);
+
+      case MachineStatus.finishing:
+        // transparent
+        return Colors.transparent;
       case null:
         return const Color(0xff495057);
       default:
@@ -74,6 +79,8 @@ class MachineStatusIndicator extends StatelessWidget {
         return context.inUse.color;
       case MachineStatus.hasIssues:
         return const Color(0xff212529);
+      case MachineStatus.finishing:
+        return context.inUse.color;
       case null:
         return const Color(0xff212529);
       default:

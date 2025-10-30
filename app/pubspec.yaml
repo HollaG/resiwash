@@ -24,6 +24,7 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.6
+  dotted_border: ^3.1.0
 
 dev_dependencies:
   flutter_test:

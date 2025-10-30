@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
 
     final routerBuild = MaterialApp.router(
       routerConfig: router,
-      title: 'Flutter Demo',
+      title: 'ResiWash',
       theme: theme.light().copyWith(textTheme: textTheme),
       darkTheme: theme.dark().copyWith(textTheme: textTheme),
       themeMode: ThemeMode.light, // TODO: enable system dark mode
