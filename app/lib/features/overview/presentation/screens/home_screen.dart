@@ -11,7 +11,7 @@ import 'package:resiwash/features/room/presentation/cubit/room_detail_state.dart
 import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
-import 'package:resiwash/features/overview/presentation/widgets/homeHeader.dart';
+import 'package:resiwash/features/overview/presentation/widgets/home_header.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview_wrapper.dart';
 
 class HomeScreen extends StatefulWidget {

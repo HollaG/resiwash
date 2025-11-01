@@ -181,11 +181,17 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
           ),
         );
       },
-    ).then(
-      (result) => {
-        // save the selectedRoomIds to SharedPrefs
-        sl<SharedPreferencesService>().setSavedLocations(loadedLocations),
-      },
-    );
+    ).then((result) {
+      // save the selectedRoomIds to SharedPrefs
+      sl<SharedPreferencesService>().setSavedLocations(loadedLocations);
+
+      // Check if widget is still mounted before using context
+      if (mounted) {
+        // reload the overview cubit with new room ids
+        context.read<OverviewCubit>().load(
+          roomIds: loadedLocations.getAllRoomIds(),
+        );
+      }
+    });
   }
 }

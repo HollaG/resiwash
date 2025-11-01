@@ -19,6 +19,9 @@ class OverviewCubit extends Cubit<OverviewState> {
 
   Future<void> load({List<String>? roomIds}) async {
     // emit(OverviewLoading());
+    // if no roomIds, just don't load anything
+    appLog.d("OverviewCubit.load called with roomIds: $roomIds");
+
     if (state is OverviewLoaded) {
       emit(
         OverviewRefreshing(

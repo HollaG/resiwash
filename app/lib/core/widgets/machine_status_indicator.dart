@@ -54,6 +54,7 @@ class MachineStatusIndicator extends StatelessWidget {
       case MachineStatus.available:
         // Use theme.success color
         return context.success.colorContainer;
+
       case MachineStatus.inUse:
         // Use the new inUse color we added
         return context.inUse.colorContainer;
@@ -71,16 +72,35 @@ class MachineStatusIndicator extends StatelessWidget {
     }
   }
 
+  static Color getConnectorColor(BuildContext context, MachineStatus? status) {
+    switch (status) {
+      case MachineStatus.available:
+        // Use theme.success color
+        return context.success.colorContainer;
+      case MachineStatus.finishing:
+      case MachineStatus.inUse:
+        // Use the new inUse color we added
+        return context.inUse.colorContainer;
+      case MachineStatus.hasIssues:
+        // Use the unknown/tertiary color (495057)
+        return const Color(0xff495057);
+
+      case null:
+        return const Color(0xff495057);
+      default:
+        return const Color(0xff495057);
+    }
+  }
+
   static Color getTextColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
         return context.success.color;
+      case MachineStatus.finishing:
       case MachineStatus.inUse:
         return context.inUse.color;
       case MachineStatus.hasIssues:
         return const Color(0xff212529);
-      case MachineStatus.finishing:
-        return context.inUse.color;
       case null:
         return const Color(0xff212529);
       default:
@@ -92,8 +112,10 @@ class MachineStatusIndicator extends StatelessWidget {
     switch (status) {
       case MachineStatus.available:
         return context.success.color;
+      case MachineStatus.finishing:
       case MachineStatus.inUse:
         return context.inUse.color;
+
       case MachineStatus.hasIssues:
         return const Color(0xffCED4DA);
       case null:
@@ -110,6 +132,7 @@ class MachineStatusIndicator extends StatelessWidget {
     switch (status) {
       case MachineStatus.available:
         return context.success.onColor;
+      case MachineStatus.finishing:
       case MachineStatus.inUse:
         return context.inUse.onColor;
       case MachineStatus.hasIssues:
@@ -120,22 +143,4 @@ class MachineStatusIndicator extends StatelessWidget {
         return const Color(0xffDEE2E6);
     }
   }
-}
-
-class _DiagonalPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xffffffff)
-      ..strokeWidth = 2;
-
-    // First diagonal (top-left to bottom-right)
-    canvas.drawLine(Offset(0, 0), Offset(size.width, size.height), paint);
-
-    // Second diagonal (top-right to bottom-left)
-    canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -94,23 +94,23 @@ class AppRoutes {
   static const String myMachines = '/me';
   static const String profile = '/profile';
 
-  // Helper methods for navigation
-  static String buildMachineListRoute({
-    List<String>? roomIds,
-    List<String>? areaIds,
-    List<String>? machineIds,
-  }) {
-    final uri = Uri(
-      path: machineList,
-      queryParameters: {
-        if (roomIds != null && roomIds.isNotEmpty) 'roomIds[]': roomIds,
-        if (areaIds != null && areaIds.isNotEmpty) 'areaIds[]': areaIds,
-        if (machineIds != null && machineIds.isNotEmpty)
-          'machineIds[]': machineIds,
-      },
-    );
-    return uri.toString();
-  }
+  // // Helper methods for navigation
+  // static String buildMachineListRoute({
+  //   List<String>? roomIds,
+  //   List<String>? areaIds,
+  //   List<String>? machineIds,
+  // }) {
+  //   final uri = Uri(
+  //     path: machineList,
+  //     queryParameters: {
+  //       if (roomIds != null && roomIds.isNotEmpty) 'roomIds[]': roomIds,
+  //       if (areaIds != null && areaIds.isNotEmpty) 'areaIds[]': areaIds,
+  //       if (machineIds != null && machineIds.isNotEmpty)
+  //         'machineIds[]': machineIds,
+  //     },
+  //   );
+  //   return uri.toString();
+  // }
 
   static String buildMachineDetailRoute(String machineId) {
     return machineDetail.replaceFirst(':machineId', machineId);

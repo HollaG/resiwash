@@ -67,6 +67,9 @@ class OverviewLoaded extends OverviewState {
     required this.machinesByRoom,
     required this.locations,
   });
+
+  @override
+  List<Object?> get props => [machines, machinesByRoom, locations];
 }
 
 class OverviewRefreshing extends OverviewLoaded {

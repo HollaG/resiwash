@@ -16,6 +16,7 @@ class MachineListCubit extends Cubit<MachineListState> {
     List<String>? machineIds,
     bool? min,
     bool? extra,
+    List<String>? types,
   }) async {
     if (state is MachineListLoaded) {
       emit(MachineListRefreshing((state as MachineListLoaded).machines));
@@ -28,6 +29,7 @@ class MachineListCubit extends Cubit<MachineListState> {
       machineIds: machineIds,
       min: min,
       extra: extra ?? false,
+      types: types,
     );
 
     final result = await listMachinesUseCase.call(params);

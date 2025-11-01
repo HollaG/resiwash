@@ -100,6 +100,6 @@ class MachineTimelineConnector extends StatelessWidget {
   }
 
   Color _getColorForMachineStatus(BuildContext context, MachineStatus status) {
-    return MachineStatusIndicator.getIndicatorColor(context, status);
+    return MachineStatusIndicator.getConnectorColor(context, status);
   }
 }

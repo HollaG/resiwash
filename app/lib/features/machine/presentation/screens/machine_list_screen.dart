@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/widgets/status_row_summary.dart';
 import 'package:resiwash/features/area/domain/usecases/get_area_use_case.dart';
 import 'package:resiwash/features/area/presentation/cubit/area_detail_cubit.dart';
 import 'package:resiwash/features/area/presentation/cubit/area_detail_state.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_list_cubit.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_list_state.dart';
@@ -60,7 +62,13 @@ class _MachineListScreenState extends State<MachineListScreen>
         BlocProvider<MachineListCubit>(
           create: (context) =>
               MachineListCubit(listMachinesUseCase: sl<ListMachinesUseCase>())
-                ..load(roomIds: widget.roomIds, extra: true),
+                ..load(
+                  roomIds: widget.roomIds,
+                  areaIds: widget.areaIds,
+                  types: widget.types,
+                  machineIds: widget.machineIds,
+                  extra: true,
+                ),
         ),
       ],
       child: Scaffold(
@@ -81,6 +89,14 @@ class _MachineListScreenState extends State<MachineListScreen>
             if (state is MachineListLoading) {
               return Center(child: CircularProgressIndicator());
             } else if (state is MachineListLoaded) {
+              List<MachineEntity> machines = state.machines;
+              List<MachineEntity> washers = machines
+                  .where((machine) => machine.type == MachineType.washer)
+                  .toList();
+              List<MachineEntity> dryers = machines
+                  .where((machine) => machine.type == MachineType.dryer)
+                  .toList();
+
               return Container(
                 padding: EdgeInsets.all(16),
                 child: RefreshIndicator(
@@ -88,14 +104,32 @@ class _MachineListScreenState extends State<MachineListScreen>
                     final completer = Completer<void>();
                     context
                         .read<MachineListCubit>()
-                        .load(roomIds: widget.roomIds, extra: true)
+                        .load(
+                          roomIds: widget.roomIds,
+                          areaIds: widget.areaIds,
+                          types: widget.types,
+                          machineIds: widget.machineIds,
+                          extra: true,
+                        )
                         .then((_) => completer.complete());
                     return completer.future;
                   },
                   child: ListView(
-                    children: state.machines.map((machine) {
-                      return MachineRow(machine: machine);
-                    }).toList(),
+                    children: [
+                      if (washers.isNotEmpty) ...[
+                        StatusRowSummary(label: "Washers", machines: washers),
+                      ],
+                      if (dryers.isNotEmpty) ...[
+                        StatusRowSummary(label: "Dryers", machines: dryers),
+                      ],
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Divider(),
+                      ),
+                      ...state.machines.map((machine) {
+                        return MachineRow(machine: machine);
+                      }),
+                    ],
                   ),
                 ),
               );

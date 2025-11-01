@@ -90,7 +90,7 @@ class HomeHeader extends StatelessWidget {
                                 Uri(
                                   path: AppRoutes.machineList,
                                   queryParameters: {
-                                    'types[]': [MachineType.washer.toString()],
+                                    'types[]': [MachineType.washer.name],
                                   },
                                 ).toString(),
                                 extra: {
@@ -98,14 +98,6 @@ class HomeHeader extends StatelessWidget {
                                   'count': totalWashers.toString(),
                                 },
                               );
-                              // context.push(
-                              //   Uri(
-                              //     path: AppRoutes.buildMachineDetailRoute(
-                              //       machine.machineId,
-                              //     ),
-                              //   ).toString(),
-                              //   extra: {'machine': machine},
-                              // );
                             },
                           ),
                         ),
@@ -117,7 +109,21 @@ class HomeHeader extends StatelessWidget {
                             count: "$dryerCount/$totalDryers",
 
                             actionText: "View",
-                            onAction: () {},
+                            onAction: () {
+                              // Navigate to the washer list page
+                              context.push(
+                                Uri(
+                                  path: AppRoutes.machineList,
+                                  queryParameters: {
+                                    'types[]': [MachineType.dryer.name],
+                                  },
+                                ).toString(),
+                                extra: {
+                                  'title': "Dryers",
+                                  'count': totalDryers.toString(),
+                                },
+                              );
+                            },
                           ),
                         ),
                       ],
