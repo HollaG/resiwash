@@ -332,8 +332,8 @@ export type Reading = {
  */
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
-    if (process.env.DEBUG_SENSOR)
-      req.log.info("createMultipleEvents", req.body);
+    // if (process.env.DEBUG_SENSOR)
+    //   req.log.info("createMultipleEvents", req.body);
 
     const data = req.body.data as EspEvent[];
     const macAddress = req.body.macAddress as string;
