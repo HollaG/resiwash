@@ -332,7 +332,8 @@ export type Reading = {
  */
 export const createMultipleEvents = asyncHandler(
   async (req: Request, res: Response) => {
-    req.log.info("createMultipleEvents", req.body);
+    if (process.env.DEBUG_SENSOR)
+      req.log.info("createMultipleEvents", req.body);
 
     const data = req.body.data as EspEvent[];
     const macAddress = req.body.macAddress as string;
@@ -377,7 +378,6 @@ export const createMultipleEvents = asyncHandler(
 
     const machineIds = sensorLinks.map((link) => link.machineId);
     const machineRepository = AppDataSource.getRepository(Machine);
-
 
     const latestEvents = await actualEventRepository
       .createQueryBuilder("event")
@@ -467,7 +467,8 @@ export const createMultipleEvents = asyncHandler(
             (event) => event.machine.machineId === machine.machineId
           );
 
-          if (!latestEvent || latestEvent.status !== status) { // if there is a state change detected
+          if (!latestEvent || latestEvent.status !== status) {
+            // if there is a state change detected
 
             actualEvents.push(actualEvent);
           } else {

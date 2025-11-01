@@ -35,6 +35,16 @@ export const getMachines = asyncHandler(
       types = [],
     } = req.query;
 
+    // note: if no filters are provided, return empty list
+    if (
+      areaIds.length === 0 &&
+      roomIds.length === 0 &&
+      machineIds.length === 0 &&
+      types.length === 0
+    ) {
+      return sendOkResponse(res, []);
+    }
+
     let machines =
       AppDataSource.getRepository(Machine).createQueryBuilder("machine");
 
@@ -72,33 +82,30 @@ export const getMachines = asyncHandler(
     // }
 
     if (types.length > 0) {
-      machines =
-        isFirstCondition
-          ? machines.where("machine.type IN (:...types)", { types })
-          : machines.andWhere("machine.type IN (:...types)", { types });
+      machines = isFirstCondition
+        ? machines.where("machine.type IN (:...types)", { types })
+        : machines.andWhere("machine.type IN (:...types)", { types });
       isFirstCondition = false;
     }
-
-
 
     if (roomIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("room.roomId IN (:...roomIds)", {
-          roomIds: roomIds.map(Number),
-        })
+            roomIds: roomIds.map(Number),
+          })
         : machines.andWhere("room.roomId IN (:...roomIds)", {
-          roomIds: roomIds.map(Number),
-        });
+            roomIds: roomIds.map(Number),
+          });
     }
 
     if (machineIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("machine.machineId IN (:...machineIds)", {
-          machineIds: machineIds.map(Number),
-        })
+            machineIds: machineIds.map(Number),
+          })
         : machines.andWhere("machine.machineId IN (:...machineIds)", {
-          machineIds: machineIds.map(Number),
-        });
+            machineIds: machineIds.map(Number),
+          });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
