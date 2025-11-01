@@ -6,6 +6,7 @@ class ListMachinesParams extends Equatable {
   final List<String>? roomIds;
   final List<String>? machineIds;
   final bool? extra;
+  final List<String>? types;
 
   const ListMachinesParams({
     this.min,
@@ -13,10 +14,11 @@ class ListMachinesParams extends Equatable {
     this.roomIds,
     this.machineIds,
     this.extra,
+    this.types,
   });
 
   @override
-  List<Object?> get props => [min, areaIds, roomIds, machineIds, extra];
+  List<Object?> get props => [min, areaIds, roomIds, machineIds, extra, types];
 
   Map<String, dynamic> toJson() {
     return {
@@ -25,6 +27,7 @@ class ListMachinesParams extends Equatable {
       if (roomIds != null) 'roomIds': roomIds,
       if (machineIds != null) 'machineIds': machineIds,
       if (extra != null) 'extra': extra,
+      if (types != null) 'types': types,
     };
   }
 
@@ -35,6 +38,7 @@ class ListMachinesParams extends Equatable {
     List<String>? roomIds,
     List<String>? machineIds,
     bool? extra,
+    List<String>? types,
   }) {
     return ListMachinesParams(
       min: min ?? this.min,
@@ -42,12 +46,13 @@ class ListMachinesParams extends Equatable {
       roomIds: roomIds ?? this.roomIds,
       machineIds: machineIds ?? this.machineIds,
       extra: extra ?? this.extra,
+      types: types ?? this.types,
     );
   }
 
   @override
   String toString() {
-    return 'ListMachinesParams(min: $min, areaIds: $areaIds, roomIds: $roomIds, machineIds: $machineIds, extra: $extra)';
+    return 'ListMachinesParams(min: $min, areaIds: $areaIds, roomIds: $roomIds, machineIds: $machineIds, extra: $extra, types: $types)';
   }
 
   Map<String, dynamic> toQueryParameters() {
@@ -62,6 +67,9 @@ class ListMachinesParams extends Equatable {
     }
     if (machineIds != null && machineIds!.isNotEmpty) {
       queryParams['machineIds[]'] = machineIds;
+    }
+    if (types != null && types!.isNotEmpty) {
+      queryParams['types[]'] = types;
     }
     return queryParams;
   }

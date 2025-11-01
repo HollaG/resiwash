@@ -8,7 +8,14 @@ import 'package:resiwash/features/room/data/models/room_model.dart';
 
 part 'machine_model.g.dart';
 
-enum MachineType { unknown, washer, dryer }
+enum MachineType {
+  @JsonValue('unknown')
+  unknown,
+  @JsonValue('washer')
+  washer,
+  @JsonValue('dryer')
+  dryer,
+}
 
 enum MachineStatus {
   @JsonValue('AVAILABLE')

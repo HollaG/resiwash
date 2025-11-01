@@ -66,10 +66,10 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
             // appBar: AppBarComponent(actions: [], title: "ResiWash"),
             body: RefreshIndicator(
               onRefresh: () {
-                return Future.delayed(Duration(seconds: 1), () {});
-                // return context
-                //     .read<OverviewCubit>()
-                //     .refresh(roomIds: loadedLocations.getAllRoomIds());
+                // return Future.delayed(Duration(seconds: 1), () {});
+                return context.read<OverviewCubit>().load(
+                  roomIds: loadedLocations.getAllRoomIds(),
+                );
               },
               child: SingleChildScrollView(
                 child: Column(

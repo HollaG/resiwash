@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/homeMainCard.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
+import 'package:resiwash/router.dart';
 
 class HomeHeader extends StatelessWidget {
   final String username;
@@ -81,7 +84,29 @@ class HomeHeader extends StatelessWidget {
                             count: "$washerCount/$totalWashers",
 
                             actionText: "View",
-                            onAction: () {},
+                            onAction: () {
+                              // Navigate to the washer list page
+                              context.push(
+                                Uri(
+                                  path: AppRoutes.machineList,
+                                  queryParameters: {
+                                    'types[]': [MachineType.washer.toString()],
+                                  },
+                                ).toString(),
+                                extra: {
+                                  'title': "Washers",
+                                  'count': totalWashers.toString(),
+                                },
+                              );
+                              // context.push(
+                              //   Uri(
+                              //     path: AppRoutes.buildMachineDetailRoute(
+                              //       machine.machineId,
+                              //     ),
+                              //   ).toString(),
+                              //   extra: {'machine': machine},
+                              // );
+                            },
                           ),
                         ),
                         SizedBox(width: 12),

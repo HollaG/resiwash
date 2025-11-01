@@ -24,6 +24,7 @@ class MachineListScreen extends StatefulWidget {
   final List<String>? areaIds;
   final List<String>? roomIds;
   final List<String>? machineIds;
+  final List<String>? types;
 
   final String? title;
   final String? count;
@@ -36,6 +37,7 @@ class MachineListScreen extends StatefulWidget {
     this.machineIds,
     this.title,
     this.count,
+    this.types,
   });
 
   @override

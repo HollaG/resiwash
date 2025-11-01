@@ -35,18 +35,18 @@ final router = GoRouter(
                 final areaIds = state.uri.queryParametersAll['areaIds[]'] ?? [];
                 final machineIds =
                     state.uri.queryParametersAll['machineIds[]'] ?? [];
+                final types = state.uri.queryParametersAll['types[]'] ?? [];
 
-                print('Parsed roomIds: $roomIds'); // Debug print
-
-                Map<String, dynamic> extra =
-                    state.extra as Map<String, dynamic>;
+                Map<String, dynamic>? extra =
+                    state.extra as Map<String, dynamic>?;
 
                 return MachineListScreen(
                   areaIds: areaIds,
                   roomIds: roomIds,
                   machineIds: machineIds,
-                  title: extra['title'] as String?,
-                  count: extra['count'] as String?,
+                  title: extra?['title'] as String?,
+                  count: extra?['count'] as String?,
+                  types: types,
                 );
               },
             ),
