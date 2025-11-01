@@ -342,6 +342,10 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(res, "MAC address is required", 400);
     }
 
+    console.log(
+      `received createMultipleEvents request from sensor ${macAddress}`
+    );
+
     // check to see if valid macAddress exists
     const sensor = await AppDataSource.getRepository(Sensor).findOne({
       where: { macAddress },
