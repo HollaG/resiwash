@@ -72,42 +72,62 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                         // TODO: some image here
 
                         // rounded pill box that displays machine status
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: MachineStatusIndicator.getBackgroundColor(
-                              context,
-                              machine.currentStatus,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        Row(
+                          spacing: 8,
+                          children: [
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      MachineStatusIndicator.getBackgroundColor(
+                                        context,
+                                        machine.currentStatus,
+                                      ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
 
-                            children: [
-                              MachineStatusIndicator(
-                                status: machine.currentStatus,
-                                size: BoxSize.large,
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                MachineDisplayUtils.getStatusLabel(machine),
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color:
-                                          MachineStatusIndicator.getOnContainerColor(
-                                            context,
-                                            machine.currentStatus,
+                                  children: [
+                                    MachineStatusIndicator(
+                                      status: machine.currentStatus,
+                                      size: BoxSize.large,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      MachineDisplayUtils.getStatusLabel(
+                                        machine,
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color:
+                                                MachineStatusIndicator.getOnContainerColor(
+                                                  context,
+                                                  machine.currentStatus,
+                                                ),
                                           ),
                                     ),
+                                    // box to take up the rest of the space
+                                    // Spacer(),
+                                  ],
+                                ),
                               ),
-                              // box to take up the rest of the space
-                              Spacer(),
-                            ],
-                          ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Coming soon!")),
+                                );
+                              },
+                              icon: const Icon(Icons.notifications_off),
+                            ),
+                          ],
                         ),
 
                         Row(
