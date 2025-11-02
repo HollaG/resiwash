@@ -47,7 +47,17 @@ class DateTimeUtils {
     if (dateTime == null) return 'Unknown';
     // return in the format of: dd MMM yyyy
     // e.g., 01 Jan 2023
-    final dateFormat = DateFormat("dd MMM yyyy, HH:mm:ss a");
+    final dateFormat = DateFormat("dd MMM yyyy, H:mm:ss a");
     return dateFormat.format(dateTime);
+  }
+
+  static String formatReadableTime(DateTime? dateTime) {
+    if (dateTime == null) return 'Unknown';
+    // Convert to local time if it's in UTC
+    final localTime = dateTime.isUtc ? dateTime.toLocal() : dateTime;
+    // return in the format of: hh:mm a (12-hour format with am/pm)
+    // e.g., 12:31 am
+    final timeFormat = DateFormat("h:mm:ss a");
+    return timeFormat.format(localTime);
   }
 }

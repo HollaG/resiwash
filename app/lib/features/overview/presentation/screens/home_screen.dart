@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
@@ -67,11 +70,35 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
             body: RefreshIndicator(
               onRefresh: () {
                 // return Future.delayed(Duration(seconds: 1), () {});
-                return context.read<OverviewCubit>().load(
+                // wait for 1s first
+
+                // Create a completer to wait for the loading to complete
+                final completer = Completer<void>();
+
+                // Listen for state changes
+                late StreamSubscription subscription;
+                subscription = context.read<OverviewCubit>().stream.listen((
+                  state,
+                ) {
+                  if (state is OverviewLoaded || state is OverviewError) {
+                    subscription.cancel();
+                    completer.complete();
+                  }
+                });
+                final loadedLocations = sl<SharedPreferencesService>()
+                    .getSavedLocations();
+
+                appLog.d("Loaded locations: $loadedLocations");
+                // Trigger the refresh
+                context.read<OverviewCubit>().load(
                   roomIds: loadedLocations.getAllRoomIds(),
                 );
+
+                // Wait for completion
+                return completer.future;
               },
               child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.start,

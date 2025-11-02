@@ -2,7 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
@@ -21,13 +23,18 @@ class RoomOverviewWrapper extends StatefulWidget {
   State<RoomOverviewWrapper> createState() => _RoomOverviewWrapperState();
 }
 
-class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
+class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
+    with WidgetsBindingObserver {
   SavedLocations loadedLocations = SavedLocations({});
+  Timer? _refreshTimer;
 
   // on init,
   @override
   void initState() {
     super.initState();
+    // Add this widget as a lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
     // Load saved locations
     // set the current room ids
     SavedLocations savedLocations = sl<SharedPreferencesService>()
@@ -36,6 +43,47 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
     setState(() {
       loadedLocations = savedLocations;
     });
+
+    // TODO: fix this: it's not working atm
+    // Set up a timer to refresh the UI every minute to update relative time
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        // refresh the context using current state (loadedLocations, not savedLocations)
+        context.read<OverviewCubit>().load(
+          roomIds: loadedLocations.getAllRoomIds(),
+        );
+
+        appLog.d("Refreshing RoomOverviewWrapper to update relative time");
+        setState(() {
+          // This will trigger a rebuild to update the relative time display
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Trigger a refresh when the app comes back to the foreground
+    if (state == AppLifecycleState.resumed && mounted) {
+      appLog.d("App resumed, refreshing RoomOverviewWrapper");
+
+      // Use current state (loadedLocations) instead of reloading from SharedPreferences
+      context.read<OverviewCubit>().load(
+        roomIds: loadedLocations.getAllRoomIds(),
+      );
+      setState(() {
+        // This will trigger a rebuild to update the relative time display
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -61,6 +109,10 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
 
           final numberOfRooms = loadedLocations.getAllRoomIds().length;
 
+          // just the time in HH:mm a format
+          final formattedLastUpdateTime = DateTimeUtils.formatReadableTime(
+            (state as dynamic).loadedTime,
+          );
           return Container(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
 
@@ -85,49 +137,33 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
                     ),
                   ],
                 ),
-                RefreshIndicator(
-                  onRefresh: () async {
-                    // wait for 1s first
-
-                    // Create a completer to wait for the loading to complete
-                    final completer = Completer<void>();
-
-                    // Listen for state changes
-                    late StreamSubscription subscription;
-                    subscription = context.read<OverviewCubit>().stream.listen((
-                      state,
-                    ) {
-                      if (state is OverviewLoaded || state is OverviewError) {
-                        subscription.cancel();
-                        completer.complete();
-                      }
-                    });
-
-                    // Trigger the refresh
-                    context.read<OverviewCubit>().load(
-                      roomIds: loadedLocations.getAllRoomIds(),
-                    );
-
-                    // Wait for completion
-                    return completer.future;
+                // TODO:
+                // 1. figure out why this refreshindicator can appear at the top of the screen
+                ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(0),
+                  shrinkWrap: true,
+                  itemCount: loadedLocations.getAllRoomIds().length,
+                  scrollDirection: Axis.vertical,
+                  itemBuilder: (context, index) {
+                    String roomId = loadedLocations.getAllRoomIds()[index];
+                    return RoomOverview(roomId: roomId);
                   },
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(0),
-                    shrinkWrap: true,
-                    itemCount: loadedLocations.getAllRoomIds().length,
-                    scrollDirection: Axis.vertical,
-                    itemBuilder: (context, index) {
-                      String roomId = loadedLocations.getAllRoomIds()[index];
-                      return RoomOverview(roomId: roomId);
-                    },
-                  ),
                 ),
                 // Column(
                 //   children: loadedLocations.getAllRoomIds().map((roomId) {
                 //     return RoomOverview(roomId: roomId);
                 //   }).toList(),
                 // ),
+                Center(
+                  child: Text(
+                    // can be OverviewLoaded or OverviewRefreshing
+                    "Last updated at $formattedLastUpdateTime",
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ],
             ),
           );

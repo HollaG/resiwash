@@ -18,6 +18,9 @@ class OverviewInitial extends OverviewState {}
 class OverviewLoading extends OverviewState {}
 
 class OverviewLoaded extends OverviewState {
+  // store the loaded time
+  final DateTime loadedTime;
+
   final List<MachineEntity> machines;
   final Map<String, List<MachineEntity>> machinesByRoom; // UI-specific grouping
   final List<AreaEntity> locations;
@@ -62,18 +65,19 @@ class OverviewLoaded extends OverviewState {
     );
   }
 
-  const OverviewLoaded({
+  OverviewLoaded({
     required this.machines,
     required this.machinesByRoom,
     required this.locations,
-  });
+    DateTime? loadedTime,
+  }) : loadedTime = loadedTime ?? DateTime.now();
 
   @override
   List<Object?> get props => [machines, machinesByRoom, locations];
 }
 
 class OverviewRefreshing extends OverviewLoaded {
-  const OverviewRefreshing({
+  OverviewRefreshing({
     required super.machines,
     required super.machinesByRoom,
     required super.locations,
