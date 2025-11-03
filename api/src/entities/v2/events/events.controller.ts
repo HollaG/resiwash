@@ -18,6 +18,7 @@ import {
 import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
+import { sendMachineStatusChangedNotification } from "../../../utils/firebase-messaging";
 
 // saves IN-MEMORY which machines have been sending data
 // TODO: migrate to Redis in future
@@ -494,6 +495,8 @@ export const createMultipleEvents = asyncHandler(
     // machinesToUpdate contains all machines that were sent an event
     const machinesToUpdate = await machineRepository.find({
       where: { machineId: In(machineIdsToUpdate) },
+      // join with the room and area data as well
+      relations: ["room", "room.area"],
     });
 
     machinesToUpdate.forEach((machine) => {
@@ -515,7 +518,19 @@ export const createMultipleEvents = asyncHandler(
         machine.lastChangeTime = new Date(); // update the lastChangeTime timestamp
         machine.previousStatus = machine.currentStatus; // copy the currentStatus to previousStatus
         machine.currentStatus = event.status; // set the currentStatus to the new status
+
+
+        // asynchronously send notification
+        // note: we do not care if it succeeds or fails
+        sendMachineStatusChangedNotification({
+          machine: machine,
+          oldStatus: machine.previousStatus,
+          newStatus: machine.currentStatus,
+        })
+
       }
+
+
     });
     await machineRepository.save(machinesToUpdate);
 

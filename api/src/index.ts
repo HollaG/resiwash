@@ -123,6 +123,9 @@ app.use(`/api/v2/events`, require("./entities/v2/events/events.routes"));
 // Sensors
 app.use(`/api/v2/sensors`, require("./entities/v2/sensors/sensors.routes"));
 
+// admin: todo, protect with auth middleware
+app.use(`/api/v2/admin`, require("./entities/v2/admin/admin.routes"));
+
 // error handler (last)
 app.use(errorHandler);
 

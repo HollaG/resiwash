@@ -13,6 +13,21 @@ export enum MachineStatus {
   UNKNOWN = "UNKNOWN",
 }
 
+export const getReadableMachineStatus = (status: MachineStatus): string => {
+  switch (status) {
+    case MachineStatus.AVAILABLE:
+      return "Available";
+    case MachineStatus.IN_USE:
+      return "In Use";
+    case MachineStatus.FINISHING:
+      return "Finishing";
+    case MachineStatus.HAS_ISSUES:
+      return "Has Issues";
+    case MachineStatus.UNKNOWN:
+      return "Unknown";
+  }
+};
+
 export const STATUS_CODE_MAP = {
   0: MachineStatus.AVAILABLE,
   1: MachineStatus.IN_USE,
