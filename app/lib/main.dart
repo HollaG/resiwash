@@ -21,13 +21,17 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await setupServiceLocator();
   await Firebase.initializeApp();
+  await setupServiceLocator();
 
   // Register the background message handler BEFORE runApp
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  final notificationService = NotificationService();
+  // final notificationService = NotificationService();
+  // await notificationService.initialize();
+
+  // get the service from Sl
+  final notificationService = sl<NotificationService>();
   await notificationService.initialize();
 
   runApp(const MyApp());

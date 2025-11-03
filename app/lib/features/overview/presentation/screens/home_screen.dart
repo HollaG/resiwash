@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
@@ -105,6 +106,29 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
                   children: [
                     HomeHeader(username: "Marcus"),
                     RoomOverviewWrapper(roomIds: []),
+
+                    Row(
+                      children: [
+                        OutlinedButton(
+                          onPressed: () {
+                            FirebaseMessaging.instance.subscribeToTopic(
+                              "machine_2",
+                            );
+
+                            print("Subscribed to topic machine_2");
+                          },
+                          child: Text("subscribe"),
+                        ),
+                        OutlinedButton(
+                          onPressed: () {
+                            FirebaseMessaging.instance.unsubscribeFromTopic(
+                              "machine_2",
+                            );
+                          },
+                          child: Text("unsubscribe"),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

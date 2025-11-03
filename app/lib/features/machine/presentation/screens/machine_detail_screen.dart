@@ -5,6 +5,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/detail_row.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
@@ -14,18 +18,36 @@ import 'package:resiwash/features/machine/presentation/cubit/machine_detail_stat
 import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_timeline.dart';
+import 'package:resiwash/features/machine/presentation/widgets/subscription_indicator.dart';
 
 class MachineDetailScreen extends StatefulWidget {
   final String machineId;
 
-  const MachineDetailScreen({Key? key, required this.machineId})
-    : super(key: key);
+  const MachineDetailScreen({super.key, required this.machineId});
 
   @override
   State<MachineDetailScreen> createState() => _MachineDetailScreenState();
 }
 
 class _MachineDetailScreenState extends State<MachineDetailScreen> {
+  int isSubscribed = 0; // 0 = false, 1 = true, 2 = loading
+
+  @override
+  void initState() {
+    super.initState();
+
+    // initialize the subscription status
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   final sharedPref = sl<SharedPreferencesService>();
+
+    //   bool subscribed = sharedPref.isSubscribedToMachine(widget.machineId);
+
+    //   setState(() {
+    //     isSubscribed = subscribed ? 1 : 0;
+    //   });
+    // });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -119,14 +141,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                 ),
                               ),
                             ),
-                            IconButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Coming soon!")),
-                                );
-                              },
-                              icon: const Icon(Icons.notifications_off),
-                            ),
+                            SubscriptionIndicator(machineId: machine.machineId),
                           ],
                         ),
 

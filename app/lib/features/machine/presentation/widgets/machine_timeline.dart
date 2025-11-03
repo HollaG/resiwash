@@ -57,10 +57,6 @@ class MachineTimeline extends StatelessWidget {
       final timeDifference = laterEventTime.difference(event.timestamp);
       final timeInMinutes = timeDifference.inMinutes;
 
-      appLog.d(
-        'Time difference: ${timeDifference.inMilliseconds}ms, minutes: $timeInMinutes',
-      );
-
       // Min width = 80px, max width = 150px, 1.5px per minute
       final width = (timeInMinutes * 1.5).clamp(80.0, 150.0);
 
