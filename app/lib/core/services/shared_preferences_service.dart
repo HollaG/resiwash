@@ -1,3 +1,4 @@
+import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -6,6 +7,7 @@ class SharedPreferencesService {
   static const String locationKey = 'locations';
 
   static const String subscribedMachinesKey = 'notif_subscribedMachines';
+  static const String claimedMachinesKey = 'claimedMachines';
 
   final SharedPreferences _prefs;
 
@@ -40,6 +42,11 @@ class SharedPreferencesService {
     return existingIds.contains(machineId);
   }
 
+  // Get all subscribed machine IDs
+  List<String> getSubscribedMachines() {
+    return _prefs.getStringList(subscribedMachinesKey) ?? [];
+  }
+
   void unsubscribeFromMachines(Set<String> machineIds) {
     final existingIds = _prefs.getStringList(subscribedMachinesKey) ?? [];
     final updatedIds = existingIds.toSet().difference(machineIds).toList();
@@ -49,6 +56,71 @@ class SharedPreferencesService {
   // helper to unsubscribe from a single machineId
   void unsubscribeFromMachine(String machineId) {
     unsubscribeFromMachines({machineId});
+  }
+
+  // Claim a machine with optional cycle time
+  void claimMachine(String machineId, {int? cycleTime}) {
+    final existingMachines = getClaimedMachines();
+
+    // Check if already claimed
+    final alreadyClaimed = existingMachines.any(
+      (m) => m.machineId == machineId,
+    );
+
+    if (!alreadyClaimed) {
+      final claimedMachine = ClaimedMachineMetadata(
+        machineId: machineId,
+        cycleTime: cycleTime,
+      );
+      existingMachines.add(claimedMachine);
+
+      // Encode all claimed machines to JSON strings
+      final encodedMachines = existingMachines.map((m) => m.encode()).toList();
+      _prefs.setStringList(claimedMachinesKey, encodedMachines);
+    }
+  }
+
+  // Unclaim a machine
+  void unclaimMachine(String machineId) {
+    final existingMachines = getClaimedMachines();
+    existingMachines.removeWhere((m) => m.machineId == machineId);
+
+    // Encode remaining claimed machines
+    final encodedMachines = existingMachines.map((m) => m.encode()).toList();
+    _prefs.setStringList(claimedMachinesKey, encodedMachines);
+  }
+
+  // Get all claimed machines
+  List<ClaimedMachineMetadata> getClaimedMachines() {
+    final encodedMachines = _prefs.getStringList(claimedMachinesKey) ?? [];
+    return encodedMachines
+        .map((encoded) => ClaimedMachineMetadata.decode(encoded))
+        .toList();
+  }
+
+  // Check if a machine is claimed
+  bool isMachineClaimed(String machineId) {
+    final claimedMachines = getClaimedMachines();
+    return claimedMachines.any((m) => m.machineId == machineId);
+  }
+
+  // Update cycle time for a claimed machine
+  void updateClaimedMachineCycleTime(String machineId, int? cycleTime) {
+    final existingMachines = getClaimedMachines();
+    final index = existingMachines.indexWhere((m) => m.machineId == machineId);
+
+    if (index != -1) {
+      // Remove old and add updated
+      existingMachines.removeAt(index);
+      existingMachines.insert(
+        index,
+        ClaimedMachineMetadata(machineId: machineId, cycleTime: cycleTime),
+      );
+
+      // Save updated list
+      final encodedMachines = existingMachines.map((m) => m.encode()).toList();
+      _prefs.setStringList(claimedMachinesKey, encodedMachines);
+    }
   }
 
   // // Save a list of room IDs

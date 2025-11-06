@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/injections/my-machines/my_machines_service_locator.dart';
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/services/notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
@@ -25,6 +26,8 @@ Future<void> setupServiceLocator() async {
   sl.registerSingleton<SharedPreferencesService>(
     SharedPreferencesService(sl<SharedPreferences>()),
   );
+
+  setupMyMachinesServiceLocator();
 
   sl.registerSingleton<NotificationService>(NotificationService());
 }

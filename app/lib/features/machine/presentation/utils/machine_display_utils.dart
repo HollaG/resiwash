@@ -60,7 +60,7 @@ class MachineDisplayUtils {
     final roomName = machine.room?.name;
 
     if (areaName != null && roomName != null) {
-      return '$areaName $roomName';
+      return '$roomName ($areaName)';
     } else if (roomName != null) {
       return roomName;
     } else if (areaName != null) {

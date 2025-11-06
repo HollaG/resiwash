@@ -106,29 +106,6 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
                   children: [
                     HomeHeader(username: "Marcus"),
                     RoomOverviewWrapper(roomIds: []),
-
-                    Row(
-                      children: [
-                        OutlinedButton(
-                          onPressed: () {
-                            FirebaseMessaging.instance.subscribeToTopic(
-                              "machine_2",
-                            );
-
-                            print("Subscribed to topic machine_2");
-                          },
-                          child: Text("subscribe"),
-                        ),
-                        OutlinedButton(
-                          onPressed: () {
-                            FirebaseMessaging.instance.unsubscribeFromTopic(
-                              "machine_2",
-                            );
-                          },
-                          child: Text("unsubscribe"),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

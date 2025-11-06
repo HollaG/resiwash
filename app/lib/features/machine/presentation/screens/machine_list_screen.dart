@@ -98,7 +98,7 @@ class _MachineListScreenState extends State<MachineListScreen>
                   .toList();
 
               return Container(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
                 child: RefreshIndicator(
                   onRefresh: () {
                     final completer = Completer<void>();
@@ -116,6 +116,7 @@ class _MachineListScreenState extends State<MachineListScreen>
                   },
                   child: ListView(
                     children: [
+                      SizedBox(height: 16),
                       if (washers.isNotEmpty) ...[
                         StatusRowSummary(label: "Washers", machines: washers),
                       ],

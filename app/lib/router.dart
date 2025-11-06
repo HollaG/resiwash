@@ -4,7 +4,8 @@ import 'package:resiwash/features/machine/presentation/screens/machine_list_scre
 import 'package:resiwash/main.dart';
 import 'package:resiwash/views/base-view.dart';
 
-import 'package:resiwash/views/my-machines/myMachinesPage.dart';
+import 'package:resiwash/views/my-machines/oldmyMachinesPage.dart';
+import 'package:resiwash/features/my-machines/presentation/screens/my_machines_screen.dart';
 import 'package:resiwash/views/profile/profilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -60,19 +61,20 @@ final router = GoRouter(
             ),
           ],
         ),
+
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: AppRoutes.profile,
-              builder: (context, state) => ProfilePage(),
+              path: AppRoutes.myMachines,
+              builder: (context, state) => MyMachinesScreen(),
             ),
           ],
         ),
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: AppRoutes.myMachines,
-              builder: (context, state) => MyMachinesPage(),
+              path: AppRoutes.profile,
+              builder: (context, state) => ProfilePage(),
             ),
           ],
         ),

@@ -8,6 +8,7 @@
     <application
         android:label="ResiWash"
         android:name="${applicationName}"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name="com.resiwash.app.MainActivity"

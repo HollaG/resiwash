@@ -476,7 +476,49 @@ class MaterialTheme {
     ),
   );
 
-  List<ExtendedColor> get extendedColors => [success, reserved, inUse];
+  /// Accent
+  static const accent = ExtendedColor(
+    seed: Color(0xffe9ebf8),
+    value: Color(0xffe9ebf8),
+    light: ColorFamily(
+      color: Color(0xff5b5e69),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffe9ebf8),
+      onColorContainer: Color(0xff676a75),
+    ),
+    lightMediumContrast: ColorFamily(
+      color: Color(0xff5b5e69),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffe9ebf8),
+      onColorContainer: Color(0xff676a75),
+    ),
+    lightHighContrast: ColorFamily(
+      color: Color(0xff5b5e69),
+      onColor: Color(0xffffffff),
+      colorContainer: Color(0xffe9ebf8),
+      onColorContainer: Color(0xff676a75),
+    ),
+    dark: ColorFamily(
+      color: Color(0xffffffff),
+      onColor: Color(0xff2d303a),
+      colorContainer: Color(0xffe0e2ef),
+      onColorContainer: Color(0xff61646f),
+    ),
+    darkMediumContrast: ColorFamily(
+      color: Color(0xffffffff),
+      onColor: Color(0xff2d303a),
+      colorContainer: Color(0xffe0e2ef),
+      onColorContainer: Color(0xff61646f),
+    ),
+    darkHighContrast: ColorFamily(
+      color: Color(0xffffffff),
+      onColor: Color(0xff2d303a),
+      colorContainer: Color(0xffe0e2ef),
+      onColorContainer: Color(0xff61646f),
+    ),
+  );
+
+  List<ExtendedColor> get extendedColors => [success, reserved, inUse, accent];
 }
 
 class ExtendedColor {
@@ -520,11 +562,13 @@ class AppColors extends ThemeExtension<AppColors> {
   final ColorFamily success;
   final ColorFamily reserved;
   final ColorFamily inUse;
+  final ColorFamily accent;
 
   const AppColors({
     required this.success,
     required this.reserved,
     required this.inUse,
+    required this.accent,
   });
 
   /// Create a theme-ready set for a given brightness (and optional contrast).
@@ -558,6 +602,7 @@ class AppColors extends ThemeExtension<AppColors> {
       success: pick(MaterialTheme.success),
       reserved: pick(MaterialTheme.reserved),
       inUse: pick(MaterialTheme.inUse),
+      accent: pick(MaterialTheme.accent),
     );
   }
 
@@ -566,10 +611,12 @@ class AppColors extends ThemeExtension<AppColors> {
     ColorFamily? success,
     ColorFamily? reserved,
     ColorFamily? inUse,
+    ColorFamily? accent,
   }) => AppColors(
     success: success ?? this.success,
     reserved: reserved ?? this.reserved,
     inUse: inUse ?? this.inUse,
+    accent: accent ?? this.accent,
   );
 
   @override
@@ -589,6 +636,7 @@ class AppColors extends ThemeExtension<AppColors> {
       success: lerpFam(success, other.success),
       reserved: lerpFam(reserved, other.reserved),
       inUse: lerpFam(inUse, other.inUse),
+      accent: lerpFam(accent, other.accent),
     );
   }
 }
@@ -599,4 +647,5 @@ extension AppColorsX on BuildContext {
   ColorFamily get success => appColors.success;
   ColorFamily get reserved => appColors.reserved;
   ColorFamily get inUse => appColors.inUse;
+  ColorFamily get accent => appColors.accent;
 }

@@ -28,9 +28,11 @@ class _SubscriptionIndicatorState extends State<SubscriptionIndicator> {
 
       bool subscribed = sharedPref.isSubscribedToMachine(widget.machineId);
 
-      setState(() {
-        isSubscribed = subscribed ? 1 : 0;
-      });
+      if (mounted) {
+        setState(() {
+          isSubscribed = subscribed ? 1 : 0;
+        });
+      }
     });
   }
 
@@ -45,19 +47,23 @@ class _SubscriptionIndicatorState extends State<SubscriptionIndicator> {
 
       appLog.d("Subscribed to topic: $topicName");
 
-      setState(() {
-        isSubscribed = 1;
-      });
+      if (mounted) {
+        setState(() {
+          isSubscribed = 1;
+        });
 
-      // notification
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Notifications for this machine enabled.")),
-      );
+        // notification
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Notifications for this machine enabled.")),
+        );
+      }
     } catch (e) {
       appLog.e("Error subscribing to machine: $e");
-      setState(() {
-        isSubscribed = 0;
-      });
+      if (mounted) {
+        setState(() {
+          isSubscribed = 0;
+        });
+      }
     }
   }
 
@@ -71,17 +77,21 @@ class _SubscriptionIndicatorState extends State<SubscriptionIndicator> {
       );
       appLog.d("Unsubscribed from topic: $topicName");
 
-      setState(() {
-        isSubscribed = 0;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Notifications for this machine disabled.")),
-      );
+      if (mounted) {
+        setState(() {
+          isSubscribed = 0;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Notifications for this machine disabled.")),
+        );
+      }
     } catch (e) {
       appLog.e("Error unsubscribing from machine: $e");
-      setState(() {
-        isSubscribed = 1;
-      });
+      if (mounted) {
+        setState(() {
+          isSubscribed = 1;
+        });
+      }
       return;
     }
   }
