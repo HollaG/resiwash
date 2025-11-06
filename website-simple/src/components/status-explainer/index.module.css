@@ -1,0 +1,17 @@
+.explainer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.explainer-item-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.explainer-help-icon {
+  color: "var(--mantine-color-gray-7)";
+  cursor: pointer;
+}

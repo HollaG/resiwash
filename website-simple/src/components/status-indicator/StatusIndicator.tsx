@@ -1,6 +1,6 @@
-import { Box } from '@mantine/core';
-import { MachineStatus } from '../../types/datatypes';
-import { getColorForMachineStatus } from '../../utils/colors';
+import { Box, Tooltip } from '@mantine/core';
+import { convertMachineStatusToString, MachineStatus } from '../../types/datatypes';
+import { getStylesForMachineStatus } from '../../utils/indicatorHelper';
 
 interface StatusIndicatorProps {
   /** The status of the indicator */
@@ -28,11 +28,14 @@ export const StatusIndicator = ({ status, size = 'md' }: StatusIndicatorProps) =
   };
 
   return (
-    <Box
-      style={{
-        ...getSizeStyles(),
-        backgroundColor: getColorForMachineStatus(status),
-      }}
-    />
+    <Tooltip label={convertMachineStatusToString(status)} withArrow events={{ hover: true, focus: true, touch: true }}>
+      <Box
+        style={{
+          ...getSizeStyles(),
+          // backgroundColor: getColorForMachineStatus(status),
+          ...getStylesForMachineStatus(status),
+        }}
+      />
+    </Tooltip>
   );
 };

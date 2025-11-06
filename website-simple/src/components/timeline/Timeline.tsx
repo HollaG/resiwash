@@ -1,6 +1,6 @@
 import { MachineEvent } from "../../types/datatypes";
-import { getColorForMachineStatus } from "../../utils/colors";
-import { StatusIndicator } from "../mini/StatusIndicator";
+import { getColorForMachineStatus } from "../../utils/indicatorHelper";
+import { StatusIndicator } from "../status-indicator/StatusIndicator";
 import { differenceInMilliseconds, endOfDay, format, isSameDay, startOfDay } from "date-fns";
 import styles from "./index.module.css";
 import { useEffect, useRef } from "react";
@@ -33,7 +33,6 @@ export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
     // up to a max of 3 hours (12 * 25px = 300px)
     const timeDifference = new Date(laterEventTime).getTime() - new Date(event.timestamp).getTime();
     const timeInMinutes = Math.floor(timeDifference / 60000); // Convert to minutes
-    console.log({ timeDifference, timeInMinutes })
     const width = Math.min(150, Math.max(80, timeInMinutes * 1.5)); // Ensure width is between 50px and 300px
 
 
@@ -41,7 +40,6 @@ export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
     if (!isSameDay(new Date(laterEventTime), new Date(event.timestamp))) {
       // left width is from laterEventTime to the start of the day of laterEventTime
       // right with is from the start of the day of laterEventTime to the current event, OR just timeDifference minus left time
-      console.log({ laterEventTime, eventTimestamp: event.timestamp });
       const msSinceStartOfDay = differenceInMilliseconds(laterEventTime, startOfDay(new Date(laterEventTime)));
       const minutesSinceStartOfDay = Math.floor(msSinceStartOfDay / 60000); // left
 

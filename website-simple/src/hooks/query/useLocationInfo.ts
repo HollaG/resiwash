@@ -17,7 +17,6 @@ export const useLocationInfo = () => {
         throw new Error("Failed to fetch location info");
       }
       const data = (await response.json()) as ServerResponse<Location[]>;
-      console.log("Location data fetched:", data);
 
       if (data.status === STATUS_TYPES.ERROR) {
         throw new Error(`Error fetching location info: ${data.status}`);

@@ -1,39 +1,43 @@
 import {
   Accordion,
-  AccordionControlProps,
+  Badge,
   Button,
-  Center,
   Checkbox,
   Collapse,
+  Flex,
   Group,
+
   SimpleGrid,
-  Space,
   Stack,
   Text,
 } from "@mantine/core";
-import { StatusIndicator } from "../mini/StatusIndicator";
 import { useSavedLocations } from "../../hooks/useSavedLocations";
 import { useEffect, useState } from "react";
 
 import { useLocationInfo } from "../../hooks/query/useLocationInfo";
 import classes from "./index.module.css";
-import { MachineStatus } from "../../types/datatypes";
-function AccordionControl(props: AccordionControlProps & { onClick: () => void, isChecked: boolean, isIndeterminate?: boolean }) {
-  return (
-    <Center>
+// function AccordionControl(props: AccordionControlProps & { onClick: () => void, isChecked: boolean, isIndeterminate?: boolean }) {
+//   return (
+//     <Center>
 
-      <Checkbox onChange={() => props.onClick()} checked={props.isChecked} indeterminate={props.isIndeterminate} />
-      <div style={{ width: "8px" }} />
-      <Accordion.Control {...props} onChange={() => { }} onClick={() => { }} />
-    </Center>
-  );
-}
+//       <Checkbox onChange={() => props.onClick()} checked={props.isChecked} indeterminate={props.isIndeterminate} />
+//       <div style={{ width: "8px" }} />
+//       <Accordion.Control {...props} onChange={() => { }} onClick={() => { }} />
+//     </Center>
+//   );
+// }
 
 export const LocationSelector = () => {
   const { savedRoomsNumber, setSavedLocations, savedLocations } = useSavedLocations();
   const { data: availableLocations } = useLocationInfo();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRooms, setSelectedRooms] = useState<{ [areaId: number]: number[] }>({});
+
+  const getMachineCount = (areaId: number) => {
+    const area = availableLocations?.find(location => location.areaId === areaId);
+    if (!area) return 0;
+    return area.rooms.reduce((acc, room) => acc + (room.machineCount || 0), 0);
+  }
 
   const onSave = () => {
     setIsEditing(false);
@@ -65,27 +69,26 @@ export const LocationSelector = () => {
     });
   };
 
-  useEffect(() => {
-    console.log("selectedRooms updated:", selectedRooms);
-  }, [selectedRooms]);
-  const onCheckArea = (areaId: number) => {
-    console.log("onCheckArea", areaId);
-    setSelectedRooms((prev) => {
-      console.log("previous selectedRooms", prev);
-      if (prev[areaId]) {
-        const newSelectedRooms = { ...prev };
-        delete newSelectedRooms[areaId];
-        return newSelectedRooms;
-      } else {
-        const allRoomIds = availableLocations?.find(location => location.areaId === areaId)?.rooms.map(room => room.roomId) || [];
-        return {
-          ...prev,
-          [areaId]: allRoomIds,
-        };
-      }
-    });
-    console.log("new selectedRooms", selectedRooms);
-  }
+
+  // const onCheckArea = (areaId: number) => {
+  //   console.log("onCheckArea", areaId);
+  //   setSelectedRooms((prev) => {
+  //     console.log("previous selectedRooms", prev);
+  //     if (prev[areaId]) {
+  //       const newSelectedRooms = { ...prev };
+  //       delete newSelectedRooms[areaId];
+  //       console.log("newSelectedRooms", newSelectedRooms);
+  //       return newSelectedRooms;
+  //     } else {
+  //       const allRoomIds = availableLocations?.find(location => location.areaId === areaId)?.rooms.map(room => room.roomId) || [];
+  //       return {
+  //         ...prev,
+  //         [areaId]: allRoomIds,
+  //       };
+  //     }
+  //   });
+  //   console.log("new selectedRooms", selectedRooms, availableLocations);
+  // }
 
   useEffect(() => {
     setSelectedRooms(savedLocations);
@@ -93,12 +96,11 @@ export const LocationSelector = () => {
 
   return (
     <Stack>
-      <Group gap={"xs"}>
-        <StatusIndicator status={savedRoomsNumber > 0 ? MachineStatus.AVAILABLE : MachineStatus.IN_USE} />
+      <Group gap={"xs"} justify="end">
         {savedRoomsNumber > 0
           ? `${savedRoomsNumber} saved rooms`
-          : "No saved rooms"}
-        <Space style={{ flexGrow: 1 }} />
+          : <Badge color="red" size="sm" radius="sm">No saved rooms!</Badge>}
+        {/* <Space style={{ flexGrow: 1 }} /> */}
         {isEditing ? (
           <Button onClick={onSave} variant="solid">
             {" "}
@@ -118,10 +120,21 @@ export const LocationSelector = () => {
 
           >
             <Accordion.Item value={`location-${location.areaId}`}>
-              <AccordionControl onClick={() => onCheckArea(location.areaId)}
+              {/* <AccordionControl onClick={() => onCheckArea(location.areaId)}
                 isChecked={selectedRooms[location.areaId]?.length === location.rooms.length}
                 isIndeterminate={selectedRooms[location.areaId]?.length > 0 && selectedRooms[location.areaId]?.length < location.rooms.length}
-              >{location.name}</AccordionControl>
+              >{location.name}</AccordionControl> */}
+              <Accordion.Control>
+                <Flex align={'center'} gap={'8px'}>
+
+                  <Text display={'inline-block'}>
+
+                    {location.name}
+                  </Text>
+
+                  <Badge color="violet" variant="light" size="sm" radius='sm'>{location.rooms.length} rooms • {getMachineCount(location.areaId)} machines</Badge>
+                </Flex>
+              </Accordion.Control>
               <Accordion.Panel>
                 <SimpleGrid
                   cols={{
