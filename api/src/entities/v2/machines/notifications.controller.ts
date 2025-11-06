@@ -87,6 +87,8 @@ export const pokeClaimant = expressAsyncHandler(async (req: Request, res: Respon
       const claimant = claimants[0];
 
       await sendPokeNotification(machine, claimant.fcmToken);
+
+      return sendOkResponse(res, { message: "Poke sent successfully" });
     }
 
   } catch (error) {

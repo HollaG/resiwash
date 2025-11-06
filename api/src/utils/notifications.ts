@@ -8,6 +8,10 @@ const ClaimMap: {
   [machineId: string]: IClaimMapEntry[];
 } = {}
 
+const UserMap: {
+  [fcmToken: string]: string; // machineId
+} = {}
+
 const ClaimedUsers = new Set<string>();
 
 class ClaimError extends Error {
@@ -30,6 +34,23 @@ class AlreadyClaimedSomethingElseError extends ClaimError {
     super("You have already claimed another machine");
   }
 }
+
+export const unclaimMachine = (machineId: string, fcmToken: string) => {
+  if (!ClaimMap[machineId]) {
+    return;
+  }
+
+  // ClaimMap[machineId] = ClaimMap[machineId].filter(claim => claim.fcmToken !== fcmToken);
+  ClaimMap[machineId] = []
+  delete UserMap[fcmToken];
+  // ClaimedUsers.delete(fcmToken);
+
+
+  console.log("Current ClaimMap:", ClaimMap);
+  console.log("Current UserMap:", UserMap);
+
+}
+
 
 /**
  * Claim a machine for a user
@@ -59,15 +80,23 @@ export const claimMachine = (machineId: string, fcmToken: string, cycleTime: num
     throw new AlreadyClaimedError();
   }
 
-  if (ClaimedUsers.has(fcmToken)) {
-    // this user has already claimed another machine
-    throw new AlreadyClaimedSomethingElseError();
+  // if (ClaimedUsers.has(fcmToken)) {
+  //   // this user has already claimed another machine
+  //   throw new AlreadyClaimedSomethingElseError();
+  // }
+  // ClaimedUsers.add(fcmToken);
+
+  const previousMachineId = UserMap[fcmToken];
+  if (previousMachineId) {
+    // unclaim previous machine
+    unclaimMachine(previousMachineId, fcmToken);
   }
-  ClaimedUsers.add(fcmToken);
 
   ClaimMap[machineId].push({ fcmToken, cycleTime, claimedAt });
+  UserMap[fcmToken] = machineId;
 
   console.log("Current ClaimMap:", ClaimMap);
+  console.log("Current UserMap:", UserMap);
 
   // Set a timeout to remove the claim after the expiration time
   // setTimeout(() => {
@@ -75,18 +104,7 @@ export const claimMachine = (machineId: string, fcmToken: string, cycleTime: num
   // }, expirationTime.getTime() - claimedAt.getTime());
 }
 
-export const unclaimMachine = (machineId: string, fcmToken: string) => {
-  if (!ClaimMap[machineId]) {
-    return;
-  }
 
-  // ClaimMap[machineId] = ClaimMap[machineId].filter(claim => claim.fcmToken !== fcmToken);
-  ClaimMap[machineId] = []
-  ClaimedUsers.delete(fcmToken);
-
-  console.log("Current ClaimMap:", ClaimMap);
-
-}
 
 export const getClaimants = (machineId: string): IClaimMapEntry[] => {
   if (!ClaimMap[machineId]) {
