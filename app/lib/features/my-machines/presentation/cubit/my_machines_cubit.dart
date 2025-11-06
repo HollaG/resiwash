@@ -3,6 +3,7 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'my_machines_state.dart';
@@ -29,6 +30,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
        _listMachinesUseCase = listMachinesUseCase,
        super(MyMachinesInitial());
 
+  /// INIT METHOD
   /// Load full machine data from repository for subscribed machines
   /// This fetches the complete machine entities from the API
   Future<void> loadNotifyableMachines() async {
@@ -87,31 +89,34 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// Subscribe to a machine
   /// - Subscribes to FCM topic via NotificationService
   /// - Saves to local storage via SharedPreferencesService
-  Future<void> subscribeToMachine(String machineId) async {
+  Future<void> subscribeToMachine(MachineEntity machine) async {
+    final machineId = machine.machineId;
     try {
       final currentState = state;
-      List<String> currentMachines = [];
+      List<String> currentMachineIds = [];
       List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<MachineEntity> currentMachines = [];
 
       if (currentState is MyMachinesLoaded) {
-        currentMachines = currentState.subscribedMachineIds;
+        currentMachineIds = currentState.subscribedMachineIds;
         currentClaimedMachines = currentState.claimedMachineMetadata;
-      } else if (currentState is MyMachinesOperationInProgress) {
-        currentMachines = currentState.subscribedMachineIds;
-      }
-
-      // Check if already subscribed
-      if (currentMachines.contains(machineId)) {
-        appLog.w('Already subscribed to machine: $machineId');
-        return;
+        currentMachines = currentState.machines ?? [];
       }
 
       emit(
-        MyMachinesOperationInProgress(
-          subscribedMachineIds: currentMachines,
-          operatingMachineId: machineId,
+        MyMachinesSubscribing(
+          subscribedMachineIds: currentMachineIds,
+          machines: currentState is MyMachinesLoaded
+              ? currentState.machines
+              : null,
+          claimedMachineMetadata: currentClaimedMachines,
         ),
       );
+
+      if (currentMachineIds.contains(machineId)) {
+        appLog.w('Already subscribed to machine: $machineId');
+        return;
+      }
 
       // Subscribe to notification topic
       await _notificationService.subscribeToMachine(machineId);
@@ -119,17 +124,47 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       // Reload from shared preferences to get updated list
       final updatedMachines = _sharedPreferencesService.getSubscribedMachines();
 
+      // refresh the claimed machines list
+
       appLog.i('Successfully subscribed to machine: $machineId');
 
       emit(
-        MyMachinesLoaded(
+        MyMachinesSubscribed(
           subscribedMachineIds: updatedMachines,
           machines: currentState is MyMachinesLoaded
               ? currentState.machines
               : null,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
+
+      // wait for 1s, then emit
+      Future.delayed(const Duration(milliseconds: 500), () async {
+        // Fetch machines from repository
+        final result = await _listMachinesUseCase(
+          ListMachinesParams(machineIds: updatedMachines, extra: true),
+        );
+
+        result.fold(
+          (failure) {
+            appLog.e('Error loading machines: ${failure.message}');
+            emit(MyMachinesError(message: 'Failed to load machines'));
+          },
+          (machines) {
+            appLog.i('Successfully loaded ${machines.length} machines');
+            emit(
+              MyMachinesLoaded(
+                subscribedMachineIds: updatedMachines,
+                machines: machines,
+                claimedMachineMetadata: currentState is MyMachinesLoaded
+                    ? currentState.claimedMachineMetadata
+                    : [],
+              ),
+            );
+          },
+        );
+      });
     } catch (e) {
       appLog.e('Error subscribing to machine $machineId: $e');
       emit(MyMachinesError(message: 'Failed to subscribe to machine'));
@@ -142,27 +177,33 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// Unsubscribe from a machine
   /// - Unsubscribes from FCM topic via NotificationService
   /// - Removes from local storage via SharedPreferencesService
-  Future<void> unsubscribeFromMachine(String machineId) async {
+  Future<void> unsubscribeFromMachine(MachineEntity machine) async {
+    final machineId = machine.machineId;
     try {
       final currentState = state;
-      List<String> currentMachines = [];
+      List<String> currentMachineIds = [];
+      List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<MachineEntity> currentMachines = [];
 
       if (currentState is MyMachinesLoaded) {
-        currentMachines = currentState.subscribedMachineIds;
-      } else if (currentState is MyMachinesOperationInProgress) {
-        currentMachines = currentState.subscribedMachineIds;
+        currentMachineIds = currentState.subscribedMachineIds;
+        currentClaimedMachines = currentState.claimedMachineMetadata;
+        currentMachines = currentState.machines ?? [];
       }
 
       // Check if not subscribed
-      if (!currentMachines.contains(machineId)) {
+      if (!currentMachineIds.contains(machineId)) {
         appLog.w('Not subscribed to machine: $machineId');
         return;
       }
 
       emit(
-        MyMachinesOperationInProgress(
-          subscribedMachineIds: currentMachines,
-          operatingMachineId: machineId,
+        MyMachinesSubscribing(
+          subscribedMachineIds: currentMachineIds,
+          machines: currentState is MyMachinesLoaded
+              ? currentState.machines
+              : null,
+          claimedMachineMetadata: currentClaimedMachines,
         ),
       );
 
@@ -174,43 +215,37 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
       // unclaim the machine
       _sharedPreferencesService.unclaimMachine(machineId);
-      List<ClaimedMachineMetadata> currentClaimedMachines =
-          _sharedPreferencesService.getClaimedMachines();
 
       appLog.i('Successfully unsubscribed from machine: $machineId');
-
       emit(
-        MyMachinesLoaded(
+        MyMachinesSubscribed(
           subscribedMachineIds: updatedMachines,
+          machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
+
+      // wait for 1s, then emit
+      Future.delayed(const Duration(seconds: 1), () {
+        emit(
+          MyMachinesLoaded(
+            subscribedMachineIds: updatedMachines,
+            machines: currentState is MyMachinesLoaded
+                ? currentState.machines
+                      ?.where((m) => m.machineId != machineId)
+                      .toList()
+                : null,
+            claimedMachineMetadata: currentClaimedMachines,
+          ),
+        );
+      });
     } catch (e) {
       appLog.e('Error unsubscribing from machine $machineId: $e');
       emit(MyMachinesError(message: 'Failed to unsubscribe from machine'));
 
       // Reload current state after error
       loadNotifyableMachines();
-    }
-  }
-
-  /// Delete a machine subscription (alias for unsubscribeFromMachine)
-  /// This provides a more semantic method name for removing machines
-  Future<void> deleteMachineSubscription(String machineId) async {
-    await unsubscribeFromMachine(machineId);
-  }
-
-  /// Batch subscribe to multiple machines
-  Future<void> subscribeToMachines(List<String> machineIds) async {
-    for (final machineId in machineIds) {
-      await subscribeToMachine(machineId);
-    }
-  }
-
-  /// Batch unsubscribe from multiple machines
-  Future<void> unsubscribeFromMachines(List<String> machineIds) async {
-    for (final machineId in machineIds) {
-      await unsubscribeFromMachine(machineId);
     }
   }
 
@@ -224,14 +259,12 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     final state = this.state;
     if (state is MyMachinesLoaded) {
       return state.subscribedMachineIds.length;
-    } else if (state is MyMachinesOperationInProgress) {
-      return state.subscribedMachineIds.length;
     }
     return 0;
   }
 
   /// Claim a machine (mark as "in use by you")
-  void claimMachine(String machineId, {int? cycleTime}) {
+  Future<void> claimMachine(String machineId, {int? cycleTime}) async {
     try {
       // Add to SharedPreferences with optional cycle time
       _sharedPreferencesService.claimMachine(machineId, cycleTime: cycleTime);
@@ -257,7 +290,8 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   }
 
   /// Unclaim a machine (remove from "in use by you")
-  void unclaimMachine(String machineId) {
+  /// // TODO: add FCM registration
+  Future<void> unclaimMachine(String machineId) async {
     try {
       // Remove from SharedPreferences
       _sharedPreferencesService.unclaimMachine(machineId);

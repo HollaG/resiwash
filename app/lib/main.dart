@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/router.dart';
@@ -69,6 +70,10 @@ class MyApp extends StatelessWidget {
     // only for global dependencies
     return MultiBlocProvider(
       providers: [
+        // MyMachinesCubit - shared across all pages
+        BlocProvider(
+          create: (context) => sl<MyMachinesCubit>()..loadNotifyableMachines(),
+        ),
         // todo: remove this one
         BlocProvider(
           create: (context) => sl<RoomDetailCubit>(instanceName: 'roomCubit'),
@@ -76,33 +81,5 @@ class MyApp extends StatelessWidget {
       ],
       child: routerBuild,
     );
-  }
-}
-
-class NotificationWidget extends StatefulWidget {
-  @override
-  _NotificationWidgetState createState() => _NotificationWidgetState();
-}
-
-class _NotificationWidgetState extends State<NotificationWidget> {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  @override
-  void initState() {
-    super.initState();
-    _firebaseMessaging.requestPermission();
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Message data: ${message.data}');
-      if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
-      }
-    });
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Message clicked! ${message.messageId}');
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(child: Text('Waiting for messages'));
   }
 }
