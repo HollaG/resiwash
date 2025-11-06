@@ -45,3 +45,26 @@ export const sendMachineStatusChangedNotification = async ({
 
 
 }
+
+export const sendPokeNotification = async (machine: Machine, fcmToken: string) => {
+  const message = {
+    token: fcmToken,
+    notification: {
+      title: `Poke: ${machine.name}`,
+      body: `You have been poked in ${machine.room.name} @ ${machine.room.area.shortName}`,
+    },
+    data: {
+      machineId: machine.machineId.toString(),
+    }
+  }
+  console.log("[🔥🏠] Sending Poke message to token:", fcmToken);
+
+  try {
+    const response = await getMessaging().send(message);
+    console.log('[🔥🏠] Successfully sent Poke message:', response);
+    return response;
+  } catch (e) {
+    console.error("[🔥🏠] Error sending Poke message:", e);
+    throw e;
+  }
+}
