@@ -59,6 +59,7 @@ class SharedPreferencesService {
   }
 
   // Claim a machine with optional cycle time
+  // remmeber to unclaim any other claimed machine the user has
   void claimMachine(String machineId, {int? cycleTime}) {
     final existingMachines = getClaimedMachines();
 
@@ -72,8 +73,10 @@ class SharedPreferencesService {
         machineId: machineId,
         cycleTime: cycleTime,
       );
+      // TODO: dcide if we want to support multiple claimed machines
+      // existingMachines.add(claimedMachine);
+      existingMachines.clear();
       existingMachines.add(claimedMachine);
-
       // Encode all claimed machines to JSON strings
       final encodedMachines = existingMachines.map((m) => m.encode()).toList();
       _prefs.setStringList(claimedMachinesKey, encodedMachines);

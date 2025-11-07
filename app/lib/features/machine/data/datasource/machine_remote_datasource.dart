@@ -6,8 +6,10 @@ import 'package:resiwash/core/network/dio_client.dart';
 import 'package:resiwash/core/network/paths.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
+import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
 
 Dio http = DioClient.instance();
 
@@ -78,6 +80,56 @@ class MachineRemoteDatasource {
       );
 
       return apiResponse.data.toEntity();
+    } on DioException catch (e) {
+      throw Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> claimMachine({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/claim",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> unclaimMachine({
+    required String machineId,
+    required UnclaimMachineParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/unclaim",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> pokeClaimant(String machineId) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/poke",
+      );
+
+      appLog.d('[api] ${response.data}');
     } on DioException catch (e) {
       throw Failure(message: e.message as String);
     } catch (e) {

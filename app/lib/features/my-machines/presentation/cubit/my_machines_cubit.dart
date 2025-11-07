@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
@@ -6,6 +7,7 @@ import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
+import 'package:resiwash/features/my-machines/domain/usecases/my_machines_usecase.dart';
 import 'my_machines_state.dart';
 
 /// Cubit for managing user's subscribed machines
@@ -20,15 +22,64 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   final SharedPreferencesService _sharedPreferencesService;
   final NotificationService _notificationService;
   final ListMachinesUseCase _listMachinesUseCase;
+  final MyMachinesUseCase _myMachinesUseCase;
 
   MyMachinesCubit({
     required SharedPreferencesService sharedPreferencesService,
     required NotificationService notificationService,
     required ListMachinesUseCase listMachinesUseCase,
+    required MyMachinesUseCase myMachinesUseCase,
   }) : _sharedPreferencesService = sharedPreferencesService,
        _notificationService = notificationService,
        _listMachinesUseCase = listMachinesUseCase,
+       _myMachinesUseCase = myMachinesUseCase,
        super(MyMachinesInitial());
+
+  Future<List<MachineEntity>> _getMyMachines() async {
+    final subscribedMachineIds = _sharedPreferencesService
+        .getSubscribedMachines();
+
+    final claimedMachineMetadata = _sharedPreferencesService
+        .getClaimedMachines();
+
+    final machineIdsToLoad = [
+      ...subscribedMachineIds,
+      ...claimedMachineMetadata.map((e) => e.machineId),
+    ].toSet().toList();
+
+    if (machineIdsToLoad.isEmpty) {
+      return [];
+    }
+
+    appLog.d(
+      'Loading ${subscribedMachineIds.length} subscribed machines from repository',
+    );
+
+    // Fetch machines from repository
+    final result = await _listMachinesUseCase(
+      ListMachinesParams(machineIds: machineIdsToLoad, extra: true),
+    );
+
+    return result.fold(
+      (failure) {
+        appLog.e('Error loading machines: ${failure.message}');
+        // emit(MyMachinesError(message: 'Failed to load machines'));
+        // throw some error
+        throw Failure(message: failure.message);
+      },
+      (machines) {
+        appLog.i('Successfully loaded ${machines.length} machines');
+        // emit(
+        //   MyMachinesLoaded(
+        //     subscribedMachineIds: subscribedMachineIds,
+        //     machines: machines,
+        //     claimedMachineMetadata: claimedMachineMetadata,
+        //   ),
+        // );
+        return machines;
+      },
+    );
+  }
 
   /// INIT METHOD
   /// Load full machine data from repository for subscribed machines
@@ -37,49 +88,26 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     try {
       emit(MyMachinesLoading());
 
-      // Get subscribed machine IDs from local storage
-      final subscribedMachineIds = _sharedPreferencesService
-          .getSubscribedMachines();
+      try {
+        List<MachineEntity> machines = await _getMyMachines();
 
-      final claimedMachineMetadata = _sharedPreferencesService
-          .getClaimedMachines();
+        final subscribedMachineIds = _sharedPreferencesService
+            .getSubscribedMachines();
 
-      appLog.d(
-        'Loading ${subscribedMachineIds.length} subscribed machines from repository',
-      );
+        final claimedMachineMetadata = _sharedPreferencesService
+            .getClaimedMachines();
 
-      if (subscribedMachineIds.isEmpty) {
         emit(
           MyMachinesLoaded(
-            subscribedMachineIds: [],
-            machines: [],
-            claimedMachineMetadata: [],
+            subscribedMachineIds: subscribedMachineIds,
+            machines: machines,
+            claimedMachineMetadata: claimedMachineMetadata,
           ),
         );
-        return;
+      } catch (e) {
+        appLog.e('Error loading machines: $e');
+        emit(MyMachinesError(message: 'Failed to load machines'));
       }
-
-      // Fetch machines from repository
-      final result = await _listMachinesUseCase(
-        ListMachinesParams(machineIds: subscribedMachineIds, extra: true),
-      );
-
-      result.fold(
-        (failure) {
-          appLog.e('Error loading machines: ${failure.message}');
-          emit(MyMachinesError(message: 'Failed to load machines'));
-        },
-        (machines) {
-          appLog.i('Successfully loaded ${machines.length} machines');
-          emit(
-            MyMachinesLoaded(
-              subscribedMachineIds: subscribedMachineIds,
-              machines: machines,
-              claimedMachineMetadata: claimedMachineMetadata,
-            ),
-          );
-        },
-      );
     } catch (e) {
       appLog.e('Error loading subscribed machines: $e');
       emit(MyMachinesError(message: 'Failed to load subscribed machines'));
@@ -106,9 +134,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribing(
           subscribedMachineIds: currentMachineIds,
-          machines: currentState is MyMachinesLoaded
-              ? currentState.machines
-              : null,
+          machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
         ),
       );
@@ -131,9 +157,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribed(
           subscribedMachineIds: updatedMachines,
-          machines: currentState is MyMachinesLoaded
-              ? currentState.machines
-              : null,
+          machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
           operatingMachine: machine,
         ),
@@ -141,29 +165,22 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
       // wait for 1s, then emit
       Future.delayed(const Duration(milliseconds: 500), () async {
-        // Fetch machines from repository
-        final result = await _listMachinesUseCase(
-          ListMachinesParams(machineIds: updatedMachines, extra: true),
-        );
-
-        result.fold(
-          (failure) {
-            appLog.e('Error loading machines: ${failure.message}');
-            emit(MyMachinesError(message: 'Failed to load machines'));
-          },
-          (machines) {
-            appLog.i('Successfully loaded ${machines.length} machines');
-            emit(
-              MyMachinesLoaded(
-                subscribedMachineIds: updatedMachines,
-                machines: machines,
-                claimedMachineMetadata: currentState is MyMachinesLoaded
-                    ? currentState.claimedMachineMetadata
-                    : [],
-              ),
-            );
-          },
-        );
+        try {
+          final machines = await _getMyMachines();
+          emit(
+            MyMachinesLoaded(
+              subscribedMachineIds: updatedMachines,
+              machines: machines,
+              claimedMachineMetadata: currentState is MyMachinesLoaded
+                  ? currentState.claimedMachineMetadata
+                  : [],
+            ),
+          );
+        } catch (e) {
+          appLog.e('Error loading machines: $e');
+          emit(MyMachinesError(message: 'Failed to load machines'));
+          return;
+        }
       });
     } catch (e) {
       appLog.e('Error subscribing to machine $machineId: $e');
@@ -200,9 +217,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribing(
           subscribedMachineIds: currentMachineIds,
-          machines: currentState is MyMachinesLoaded
-              ? currentState.machines
-              : null,
+          machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
         ),
       );
@@ -231,11 +246,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
         emit(
           MyMachinesLoaded(
             subscribedMachineIds: updatedMachines,
-            machines: currentState is MyMachinesLoaded
-                ? currentState.machines
-                      ?.where((m) => m.machineId != machineId)
-                      .toList()
-                : null,
+            machines: currentMachines,
             claimedMachineMetadata: currentClaimedMachines,
           ),
         );
@@ -264,24 +275,51 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   }
 
   /// Claim a machine (mark as "in use by you")
+  /// NOTE: this function asserts that it is only called when you have NOT claimed the machine
   Future<void> claimMachine(String machineId, {int? cycleTime}) async {
     try {
+      final currentState = state;
+      List<String> currentMachineIds = [];
+      List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<MachineEntity> currentMachines = [];
+
+      if (currentState is MyMachinesLoaded) {
+        currentMachineIds = currentState.subscribedMachineIds;
+        currentClaimedMachines = currentState.claimedMachineMetadata;
+        currentMachines = currentState.machines ?? [];
+      }
+
+      emit(
+        MyMachinesClaiming(
+          subscribedMachineIds: currentMachineIds,
+          machines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachines,
+        ),
+      );
+
       // Add to SharedPreferences with optional cycle time
       _sharedPreferencesService.claimMachine(machineId, cycleTime: cycleTime);
 
+      // get fcm token
+      final fcmToken = await _notificationService.getFcmToken();
+
+      // Call use case to claim machine
+      await _myMachinesUseCase.claim(
+        machineId,
+        cycleTime: 30, // for now
+        fcmToken: fcmToken,
+      );
+
       // Reload state to reflect changes
-      final currentState = state;
-      if (currentState is MyMachinesLoaded) {
-        final updatedClaimedMetadata = _sharedPreferencesService
-            .getClaimedMachines();
-        emit(
-          MyMachinesLoaded(
-            subscribedMachineIds: currentState.subscribedMachineIds,
-            machines: currentState.machines,
-            claimedMachineMetadata: updatedClaimedMetadata,
-          ),
-        );
-      }
+      final updatedClaimedMetadata = _sharedPreferencesService
+          .getClaimedMachines();
+      emit(
+        MyMachinesLoaded(
+          subscribedMachineIds: currentMachineIds,
+          machines: currentMachines,
+          claimedMachineMetadata: updatedClaimedMetadata,
+        ),
+      );
 
       appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
     } catch (e) {
@@ -293,18 +331,42 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// // TODO: add FCM registration
   Future<void> unclaimMachine(String machineId) async {
     try {
+      final currentState = state;
+      List<String> currentMachineIds = [];
+      List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<MachineEntity> currentMachines = [];
+
+      if (currentState is MyMachinesLoaded) {
+        currentMachineIds = currentState.subscribedMachineIds;
+        currentClaimedMachines = currentState.claimedMachineMetadata;
+        currentMachines = currentState.machines ?? [];
+      }
+
+      emit(
+        MyMachinesClaiming(
+          subscribedMachineIds: currentMachineIds,
+          machines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachines,
+        ),
+      );
+
+      // get fcm token
+      final fcmToken = await _notificationService.getFcmToken();
+
+      // Call use case to claim machine
+      await _myMachinesUseCase.unclaim(machineId, fcmToken: fcmToken);
+
       // Remove from SharedPreferences
       _sharedPreferencesService.unclaimMachine(machineId);
 
       // Reload state to reflect changes
-      final currentState = state;
       if (currentState is MyMachinesLoaded) {
         final updatedClaimedMetadata = _sharedPreferencesService
             .getClaimedMachines();
         emit(
           MyMachinesLoaded(
-            subscribedMachineIds: currentState.subscribedMachineIds,
-            machines: currentState.machines,
+            subscribedMachineIds: currentMachineIds,
+            machines: currentMachines,
             claimedMachineMetadata: updatedClaimedMetadata,
           ),
         );

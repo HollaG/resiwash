@@ -15,12 +15,12 @@ class MyMachinesLoading extends MyMachinesState {}
 
 class MyMachinesLoaded extends MyMachinesState {
   final List<String> subscribedMachineIds;
-  final List<MachineEntity>? machines;
+  final List<MachineEntity> machines;
   final List<ClaimedMachineMetadata> claimedMachineMetadata;
 
   const MyMachinesLoaded({
     required this.subscribedMachineIds,
-    this.machines,
+    required this.machines,
     required this.claimedMachineMetadata,
   });
 
@@ -46,7 +46,7 @@ class MyMachinesError extends MyMachinesState {
 class MyMachinesSubscribing extends MyMachinesLoaded {
   const MyMachinesSubscribing({
     required super.subscribedMachineIds,
-    super.machines,
+    required super.machines,
     required super.claimedMachineMetadata,
   });
 }
@@ -56,7 +56,7 @@ class MyMachinesSubscribed extends MyMachinesLoaded {
 
   const MyMachinesSubscribed({
     required super.subscribedMachineIds,
-    super.machines,
+    required super.machines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
   });
@@ -69,7 +69,7 @@ class MyMachinesSubscribed extends MyMachinesLoaded {
 class MyMachinesClaiming extends MyMachinesLoaded {
   const MyMachinesClaiming({
     required super.subscribedMachineIds,
-    super.machines,
+    required super.machines,
     required super.claimedMachineMetadata,
   });
 }
@@ -79,7 +79,7 @@ class MyMachinesClaimed extends MyMachinesLoaded {
 
   const MyMachinesClaimed({
     required super.subscribedMachineIds,
-    super.machines,
+    required super.machines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
   });

@@ -138,28 +138,28 @@ class InUseByYouSection extends StatelessWidget {
               Center(child: CircularProgressIndicator()),
 
             // claimed machines
-            // if (state is MyMachinesLoaded)
-            //   Column(
-            //     spacing: 8,
-            //     children: state.claimedMachineMetadata.isNotEmpty
-            //         ? state.claimedMachineMetadata
-            //               .map(
-            //                 (claimedMeta) => Tracker(
-            //                   claimedMetadata: claimedMeta,
-            //                   machine: state.machines!.firstWhere(
-            //                     (machine) =>
-            //                         machine.machineId == claimedMeta.machineId,
-            //                   ),
-            //                 ),
-            //               )
-            //               .toList()
-            //         : [
-            //             Text(
-            //               "You have not marked any machines as in use.",
-            //               style: Theme.of(context).textTheme.bodyMedium,
-            //             ),
-            //           ],
-            //   ),
+            if (state is MyMachinesLoaded)
+              Column(
+                spacing: 8,
+                children: state.claimedMachineMetadata.isNotEmpty
+                    ? state.claimedMachineMetadata
+                          .map(
+                            (claimedMeta) => Tracker(
+                              claimedMetadata: claimedMeta,
+                              machine: (state.machines ?? []).firstWhere(
+                                (machine) =>
+                                    machine.machineId == claimedMeta.machineId,
+                              ),
+                            ),
+                          )
+                          .toList()
+                    : [
+                        Text(
+                          "You have not marked any machines as in use.",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+              ),
           ],
         );
       },

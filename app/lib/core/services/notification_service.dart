@@ -37,8 +37,9 @@ class NotificationService {
     }
   }
 
-  Future<String?> getFcmToken() async {
-    return await _firebaseMessaging.getToken();
+  // TODO: check how to guarantee non-null token
+  Future<String> getFcmToken() async {
+    return await _firebaseMessaging.getToken() ?? "";
   }
 
   Future<String> subscribeToMachine(String machineId) async {

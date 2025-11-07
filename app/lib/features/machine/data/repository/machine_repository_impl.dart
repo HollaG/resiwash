@@ -3,7 +3,9 @@ import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/data/datasource/machine_remote_datasource.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 
@@ -38,6 +40,36 @@ class MachineRepositoryImpl implements MachineRepository {
         params: params,
       );
       return Right(machine);
+    } on Failure catch (e) {
+      return Left(Failure(message: e.message));
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unclaimMachine({
+    required String machineId,
+    required UnclaimMachineParams params,
+  }) async {
+    try {
+      await dataSource.unclaimMachine(machineId: machineId, params: params);
+      return const Right(null);
+    } on Failure catch (e) {
+      return Left(Failure(message: e.message));
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> claimMachine({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      await dataSource.claimMachine(machineId: machineId, params: params);
+      return const Right(null);
     } on Failure catch (e) {
       return Left(Failure(message: e.message));
     } catch (e) {
