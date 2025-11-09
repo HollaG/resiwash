@@ -39,9 +39,25 @@ class MachineRow extends StatefulWidget {
   State<MachineRow> createState() => _MachineRowState();
 }
 
+enum SubscriptionState {
+  notSubscribed,
+  subscribed,
+  loading,
+  successSubscribing,
+  successUnsubscribing,
+}
+
+enum ClaimState {
+  notClaimed,
+  claimed,
+  loading,
+  successClaiming,
+  successUnclaiming,
+}
+
 class _MachineRowState extends State<MachineRow> {
-  // 0 = not subscribed, 1 = subscribed, 2 = loading, 3 = success subscribing, 4 = success unsubscribing
-  int isSubscribed = 2;
+  SubscriptionState subscriptionState = SubscriptionState.loading;
+  ClaimState claimState = ClaimState.loading;
 
   int isClaimed =
       2; // 0 = not claimed, 1 = claimed, 2 = loading, 3 = success claiming, 4 = success unclaiming
@@ -50,146 +66,153 @@ class _MachineRowState extends State<MachineRow> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // _checkSubscriptionStatus(); // visible in UI
-      // _checkClaimStatus(); // not visible in UI
+      // Now, we do this separately, because we don't want to listen to MyMachinesCubit load success.
+      bool isClaimed = context.read<MyMachinesCubit>().isMachineClaimed(
+        widget.machine.machineId,
+      );
+      bool isSubscribed = context.read<MyMachinesCubit>().isSubscribedToMachine(
+        widget.machine.machineId,
+      );
+
+      setState(() {
+        subscriptionState = isSubscribed
+            ? SubscriptionState.subscribed
+            : SubscriptionState.notSubscribed;
+        claimState = isClaimed ? ClaimState.claimed : ClaimState.notClaimed;
+      });
     });
   }
 
-  // void _checkSubscriptionStatus() {
-  //   final sharedPref = sl<SharedPreferencesService>();
-
-  //   bool subscribed = sharedPref.isSubscribedToMachine(
-  //     widget.machine.machineId,
-  //   );
-
-  //   setState(() {
-  //     isSubscribed = subscribed ? 1 : 0;
-  //   });
-  // }
-
-  // void _checkClaimStatus() {
-  //   final sharedPref = sl<SharedPreferencesService>();
-
-  //   bool claimed = sharedPref.isMachineClaimed(widget.machine.machineId);
-
-  //   setState(() {
-  //     isClaimed = claimed ? 1 : 0;
-  //   });
-  // }
-
-  // Future<void> subscribe() async {
-  //   setState(() {
-  //     isSubscribed = 2;
-  //   });
-  //   try {
-  //     String topicName = await sl<NotificationService>().subscribeToMachine(
-  //       widget.machine.machineId,
-  //     );
-
-  //     appLog.d("Subscribed to topic: $topicName");
-
-  //     if (mounted) {
-  //       setState(() {
-  //         isSubscribed = 3;
-  //       });
-  //     }
-
-  //     // set a timer to reset the state back to unsubscribed after 1s
-  //     Future.delayed(Duration(milliseconds: 500), () {
-  //       if (mounted) {
-  //         setState(() {
-  //           isSubscribed = 1;
-  //         });
-  //       }
-  //     });
-
-  //     // notification
-  //     // ScaffoldMessenger.of(context).showSnackBar(
-  //     //   SnackBar(content: Text("Notifications for this machine enabled.")),
-  //     // );
-  //   } catch (e) {
-  //     appLog.e("Error subscribing to machine: $e");
-  //     if (mounted) {
-  //       setState(() {
-  //         isSubscribed = 0;
-  //       });
-  //     }
-
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text("There was an error subscribing to this machine."),
-  //       ),
-  //     );
-  //   }
-  // }
-
-  // Future<void> unsubscribe() async {
-  //   setState(() {
-  //     isSubscribed = 2;
-  //   });
-  //   try {
-  //     String topicName = await sl<NotificationService>().unsubscribeFromMachine(
-  //       widget.machine.machineId,
-  //     );
-  //     appLog.d("Unsubscribed from topic: $topicName");
-
-  //     if (mounted) {
-  //       setState(() {
-  //         isSubscribed = 4;
-  //       });
-  //     }
-
-  //     // set a timer to reset the state back to unsubscribed after 1s
-  //     Future.delayed(Duration(milliseconds: 500), () {
-  //       if (mounted) {
-  //         setState(() {
-  //           isSubscribed = 0;
-  //         });
-  //       }
-  //     });
-  //   } catch (e) {
-  //     appLog.e("Error unsubscribing from machine: $e");
-  //     if (mounted) {
-  //       setState(() {
-  //         isSubscribed = 1;
-  //       });
-  //     }
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         content: Text("There was an error unsubscribing from this machine."),
-  //       ),
-  //     );
-  //     return;
-  //   }
-  // }
-
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MyMachinesCubit, MyMachinesState>(
-      builder: (context, state) {
-        if (state is MyMachinesLoaded) {
-          bool isSubscribed = state.subscribedMachineIds.contains(
+    return BlocConsumer<MyMachinesCubit, MyMachinesState>(
+      /// NOTE: Since the MyMachinesCubit is provided higher up in the tree,
+      ///       other MachineRows will receive state updates from this MachineRow, and vice versa.
+      ///       We can listen to `state.operatingMachine.machineId` to filter out irrelevant updates.
+      listener: (context, state) {
+        if (state is MyMachinesLoaded) {}
+
+        if (state is MyMachinesClaiming &&
+            state.operatingMachine.machineId == widget.machine.machineId) {
+          // change internal state to loading
+          setState(() {
+            claimState = ClaimState.loading;
+          });
+        }
+
+        if ((state is MyMachinesClaimed &&
+                state.operatingMachine.machineId == widget.machine.machineId) ||
+            (state is MyMachinesUnclaimed &&
+                state.operatingMachine.machineId == widget.machine.machineId)) {
+          // change internal state to success
+          setState(() {
+            claimState = state is MyMachinesClaimed
+                ? ClaimState.successClaiming
+                : ClaimState.successUnclaiming;
+          });
+
+          // change back to normal 1s later
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              setState(() {
+                bool isClaimed = context
+                    .read<MyMachinesCubit>()
+                    .isMachineClaimed(widget.machine.machineId);
+                claimState = isClaimed
+                    ? ClaimState.claimed
+                    : ClaimState.notClaimed;
+              });
+            }
+          });
+        }
+
+        if (state is MyMachinesSubscribing &&
+            state.operatingMachine.machineId == widget.machine.machineId) {
+          // change internal state to loading
+          setState(() {
+            subscriptionState = SubscriptionState.loading;
+          });
+        }
+
+        if (state is MyMachinesSubscribed &&
+                state.operatingMachine.machineId == widget.machine.machineId ||
+            (state is MyMachinesUnsubscribed &&
+                state.operatingMachine.machineId == widget.machine.machineId)) {
+          // change internal state to success
+          setState(() {
+            subscriptionState = state is MyMachinesSubscribed
+                ? SubscriptionState.successSubscribing
+                : SubscriptionState.successUnsubscribing;
+          });
+
+          // change back to normal 1s later
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              setState(() {
+                bool isSubscribed = context
+                    .read<MyMachinesCubit>()
+                    .isSubscribedToMachine(widget.machine.machineId);
+                subscriptionState = isSubscribed
+                    ? SubscriptionState.subscribed
+                    : SubscriptionState.notSubscribed;
+              });
+            }
+          });
+        }
+
+        if (state is MyMachinesErrorClaiming &&
+            state.operatingMachine.machineId == widget.machine.machineId) {
+          // reset to previous state on error
+          bool isClaimed = context.read<MyMachinesCubit>().isMachineClaimed(
             widget.machine.machineId,
           );
-          bool isClaimed = state.claimedMachineMetadata
-              .map((e) => e.machineId)
-              .contains(widget.machine.machineId);
 
+          setState(() {
+            claimState = isClaimed ? ClaimState.claimed : ClaimState.notClaimed;
+          });
+
+          print('Error claiming machine: ${state.message}');
+          // show error message in snackbar only if this route is currently active
+          // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
+          if (!TickerMode.of(context)) return; 
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        if (state is MyMachinesLoaded) {
           final location = MachineDisplayUtils.getLocationLabel(widget.machine);
           final time = MachineDisplayUtils.getStatusLabel(widget.machine);
+          String subscribeText = "";
 
-          String subscribeText = isSubscribed ? "Unsubscribe" : "Subscribe";
-          // todo: any point distinguishing between unsubbing and subbbing?
-          if (state is MyMachinesSubscribing) subscribeText = "Loading...";
-          if (state is MyMachinesSubscribed)
-            subscribeText = isSubscribed ? "Subscribed!" : "Unsubscribed!";
+          switch (subscriptionState) {
+            case SubscriptionState.notSubscribed:
+              subscribeText = "Subscribe";
+              break;
+            case SubscriptionState.subscribed:
+              subscribeText = "Unsubscribe";
+              break;
+            case SubscriptionState.loading:
+              subscribeText = "Loading...";
+              break;
+            case SubscriptionState.successSubscribing:
+              subscribeText = "Subscribed!";
+              break;
+            case SubscriptionState.successUnsubscribing:
+              subscribeText = "Unsubscribed!";
+              break;
+          }
 
           Widget notificationIcon = Icon(
             Icons.notification_add,
             color: Theme.of(context).colorScheme.secondary,
           );
 
-          if (state is MyMachinesSubscribing) {
+          if (subscriptionState == SubscriptionState.loading) {
             notificationIcon = SizedBox(
               width: 16,
               height: 16,
@@ -200,7 +223,8 @@ class _MachineRowState extends State<MachineRow> {
             );
           }
 
-          if (state is MyMachinesSubscribed) {
+          if (subscriptionState == SubscriptionState.successSubscribing ||
+              subscriptionState == SubscriptionState.successUnsubscribing) {
             // success subscribing
             notificationIcon = Icon(
               Icons.check,
@@ -208,31 +232,52 @@ class _MachineRowState extends State<MachineRow> {
             );
           }
 
-          String claimText = isClaimed ? "Unclaim" : "Claim";
-          if (state is MyMachinesClaiming) claimText = "Loading...";
-          if (state is MyMachinesClaimed)
-            claimText = isClaimed ? "Claimed!" : "Unclaimed!";
-          Widget claimIcon = Icon(
-            Icons.person,
-            color: Theme.of(context).colorScheme.onPrimaryContainer,
-          );
+          String claimText = '';
+          switch (claimState) {
+            case ClaimState.notClaimed:
+              claimText = "Claim";
+              break;
+            case ClaimState.claimed:
+              claimText = "Unclaim";
+              break;
+            case ClaimState.loading:
+              claimText = "Loading...";
+              break;
+            case ClaimState.successClaiming:
+              claimText = "Claimed!";
+              break;
+            case ClaimState.successUnclaiming:
+              claimText = "Unclaimed!";
+              break;
+          }
 
-          if (state is MyMachinesClaiming) {
+          Widget claimIcon = claimState == ClaimState.notClaimed
+              ? Icon(
+                  Icons.person_add_alt_rounded,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                )
+              : Icon(
+                  Icons.person_off_rounded,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                );
+
+          if (claimState == ClaimState.loading) {
             claimIcon = SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Theme.of(context).colorScheme.secondary,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
               ),
             );
           }
 
-          if (state is MyMachinesClaimed) {
+          if (claimState == ClaimState.successClaiming ||
+              claimState == ClaimState.successUnclaiming) {
             // success claiming
             claimIcon = Icon(
               Icons.check,
-              color: Theme.of(context).colorScheme.secondary,
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
             );
           }
 
@@ -294,24 +339,29 @@ class _MachineRowState extends State<MachineRow> {
             confirmDismiss: (direction) async {
               // wait 1s
               if (direction == DismissDirection.endToStart) {
-                if (isSubscribed) {
+                if (subscriptionState == SubscriptionState.subscribed) {
                   await context.read<MyMachinesCubit>().unsubscribeFromMachine(
                     widget.machine,
                   );
-                } else {
+                } else if (subscriptionState ==
+                    SubscriptionState.notSubscribed) {
                   await context.read<MyMachinesCubit>().subscribeToMachine(
                     widget.machine,
                   );
+                } else {
+                  return null;
                 }
               } else if (direction == DismissDirection.startToEnd) {
-                if (isClaimed) {
+                if (claimState == ClaimState.claimed) {
                   await context.read<MyMachinesCubit>().unclaimMachine(
-                    widget.machine.machineId,
+                    widget.machine,
+                  );
+                } else if (claimState == ClaimState.notClaimed) {
+                  await context.read<MyMachinesCubit>().claimMachine(
+                    widget.machine,
                   );
                 } else {
-                  await context.read<MyMachinesCubit>().claimMachine(
-                    widget.machine.machineId,
-                  );
+                  return null;
                 }
               }
 
@@ -345,7 +395,8 @@ class _MachineRowState extends State<MachineRow> {
                         Row(
                           spacing: 4,
                           children: [
-                            if (isSubscribed)
+                            if (subscriptionState ==
+                                SubscriptionState.subscribed)
                               Icon(
                                 Icons.notifications,
                                 size: 14,

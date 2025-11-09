@@ -117,25 +117,27 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// Subscribe to a machine
   /// - Subscribes to FCM topic via NotificationService
   /// - Saves to local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
   Future<void> subscribeToMachine(MachineEntity machine) async {
     final machineId = machine.machineId;
+    final currentState = state;
+    List<String> currentMachineIds = [];
+    List<ClaimedMachineMetadata> currentClaimedMachines = [];
+    List<MachineEntity> currentMachines = [];
+
+    if (currentState is MyMachinesLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentClaimedMachines = currentState.claimedMachineMetadata;
+      currentMachines = currentState.machines ?? [];
+    }
+
     try {
-      final currentState = state;
-      List<String> currentMachineIds = [];
-      List<ClaimedMachineMetadata> currentClaimedMachines = [];
-      List<MachineEntity> currentMachines = [];
-
-      if (currentState is MyMachinesLoaded) {
-        currentMachineIds = currentState.subscribedMachineIds;
-        currentClaimedMachines = currentState.claimedMachineMetadata;
-        currentMachines = currentState.machines ?? [];
-      }
-
       emit(
         MyMachinesSubscribing(
           subscribedMachineIds: currentMachineIds,
           machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
 
@@ -184,8 +186,15 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       });
     } catch (e) {
       appLog.e('Error subscribing to machine $machineId: $e');
-      emit(MyMachinesError(message: 'Failed to subscribe to machine'));
-
+      emit(
+        MyMachinesSubscribeError(
+          message: 'Failed to unsubscribe from machine',
+          claimedMachineMetadata: currentClaimedMachines,
+          machines: currentMachines,
+          subscribedMachineIds: currentMachineIds,
+          operatingMachine: machine,
+        ),
+      );
       // Reload current state after error
       loadNotifyableMachines();
     }
@@ -194,20 +203,20 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// Unsubscribe from a machine
   /// - Unsubscribes from FCM topic via NotificationService
   /// - Removes from local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
   Future<void> unsubscribeFromMachine(MachineEntity machine) async {
     final machineId = machine.machineId;
+    final currentState = state;
+    List<String> currentMachineIds = [];
+    List<ClaimedMachineMetadata> currentClaimedMachines = [];
+    List<MachineEntity> currentMachines = [];
+
+    if (currentState is MyMachinesLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentClaimedMachines = currentState.claimedMachineMetadata;
+      currentMachines = currentState.machines ?? [];
+    }
     try {
-      final currentState = state;
-      List<String> currentMachineIds = [];
-      List<ClaimedMachineMetadata> currentClaimedMachines = [];
-      List<MachineEntity> currentMachines = [];
-
-      if (currentState is MyMachinesLoaded) {
-        currentMachineIds = currentState.subscribedMachineIds;
-        currentClaimedMachines = currentState.claimedMachineMetadata;
-        currentMachines = currentState.machines ?? [];
-      }
-
       // Check if not subscribed
       if (!currentMachineIds.contains(machineId)) {
         appLog.w('Not subscribed to machine: $machineId');
@@ -219,6 +228,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           subscribedMachineIds: currentMachineIds,
           machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
 
@@ -233,7 +243,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
       appLog.i('Successfully unsubscribed from machine: $machineId');
       emit(
-        MyMachinesSubscribed(
+        MyMachinesUnsubscribed(
           subscribedMachineIds: updatedMachines,
           machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
@@ -253,7 +263,15 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       });
     } catch (e) {
       appLog.e('Error unsubscribing from machine $machineId: $e');
-      emit(MyMachinesError(message: 'Failed to unsubscribe from machine'));
+      emit(
+        MyMachinesSubscribeError(
+          message: 'Failed to unsubscribe from machine',
+          claimedMachineMetadata: currentClaimedMachines,
+          machines: currentMachines,
+          subscribedMachineIds: currentMachineIds,
+          operatingMachine: machine,
+        ),
+      );
 
       // Reload current state after error
       loadNotifyableMachines();
@@ -276,7 +294,9 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
   /// Claim a machine (mark as "in use by you")
   /// NOTE: this function asserts that it is only called when you have NOT claimed the machine
-  Future<void> claimMachine(String machineId, {int? cycleTime}) async {
+  /// NOTE: hits the backend
+  Future<void> claimMachine(MachineEntity machine, {int? cycleTime}) async {
+    final machineId = machine.machineId;
     try {
       final currentState = state;
       List<String> currentMachineIds = [];
@@ -294,42 +314,90 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           subscribedMachineIds: currentMachineIds,
           machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
-
-      // Add to SharedPreferences with optional cycle time
-      _sharedPreferencesService.claimMachine(machineId, cycleTime: cycleTime);
 
       // get fcm token
       final fcmToken = await _notificationService.getFcmToken();
 
       // Call use case to claim machine
-      await _myMachinesUseCase.claim(
+
+      final myMachinesEither = await _myMachinesUseCase.claim(
         machineId,
         cycleTime: 30, // for now
         fcmToken: fcmToken,
       );
 
-      // Reload state to reflect changes
-      final updatedClaimedMetadata = _sharedPreferencesService
-          .getClaimedMachines();
-      emit(
-        MyMachinesLoaded(
-          subscribedMachineIds: currentMachineIds,
-          machines: currentMachines,
-          claimedMachineMetadata: updatedClaimedMetadata,
-        ),
-      );
+      myMachinesEither.fold(
+        (failure) {
+          appLog.e('Error claiming machine $machineId: ${failure.message}');
 
-      appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
+          // // Emit error state with the actual error message
+          emit(
+            MyMachinesErrorClaiming(
+              subscribedMachineIds: currentMachineIds,
+              machines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachines,
+              operatingMachine: machine,
+              message: failure.message,
+            ),
+          );
+
+          // // Restore previous state after a delay
+          // Future.delayed(const Duration(seconds: 2), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: currentClaimedMachines,
+          //     ),
+          //   );
+          // });
+        },
+        (_) {
+          // Add to SharedPreferences with optional cycle time
+          _sharedPreferencesService.claimMachine(
+            machineId,
+            cycleTime: cycleTime,
+          );
+
+          // Reload state to reflect changes
+          final updatedClaimedMetadata = _sharedPreferencesService
+              .getClaimedMachines();
+
+          emit(
+            MyMachinesClaimed(
+              subscribedMachineIds: currentMachineIds,
+              machines: currentMachines,
+              claimedMachineMetadata: updatedClaimedMetadata,
+              operatingMachine: machine,
+            ),
+          );
+
+          // wait for 1s, then emit
+          // Future.delayed(const Duration(seconds: 1), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: updatedClaimedMetadata,
+          //     ),
+          //   );
+          // });
+
+          appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
+        },
+      );
     } catch (e) {
       appLog.e('Error claiming machine $machineId: $e');
     }
   }
 
   /// Unclaim a machine (remove from "in use by you")
-  /// // TODO: add FCM registration
-  Future<void> unclaimMachine(String machineId) async {
+  /// NOTE: hits the backend
+  Future<void> unclaimMachine(MachineEntity machine) async {
+    final machineId = machine.machineId;
     try {
       final currentState = state;
       List<String> currentMachineIds = [];
@@ -347,6 +415,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           subscribedMachineIds: currentMachineIds,
           machines: currentMachines,
           claimedMachineMetadata: currentClaimedMachines,
+          operatingMachine: machine,
         ),
       );
 
@@ -354,28 +423,74 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       final fcmToken = await _notificationService.getFcmToken();
 
       // Call use case to claim machine
-      await _myMachinesUseCase.unclaim(machineId, fcmToken: fcmToken);
+      final result = await _myMachinesUseCase.unclaim(
+        machineId,
+        fcmToken: fcmToken,
+      );
+      result.fold(
+        (failure) {
+          appLog.e('Error unclaiming machine $machineId: ${failure.message}');
 
-      // Remove from SharedPreferences
-      _sharedPreferencesService.unclaimMachine(machineId);
+          // // Emit error state with the actual error message
+          emit(
+            MyMachinesErrorClaiming(
+              subscribedMachineIds: currentMachineIds,
+              machines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachines,
+              operatingMachine: machine,
+              message: failure.message,
+            ),
+          );
 
-      // Reload state to reflect changes
-      if (currentState is MyMachinesLoaded) {
-        final updatedClaimedMetadata = _sharedPreferencesService
-            .getClaimedMachines();
-        emit(
-          MyMachinesLoaded(
-            subscribedMachineIds: currentMachineIds,
-            machines: currentMachines,
-            claimedMachineMetadata: updatedClaimedMetadata,
-          ),
-        );
-      }
+          // // Restore previous state after a delay
+          // Future.delayed(const Duration(seconds: 2), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: currentClaimedMachines,
+          //     ),
+          //   );
+          // });
+        },
+        (_) {
+          // Remove from SharedPreferences
+          _sharedPreferencesService.unclaimMachine(machineId);
 
-      appLog.i('Unclaimed machine: $machineId');
+          // Reload state to reflect changes
+          final updatedClaimedMetadata = _sharedPreferencesService
+              .getClaimedMachines();
+
+          emit(
+            MyMachinesUnclaimed(
+              subscribedMachineIds: currentMachineIds,
+              machines: currentMachines,
+              claimedMachineMetadata: updatedClaimedMetadata,
+              operatingMachine: machine,
+            ),
+          );
+
+          // wait for 1s, then emit
+          // Future.delayed(const Duration(seconds: 1), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: updatedClaimedMetadata,
+          //     ),
+          //   );
+          // });
+
+          appLog.i('Unclaimed machine: $machineId');
+        },
+      );
     } catch (e) {
       appLog.e('Error unclaiming machine $machineId: $e');
     }
+  }
+
+  bool isMachineClaimed(String machineId) {
+    return _sharedPreferencesService.isMachineClaimed(machineId);
   }
 
   /// Update the cycle time for a claimed machine

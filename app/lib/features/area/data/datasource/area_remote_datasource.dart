@@ -32,7 +32,9 @@ class AreaRemoteDatasource {
           .toList();
     } on DioException catch (e) {
       appLog.e('[api] ListAreas error: ${e.message}');
-      return [];
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message ?? 'Unknown error');
     }
   }
 
@@ -61,7 +63,9 @@ class AreaRemoteDatasource {
           .toList();
     } on DioException catch (e) {
       appLog.e('[api] ListLocations error: ${e.message}');
-      return [];
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message ?? 'Unknown error');
     }
   }
 
@@ -80,7 +84,9 @@ class AreaRemoteDatasource {
       return apiResponse.data.toEntity();
     } on DioException catch (e) {
       appLog.e('[api] GetAreaById error: ${e.message}');
-      throw Failure(message: e.message ?? 'Unknown error');
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message ?? 'Unknown error');
     }
   }
 }

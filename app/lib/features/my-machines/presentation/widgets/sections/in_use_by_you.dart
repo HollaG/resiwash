@@ -58,11 +58,11 @@ class InUseByYouSection extends StatelessWidget {
                                     if (newValue == true) {
                                       context
                                           .read<MyMachinesCubit>()
-                                          .claimMachine(machine.machineId);
+                                          .claimMachine(machine);
                                     } else {
                                       context
                                           .read<MyMachinesCubit>()
-                                          .unclaimMachine(machine.machineId);
+                                          .unclaimMachine(machine);
                                     }
                                   },
                                 ),

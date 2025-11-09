@@ -54,7 +54,9 @@ class MachineRemoteDatasource {
       // return apiResponse.data.map((model) => model.toEntity()).toList();
     } on DioException catch (e) {
       appLog.e('[api] error fetching machines: $e');
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       print('failed');
       throw Exception();
@@ -81,7 +83,9 @@ class MachineRemoteDatasource {
 
       return apiResponse.data.toEntity();
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       throw Exception();
     }
@@ -99,7 +103,9 @@ class MachineRemoteDatasource {
 
       appLog.d('[api] ${response.data}');
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       throw Exception();
     }
@@ -117,7 +123,9 @@ class MachineRemoteDatasource {
 
       appLog.d('[api] ${response.data}');
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       throw Exception();
     }
@@ -131,7 +139,9 @@ class MachineRemoteDatasource {
 
       appLog.d('[api] ${response.data}');
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       throw Exception();
     }

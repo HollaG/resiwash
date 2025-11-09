@@ -23,7 +23,7 @@ class MachineRepositoryImpl implements MachineRepository {
       appLog.d("Fetched machines: $machines");
       return Right(machines);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }
@@ -41,7 +41,7 @@ class MachineRepositoryImpl implements MachineRepository {
       );
       return Right(machine);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }
@@ -56,7 +56,7 @@ class MachineRepositoryImpl implements MachineRepository {
       await dataSource.unclaimMachine(machineId: machineId, params: params);
       return const Right(null);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }
@@ -71,7 +71,8 @@ class MachineRepositoryImpl implements MachineRepository {
       await dataSource.claimMachine(machineId: machineId, params: params);
       return const Right(null);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      print("MachineRepositoryImpl claimMachine error: ${e.message}");
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }
