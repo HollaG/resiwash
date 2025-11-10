@@ -527,9 +527,9 @@ export const createMultipleEvents = asyncHandler(
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
-          machine.lastAvailableTime = now; // update lastAvailableTime if the machine is now available
-        } else {
-          // else, leave lastAvailableTime unchanged
+          machine.lastAvailableTime = now; // the machine is now available, so update lastAvailableTime to now. in a sense, this is more of "firstAvailableTime" but we'll run with it
+        } else if (machine.previousStatus === MachineStatus.AVAILABLE) {
+          machine.lastAvailableTime = now; // the machine has now become not available, so NOW is the last available time
         }
 
         // asynchronously send notification
