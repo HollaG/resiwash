@@ -515,10 +515,22 @@ export const createMultipleEvents = asyncHandler(
         (m) => m.machineId === event.machine.machineId
       );
       if (machine) {
-        machine.lastChangeTime = new Date(); // update the lastChangeTime timestamp
+        const now = new Date();
+        machine.lastChangeTime = now; // update the lastChangeTime timestamp
         machine.previousStatus = machine.currentStatus; // copy the currentStatus to previousStatus
         machine.currentStatus = event.status; // set the currentStatus to the new status
+        machine.previousStatusActiveTime = machine.lastChangeTime
+          ? Math.floor(
+            (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+            1000
+          )
+          : 0; // calculate how long the machine was in the previous status in seconds
 
+        if (machine.currentStatus === MachineStatus.AVAILABLE) {
+          machine.lastAvailableTime = now; // update lastAvailableTime if the machine is now available
+        } else {
+          // else, leave lastAvailableTime unchanged
+        }
 
         // asynchronously send notification
         // note: we do not care if it succeeds or fails

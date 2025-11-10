@@ -60,14 +60,25 @@ export class Machine {
   @Column({ type: "timestamp", nullable: true })
   lastUpdated: Date; // Last time that there was an update from the sensor
 
-  // processed fields
+  // processed fields for easy access
   @Column({ type: "timestamp", nullable: true })
   lastChangeTime: Date; // Last time that the machine changed state (e.g., from in use to available)
 
-  // for easy access
   @Column({ nullable: true })
   currentStatus: MachineStatus; // Current status of the machine
 
   @Column({ nullable: true })
   previousStatus: MachineStatus; // Previous status of the machine
+  @Column({ nullable: true })
+  previousStatusActiveTime: number; // How long the machine was in the previous status (in seconds)
+
+  /**
+   * The last time the machine was available (i.e. matching machineStatus === MachineStatus.AVAILABLE)
+   * So,
+   *   if machineStatus == MachineStatus.AVAILABLE, lastAvailableTime is updated to now (same as lastChangeTime)
+   *   else lastAvailableTime remains unchanged
+   */
+  @Column({ type: "timestamp", nullable: true })
+  lastAvailableTime: Date;
+
 }
