@@ -1,5 +1,5 @@
 import 'package:get_it/get_it.dart';
-import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/my-machines/domain/usecases/my_machines_usecase.dart';
@@ -20,7 +20,7 @@ void setupMyMachinesServiceLocator() {
     () => MyMachinesCubit(
       myMachinesUseCase: sl<MyMachinesUseCase>(),
       sharedPreferencesService: sl<SharedPreferencesService>(),
-      notificationService: sl<NotificationService>(),
+      notificationService: sl<FirebaseNotificationService>(),
       listMachinesUseCase: sl<ListMachinesUseCase>(),
     ),
   );

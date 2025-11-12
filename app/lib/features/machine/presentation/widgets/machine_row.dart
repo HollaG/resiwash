@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
-import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
-import 'package:resiwash/core/logging/logger.dart';
-import 'package:resiwash/core/services/notification_service.dart';
-import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -81,6 +77,104 @@ class _MachineRowState extends State<MachineRow> {
         claimState = isClaimed ? ClaimState.claimed : ClaimState.notClaimed;
       });
     });
+  }
+
+  Future<int?> _dialogBuilder(BuildContext context) {
+    int selectedCycleTime = 30;
+
+    return showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.all(12),
+              title: const Text('Set cycle time'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Please choose your cycle time for the machine you are using.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Center(
+                    child: SegmentedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return (Theme.of(context).colorScheme.primary);
+                            }
+                            return Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh;
+                          },
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.onPrimary;
+                            }
+                            return Theme.of(context).colorScheme.onSurface;
+                          },
+                        ),
+                      ),
+                      segments: const <ButtonSegment<int>>[
+                        ButtonSegment<int>(value: 30, label: Text('30m')),
+                        ButtonSegment<int>(value: 45, label: Text('45m')),
+                        ButtonSegment<int>(value: 60, label: Text('60m')),
+                      ],
+                      selected: <int>{selectedCycleTime},
+                      onSelectionChanged: (Set<int> newSelection) {
+                        setState(() {
+                          selectedCycleTime = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+
+                  // Padding(
+                  //   padding: const EdgeInsets.fromLTRB(24.0, 0, 24, 0),
+                  //   child: Row(
+                  //     spacing: 20,
+                  //     children: [
+                  //       Expanded(child: Divider(), flex: 1),
+                  //       Text("or"),
+                  //       Expanded(child: Divider(), flex: 1),
+                  //     ],
+                  //   ),
+                  // ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Returns null
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).pop(selectedCycleTime); // Return selected time
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -174,7 +268,7 @@ class _MachineRowState extends State<MachineRow> {
           print('Error claiming machine: ${state.message}');
           // show error message in snackbar only if this route is currently active
           // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
-          if (!TickerMode.of(context)) return; 
+          if (!TickerMode.of(context)) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -357,9 +451,16 @@ class _MachineRowState extends State<MachineRow> {
                     widget.machine,
                   );
                 } else if (claimState == ClaimState.notClaimed) {
-                  await context.read<MyMachinesCubit>().claimMachine(
-                    widget.machine,
-                  );
+                  // Show dialog and get selected cycle time
+                  final cycleTime = await _dialogBuilder(context);
+
+                  // Only claim if user confirmed (didn't cancel)
+                  if (cycleTime != null && mounted) {
+                    await context.read<MyMachinesCubit>().claimMachine(
+                      widget.machine,
+                      cycleTime: cycleTime,
+                    );
+                  }
                 } else {
                   return null;
                 }
@@ -465,228 +566,4 @@ class _MachineRowState extends State<MachineRow> {
       },
     );
   }
-
-  // @override
-  // Widget build2(BuildContext context) {
-  //   // Use the utility function to generate the complete subtitle
-  //   final location = MachineDisplayUtils.getLocationLabel(widget.machine);
-  //   final time = MachineDisplayUtils.getStatusLabel(widget.machine);
-
-  //   String notificationText = "";
-  //   if (isSubscribed == 1) {
-  //     notificationText = "Unsubscribe";
-  //   } else if (isSubscribed == 0) {
-  //     notificationText = "Subscribe";
-  //   } else if (isSubscribed == 2) {
-  //     notificationText = "Loading...";
-  //   } else if (isSubscribed == 3) {
-  //     notificationText = "Subscribed!";
-  //   } else if (isSubscribed == 4) {
-  //     notificationText = "Unsubscribed!";
-  //   }
-
-  //   Widget notificationIcon = Icon(
-  //     Icons.notification_add,
-  //     color: Theme.of(context).colorScheme.secondary,
-  //   );
-
-  //   if (isSubscribed == 1) {
-  //     notificationIcon = Icon(
-  //       Icons.notifications_off,
-  //       color: Theme.of(context).colorScheme.secondary,
-  //     );
-  //   } else if (isSubscribed == 2) {
-  //     notificationIcon = SizedBox(
-  //       width: 16,
-  //       height: 16,
-  //       child: CircularProgressIndicator(
-  //         strokeWidth: 2,
-  //         color: Theme.of(context).colorScheme.secondary,
-  //       ),
-  //     );
-  //   } else if (isSubscribed == 3) {
-  //     // success subscribing
-  //     notificationIcon = Icon(
-  //       Icons.check,
-  //       color: Theme.of(context).colorScheme.secondary,
-  //     );
-  //   } else if (isSubscribed == 4) {
-  //     // success unsubscribing
-  //     notificationIcon = Icon(
-  //       Icons.check,
-  //       color: Theme.of(context).colorScheme.secondary,
-  //     );
-  //   }
-
-  //   String claimText = "";
-  //   if (isClaimed == 1) {
-  //     claimText = "Unclaim";
-  //   } else if (isClaimed == 0) {
-  //     claimText = "Claim";
-  //   } else if (isClaimed == 2) {
-  //     claimText = "Loading...";
-  //   } else if (isClaimed == 3) {
-  //     claimText = "Claimed!";
-  //   } else if (isClaimed == 4) {
-  //     claimText = "Unclaimed!";
-  //   }
-
-  //   return Dismissible(
-  //     // subscribe
-  //     direction: widget.allowSwipe
-  //         ? DismissDirection.horizontal
-  //         : DismissDirection.none,
-
-  //     // claim
-  //     background: Container(
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(8),
-  //         color: Theme.of(context).colorScheme.primaryContainer,
-  //       ),
-  //       // color: Theme.of(context).colorScheme.secondaryContainer,
-  //       alignment: Alignment.centerRight,
-  //       padding: const EdgeInsets.symmetric(horizontal: 20),
-  //       child: Row(
-  //         mainAxisAlignment: MainAxisAlignment.end,
-  //         spacing: 8,
-  //         children: [
-  //           Text(
-  //             notificationText,
-  //             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-  //               color: Theme.of(context).colorScheme.onPrimaryContainer,
-  //             ),
-  //           ),
-  //           notificationIcon,
-  //         ],
-  //       ),
-  //     ),
-
-  //     // sub/unsub
-  //     secondaryBackground: Container(
-  //       decoration: BoxDecoration(
-  //         borderRadius: BorderRadius.circular(8),
-  //         color: context.accent.colorContainer,
-  //       ),
-  //       alignment: Alignment.centerRight,
-  //       padding: const EdgeInsets.symmetric(horizontal: 20),
-  //       child: Row(
-  //         mainAxisAlignment: MainAxisAlignment.end,
-  //         spacing: 8,
-  //         children: [
-  //           Text(
-  //             notificationText,
-  //             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-  //               color: Theme.of(context).colorScheme.secondary,
-  //             ),
-  //           ),
-  //           notificationIcon,
-  //         ],
-  //       ),
-  //     ),
-  //     key: Key(widget.machine.machineId),
-
-  //     confirmDismiss: (direction) async {
-  //       // wait 1s
-  //       if (direction == DismissDirection.endToStart) {
-  //         if (isSubscribed == 1) {
-  //           // unsubscribe
-  //           await unsubscribe();
-  //         } else if (isSubscribed == 0) {
-  //           // subscribe
-  //           await subscribe();
-  //         }
-  //         // SUBSCRIBE
-  //       } else if (direction == DismissDirection.startToEnd) {
-  //         // UNSUBSCRIBE
-  //         return null;
-  //       }
-  //     }, // don't dismiss
-  //     child: Container(
-  //       decoration: BoxDecoration(
-  //         // borderRadius: BorderRadius.circular(8),
-  //         color: Theme.of(context).colorScheme.surface,
-  //         borderRadius: BorderRadius.circular(8),
-  //       ),
-  //       child: ListTile(
-  //         onTap: () {
-  //           // go to /machines/:id
-  //           context
-  //               .push(
-  //                 Uri(
-  //                   path: AppRoutes.buildMachineDetailRoute(
-  //                     widget.machine.machineId,
-  //                   ),
-  //                 ).toString(),
-  //                 extra: {'machine': widget.machine},
-  //               )
-  //               .then((_) => {_checkSubscriptionStatus()});
-  //         },
-  //         title: Column(
-  //           children: [
-  //             Row(
-  //               crossAxisAlignment: CrossAxisAlignment.center,
-  //               spacing: 8,
-  //               children: [
-  //                 Row(
-  //                   spacing: 4,
-  //                   children: [
-  //                     if (isSubscribed == 1)
-  //                       Icon(
-  //                         Icons.notifications,
-  //                         size: 14,
-  //                         // color: Theme.of(
-  //                         //   context,
-  //                         // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-  //                       ),
-  //                     Text(
-  //                       widget.machine.name,
-  //                       style: Theme.of(context).textTheme.labelMedium,
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 Expanded(
-  //                   child: Text(
-  //                     "@ $location",
-  //                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-  //                       color: Theme.of(
-  //                         context,
-  //                       ).textTheme.bodySmall?.color?.withValues(alpha: 0.8),
-  //                     ),
-  //                     maxLines: 1,
-  //                     overflow: TextOverflow.ellipsis,
-  //                     softWrap: false,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //         subtitle: Column(
-  //           spacing: 2,
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Text(
-  //               time,
-  //               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-  //                 color: MachineStatusIndicator.getTextColor(
-  //                   context,
-  //                   widget.machine.currentStatus,
-  //                 ),
-  //               ),
-  //               maxLines: 1,
-  //               overflow: TextOverflow.ellipsis,
-  //               softWrap: false,
-  //             ),
-  //           ],
-  //         ),
-  //         trailing: (widget.showIcon)
-  //             ? (widget.machine.type == MachineType.washer
-  //                   ? AssetIcons.washerIcon(context)
-  //                   : AssetIcons.dryerIcon(context))
-  //             : SizedBox.shrink(),
-  //         leading: MachineStatusIndicator(status: widget.machine.currentStatus),
-  //       ),
-  //     ),
-  //   );
-  // }
 }

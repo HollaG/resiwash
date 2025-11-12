@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
-import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 
 class SubscriptionIndicator extends StatefulWidget {
@@ -41,9 +41,8 @@ class _SubscriptionIndicatorState extends State<SubscriptionIndicator> {
       isSubscribed = 2;
     });
     try {
-      String topicName = await sl<NotificationService>().subscribeToMachine(
-        widget.machineId,
-      );
+      String topicName = await sl<FirebaseNotificationService>()
+          .subscribeToMachine(widget.machineId);
 
       appLog.d("Subscribed to topic: $topicName");
 
@@ -72,9 +71,8 @@ class _SubscriptionIndicatorState extends State<SubscriptionIndicator> {
       isSubscribed = 2;
     });
     try {
-      String topicName = await sl<NotificationService>().unsubscribeFromMachine(
-        widget.machineId,
-      );
+      String topicName = await sl<FirebaseNotificationService>()
+          .unsubscribeFromMachine(widget.machineId);
       appLog.d("Unsubscribed from topic: $topicName");
 
       if (mounted) {

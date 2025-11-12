@@ -54,8 +54,10 @@ class SubscriptionsSection extends StatelessWidget {
 
             if (state is MyMachinesLoaded)
               Column(
-                children: state.machines != null && state.machines!.isNotEmpty
-                    ? state.machines!
+                children:
+                    state.subscribedMachines != null &&
+                        state.subscribedMachines!.isNotEmpty
+                    ? state.subscribedMachines
                           .map((machine) => MachineRow(machine: machine))
                           .toList()
                     : [

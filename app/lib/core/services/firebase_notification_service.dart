@@ -1,0 +1,140 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:resiwash/core/injections/room/room_service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/local_notifications.dart';
+import 'package:resiwash/core/utils/subscription_utils.dart';
+
+class FirebaseNotificationService {
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+
+  Future<String> _getPermission() async {
+    await _firebaseMessaging.requestPermission();
+    return await _firebaseMessaging.getToken() ?? "";
+  }
+
+  void _handleMessageWhenOpenedFromNotification(RemoteMessage message) {
+    // Handle the message and navigate to specific screen if needed
+    appLog.i(
+      "[FirebaseNotificationService] App opened from notification: $message",
+    );
+    // You can add navigation logic here based on message data
+  }
+
+  void _handleMessageWhenInApp(RemoteMessage message) {
+    // Handle the message when the app is in the foreground
+    appLog.i(
+      "[FirebaseNotificationService] Message received in foreground: $message",
+    );
+    // You can show a local notification here if needed
+
+    // RemoteNotification notification = message.notification;
+    // AndroidNotification android = message.notification?.android;
+
+    // display the message contents in appLog
+    appLog.i("[FirebaseNotificationService] Notification: ${message.data}");
+
+    if (message.data.containsKey("channel")) {
+      String channel = message.data["channel"];
+      appLog.i("[FirebaseNotificationService] channel: $channel");
+      // Handle different channels if needed
+
+      if (channel == "claimed") {
+        //
+      }
+
+      if (channel == "subscribed") {
+        // show an in-app notification
+        if (message.notification != null) {
+          String title = message.notification?.title ?? "Notification";
+          String body = message.notification?.body ?? "";
+
+          LocalNotificationHandler.instance.showFirebaseNotification(message);
+        }
+      }
+    }
+  }
+
+  Future<void> initialize() async {
+    try {
+      // request for permission on app launch
+      await _getPermission();
+
+      // check if this app was opened from a notification
+      RemoteMessage? initialMessage = await FirebaseMessaging.instance
+          .getInitialMessage();
+      if (initialMessage != null) {
+        _handleMessageWhenOpenedFromNotification(initialMessage);
+      }
+
+      // Also handle any interaction when the app is in the background via a
+      // Stream listener
+      FirebaseMessaging.onMessageOpenedApp.listen(
+        _handleMessageWhenOpenedFromNotification,
+      );
+
+      // When app is minimized but not closed
+      FirebaseMessaging.onMessage.listen(_handleMessageWhenInApp);
+
+      // NOTE: Background message handler must be registered in main.dart as a top-level function
+      // Do not register it here to avoid null check errors
+
+      // IOS: display on foreground
+      await FirebaseMessaging.instance
+          .setForegroundNotificationPresentationOptions(
+            alert: true, // Required to display a heads up notification
+            badge: true,
+            sound: true,
+          );
+
+      // Android: display on foreground
+      // note: android is handled in android/app/src/main/AndroidManifest.xml:
+      // https://firebase.flutter.dev/docs/messaging/notifications/
+    } catch (e) {
+      print("Error initializing permissions: $e");
+    }
+  }
+
+  // TODO: check how to guarantee non-null token
+  Future<String> getFcmToken() async {
+    return await _firebaseMessaging.getToken() ?? "";
+  }
+
+  Future<String> subscribeToMachine(String machineId) async {
+    try {
+      String topic = SubscriptionUtils.getTopicNameForMachine(machineId);
+      await _subscribeToTopic(topic);
+      sl<SharedPreferencesService>().subscribeToMachine(machineId);
+
+      appLog.i("Subscribed to machine $machineId");
+
+      return topic;
+    } catch (e) {
+      appLog.e("Error subscribing to machine $machineId: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> unsubscribeFromMachine(String machineId) async {
+    try {
+      String topic = SubscriptionUtils.getTopicNameForMachine(machineId);
+      await _unsubscribeFromTopic(topic);
+      sl<SharedPreferencesService>().unsubscribeFromMachine(machineId);
+
+      appLog.i("Unsubscribed from machine $machineId");
+
+      return topic;
+    } catch (e) {
+      appLog.e("Error unsubscribing from machine $machineId: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> _subscribeToTopic(String topic) async {
+    await _firebaseMessaging.subscribeToTopic(topic);
+  }
+
+  Future<void> _unsubscribeFromTopic(String topic) async {
+    await _firebaseMessaging.unsubscribeFromTopic(topic);
+  }
+}

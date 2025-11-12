@@ -57,6 +57,9 @@ class MachineModel {
   final MachineStatus? currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
   final MachineStatus? previousStatus;
 
+  final int? previousStatusActiveTime;
+  final DateTime? lastAvailableTime;
+
   const MachineModel({
     required this.machineId,
     required this.name,
@@ -74,6 +77,8 @@ class MachineModel {
     this.lastChangeTime,
     this.currentStatus,
     this.previousStatus,
+    this.previousStatusActiveTime,
+    this.lastAvailableTime,
   });
 
   factory MachineModel.fromJson(Map<String, dynamic> json) =>
@@ -98,5 +103,7 @@ class MachineModel {
     lastChangeTime: lastChangeTime,
     currentStatus: currentStatus,
     previousStatus: previousStatus,
+    previousStatusActiveTime: previousStatusActiveTime,
+    lastAvailableTime: lastAvailableTime,
   );
 }

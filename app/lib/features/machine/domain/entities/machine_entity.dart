@@ -24,6 +24,9 @@ class MachineEntity {
   final MachineStatus? currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
   final MachineStatus? previousStatus;
 
+  final int? previousStatusActiveTime;
+  final DateTime? lastAvailableTime;
+
   MachineEntity({
     required this.machineId,
     required this.name,
@@ -41,5 +44,7 @@ class MachineEntity {
     required this.lastChangeTime,
     this.currentStatus,
     this.previousStatus,
+    this.previousStatusActiveTime,
+    this.lastAvailableTime,
   });
 }

@@ -16,20 +16,23 @@ class MyMachinesLoading extends MyMachinesState {}
 // Assertion: MyMachinesClaimed and MyMachinesSubscribed will always emit MyMachinesLoaded after 1 second
 class MyMachinesLoaded extends MyMachinesState {
   final List<String> subscribedMachineIds;
-  final List<MachineEntity> machines;
+  final List<MachineEntity> subscribedMachines;
   final List<ClaimedMachineMetadata> claimedMachineMetadata;
+  final List<MachineEntity> claimedMachines;
 
   const MyMachinesLoaded({
     required this.subscribedMachineIds,
-    required this.machines,
+    required this.subscribedMachines,
     required this.claimedMachineMetadata,
+    required this.claimedMachines,
   });
 
   @override
   List<Object?> get props => [
     subscribedMachineIds,
-    machines,
+    subscribedMachines,
     claimedMachineMetadata,
+    claimedMachines,
   ];
 }
 
@@ -49,9 +52,10 @@ class MyMachinesSubscribing extends MyMachinesLoaded {
 
   const MyMachinesSubscribing({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
 }
 
@@ -60,9 +64,10 @@ class MyMachinesSubscribed extends MyMachinesLoaded {
 
   const MyMachinesSubscribed({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
   @override
   List<Object?> get props => [...super.props, operatingMachine];
@@ -73,9 +78,10 @@ class MyMachinesUnsubscribed extends MyMachinesLoaded {
 
   const MyMachinesUnsubscribed({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
   @override
   List<Object?> get props => [...super.props, operatingMachine];
@@ -87,10 +93,11 @@ class MyMachinesSubscribeError extends MyMachinesLoaded {
 
   const MyMachinesSubscribeError({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
     required this.message,
+    required super.claimedMachines,
   });
 
   @override
@@ -103,9 +110,10 @@ class MyMachinesClaiming extends MyMachinesLoaded {
   final MachineEntity operatingMachine;
   const MyMachinesClaiming({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
 }
 
@@ -114,9 +122,10 @@ class MyMachinesClaimed extends MyMachinesLoaded {
 
   const MyMachinesClaimed({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
   @override
   List<Object?> get props => [...super.props, operatingMachine];
@@ -127,9 +136,10 @@ class MyMachinesUnclaimed extends MyMachinesLoaded {
 
   const MyMachinesUnclaimed({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
+    required super.claimedMachines,
   });
   @override
   List<Object?> get props => [...super.props, operatingMachine];
@@ -141,10 +151,11 @@ class MyMachinesErrorClaiming extends MyMachinesLoaded {
 
   const MyMachinesErrorClaiming({
     required super.subscribedMachineIds,
-    required super.machines,
+    required super.subscribedMachines,
     required super.claimedMachineMetadata,
     required this.operatingMachine,
     required this.message,
+    required super.claimedMachines,
   });
 
   @override

@@ -6,7 +6,7 @@ import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
-import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/detail_row.dart';

@@ -25,7 +25,7 @@ class InUseByYouSection extends StatelessWidget {
               if (state is! MyMachinesLoaded) {
                 return Center(child: CircularProgressIndicator());
               }
-              final subscribedMachines = state.machines ?? [];
+              final subscribedMachines = state.subscribedMachines ?? [];
               final claimedMeta = state.claimedMachineMetadata;
               return SizedBox(
                 width: double.infinity,
@@ -138,7 +138,9 @@ class InUseByYouSection extends StatelessWidget {
               Center(child: CircularProgressIndicator()),
 
             // claimed machines
-            if (state is MyMachinesLoaded)
+            if (state is MyMachinesLoaded &&
+                state.claimedMachines.isNotEmpty &&
+                state.claimedMachineMetadata.isNotEmpty)
               Column(
                 spacing: 8,
                 children: state.claimedMachineMetadata.isNotEmpty
@@ -146,7 +148,7 @@ class InUseByYouSection extends StatelessWidget {
                           .map(
                             (claimedMeta) => Tracker(
                               claimedMetadata: claimedMeta,
-                              machine: (state.machines ?? []).firstWhere(
+                              machine: (state.claimedMachines).firstWhere(
                                 (machine) =>
                                     machine.machineId == claimedMeta.machineId,
                               ),

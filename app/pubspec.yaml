@@ -1,7 +1,7 @@
 name: resiwash
 description: "Laundry status companion app"
 publish_to: "none"
-version: 0.1.0+5
+version: 0.1.0+6
 
 environment:
   sdk: ^3.8.1
@@ -29,6 +29,7 @@ dependencies:
   firebase_messaging: ^16.0.3
   firebase_core: ^4.2.0
   flutter_local_notifications: ^19.5.0
+  live_activities: ^2.4.2
 
 dev_dependencies:
   flutter_test:
@@ -37,6 +38,10 @@ dev_dependencies:
   json_serializable: ^6.10.0
   build_runner: ^2.6.0
   build_test: any
+  android_notification_icons:
+
+android_notification_icons:
+  image_path: 'assets/logo.png'
 
 flutter:
   uses-material-design: true

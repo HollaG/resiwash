@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
-import 'package:resiwash/core/services/notification_service.dart';
+import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -20,13 +22,13 @@ import 'my_machines_state.dart';
 /// - Deleting/removing a single machine subscription
 class MyMachinesCubit extends Cubit<MyMachinesState> {
   final SharedPreferencesService _sharedPreferencesService;
-  final NotificationService _notificationService;
+  final FirebaseNotificationService _notificationService;
   final ListMachinesUseCase _listMachinesUseCase;
   final MyMachinesUseCase _myMachinesUseCase;
 
   MyMachinesCubit({
     required SharedPreferencesService sharedPreferencesService,
-    required NotificationService notificationService,
+    required FirebaseNotificationService notificationService,
     required ListMachinesUseCase listMachinesUseCase,
     required MyMachinesUseCase myMachinesUseCase,
   }) : _sharedPreferencesService = sharedPreferencesService,
@@ -35,20 +37,20 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
        _myMachinesUseCase = myMachinesUseCase,
        super(MyMachinesInitial());
 
-  Future<List<MachineEntity>> _getMyMachines() async {
+  Future<(List<MachineEntity>, List<MachineEntity>)> _getMyMachines() async {
     final subscribedMachineIds = _sharedPreferencesService
         .getSubscribedMachines();
 
     final claimedMachineMetadata = _sharedPreferencesService
         .getClaimedMachines();
 
-    final machineIdsToLoad = [
+    final machineIdsToLoad = <String>{
       ...subscribedMachineIds,
       ...claimedMachineMetadata.map((e) => e.machineId),
-    ].toSet().toList();
+    }.toList();
 
     if (machineIdsToLoad.isEmpty) {
-      return [];
+      return (<MachineEntity>[], <MachineEntity>[]);
     }
 
     appLog.d(
@@ -69,14 +71,23 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       },
       (machines) {
         appLog.i('Successfully loaded ${machines.length} machines');
-        // emit(
-        //   MyMachinesLoaded(
-        //     subscribedMachineIds: subscribedMachineIds,
-        //     machines: machines,
-        //     claimedMachineMetadata: claimedMachineMetadata,
-        //   ),
-        // );
-        return machines;
+
+        // split the machines into subscribed and claimed
+        final subscribedMachines = machines
+            .where(
+              (machine) => subscribedMachineIds.contains(machine.machineId),
+            )
+            .toList();
+
+        final claimedMachines = machines
+            .where(
+              (machine) => claimedMachineMetadata.any(
+                (claimed) => claimed.machineId == machine.machineId,
+              ),
+            )
+            .toList();
+
+        return (subscribedMachines, claimedMachines);
       },
     );
   }
@@ -89,7 +100,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(MyMachinesLoading());
 
       try {
-        List<MachineEntity> machines = await _getMyMachines();
+        var (subscribedMachines, claimedMachines) = await _getMyMachines();
 
         final subscribedMachineIds = _sharedPreferencesService
             .getSubscribedMachines();
@@ -100,8 +111,9 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
         emit(
           MyMachinesLoaded(
             subscribedMachineIds: subscribedMachineIds,
-            machines: machines,
+            subscribedMachines: subscribedMachines,
             claimedMachineMetadata: claimedMachineMetadata,
+            claimedMachines: claimedMachines,
           ),
         );
       } catch (e) {
@@ -114,6 +126,31 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     }
   }
 
+  /// REFRESHES
+  /// Refresh claimed machines only
+
+  Future<void> refreshClaimedMachines() async {
+    // TODO: emit loading state
+    final currentState = state;
+    if (currentState is MyMachinesLoaded) {
+      try {
+        var (subscribedMachines, claimedMachines) = await _getMyMachines();
+
+        emit(
+          MyMachinesLoaded(
+            subscribedMachineIds: currentState.subscribedMachineIds,
+            subscribedMachines: subscribedMachines,
+            claimedMachineMetadata: currentState.claimedMachineMetadata,
+            claimedMachines: claimedMachines,
+          ),
+        );
+      } catch (e) {
+        appLog.e('Error refreshing claimed machines: $e');
+        // Optionally, you can emit an error state or keep the current state
+      }
+    }
+  }
+
   /// Subscribe to a machine
   /// - Subscribes to FCM topic via NotificationService
   /// - Saves to local storage via SharedPreferencesService
@@ -122,21 +159,24 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     final machineId = machine.machineId;
     final currentState = state;
     List<String> currentMachineIds = [];
-    List<ClaimedMachineMetadata> currentClaimedMachines = [];
-    List<MachineEntity> currentMachines = [];
+    List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+    List<MachineEntity> currentSubscribedMachines = [];
+    List<MachineEntity> currentClaimedMachinesEntities = [];
 
     if (currentState is MyMachinesLoaded) {
       currentMachineIds = currentState.subscribedMachineIds;
-      currentClaimedMachines = currentState.claimedMachineMetadata;
-      currentMachines = currentState.machines ?? [];
+      currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+      currentSubscribedMachines = currentState.subscribedMachines ?? [];
+      currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
     }
 
     try {
       emit(
         MyMachinesSubscribing(
           subscribedMachineIds: currentMachineIds,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentSubscribedMachines,
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          claimedMachines: currentClaimedMachinesEntities,
           operatingMachine: machine,
         ),
       );
@@ -159,8 +199,9 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribed(
           subscribedMachineIds: updatedMachines,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentSubscribedMachines,
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          claimedMachines: currentClaimedMachinesEntities,
           operatingMachine: machine,
         ),
       );
@@ -168,14 +209,15 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       // wait for 1s, then emit
       Future.delayed(const Duration(milliseconds: 500), () async {
         try {
-          final machines = await _getMyMachines();
+          final (subscribedMachines, claimedMachines) = await _getMyMachines();
           emit(
             MyMachinesLoaded(
               subscribedMachineIds: updatedMachines,
-              machines: machines,
+              subscribedMachines: subscribedMachines,
               claimedMachineMetadata: currentState is MyMachinesLoaded
                   ? currentState.claimedMachineMetadata
                   : [],
+              claimedMachines: claimedMachines,
             ),
           );
         } catch (e) {
@@ -189,10 +231,11 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribeError(
           message: 'Failed to unsubscribe from machine',
-          claimedMachineMetadata: currentClaimedMachines,
-          machines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          subscribedMachines: currentSubscribedMachines,
           subscribedMachineIds: currentMachineIds,
           operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
         ),
       );
       // Reload current state after error
@@ -208,13 +251,15 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     final machineId = machine.machineId;
     final currentState = state;
     List<String> currentMachineIds = [];
-    List<ClaimedMachineMetadata> currentClaimedMachines = [];
+    List<ClaimedMachineMetadata> currentClaimedMachinesMetadata = [];
     List<MachineEntity> currentMachines = [];
+    List<MachineEntity> currentClaimedMachinesEntities = [];
 
     if (currentState is MyMachinesLoaded) {
       currentMachineIds = currentState.subscribedMachineIds;
-      currentClaimedMachines = currentState.claimedMachineMetadata;
-      currentMachines = currentState.machines ?? [];
+      currentClaimedMachinesMetadata = currentState.claimedMachineMetadata;
+      currentMachines = currentState.subscribedMachines ?? [];
+      currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
     }
     try {
       // Check if not subscribed
@@ -226,9 +271,10 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribing(
           subscribedMachineIds: currentMachineIds,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachinesMetadata,
           operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
         ),
       );
 
@@ -245,19 +291,23 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesUnsubscribed(
           subscribedMachineIds: updatedMachines,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachinesMetadata,
           operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
         ),
       );
 
       // wait for 1s, then emit
-      Future.delayed(const Duration(seconds: 1), () {
+      Future.delayed(const Duration(seconds: 1), () async {
         emit(
           MyMachinesLoaded(
             subscribedMachineIds: updatedMachines,
-            machines: currentMachines,
-            claimedMachineMetadata: currentClaimedMachines,
+            subscribedMachines: currentMachines
+                .filter((machine) => machine.machineId != machineId)
+                .toList(), // note: we don't need to reload machines here, just remove the unsubscribed one
+            claimedMachineMetadata: currentClaimedMachinesMetadata,
+            claimedMachines: currentClaimedMachinesEntities,
           ),
         );
       });
@@ -266,10 +316,11 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
       emit(
         MyMachinesSubscribeError(
           message: 'Failed to unsubscribe from machine',
-          claimedMachineMetadata: currentClaimedMachines,
-          machines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachinesMetadata,
+          subscribedMachines: currentMachines,
           subscribedMachineIds: currentMachineIds,
           operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
         ),
       );
 
@@ -295,26 +346,36 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// Claim a machine (mark as "in use by you")
   /// NOTE: this function asserts that it is only called when you have NOT claimed the machine
   /// NOTE: hits the backend
+  /// NOTE: the storage supports claiming multiple machines. However, we restrict it to one-to-one logically.
+  ///       If we ever expand in the future, we can.
+  ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
   Future<void> claimMachine(MachineEntity machine, {int? cycleTime}) async {
     final machineId = machine.machineId;
     try {
       final currentState = state;
       List<String> currentMachineIds = [];
-      List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
       List<MachineEntity> currentMachines = [];
+      List<MachineEntity> currentClaimedMachinesEntities = [];
 
       if (currentState is MyMachinesLoaded) {
         currentMachineIds = currentState.subscribedMachineIds;
-        currentClaimedMachines = currentState.claimedMachineMetadata;
-        currentMachines = currentState.machines ?? [];
+        currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+        currentMachines = currentState.subscribedMachines ?? [];
+        currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
       }
+
+      final oldClaimedMachineId = currentClaimedMachineMetadata.isNotEmpty
+          ? currentClaimedMachineMetadata.first.machineId
+          : null;
 
       emit(
         MyMachinesClaiming(
           subscribedMachineIds: currentMachineIds,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachineMetadata,
           operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
         ),
       );
 
@@ -337,8 +398,9 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           emit(
             MyMachinesErrorClaiming(
               subscribedMachineIds: currentMachineIds,
-              machines: currentMachines,
-              claimedMachineMetadata: currentClaimedMachines,
+              subscribedMachines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachineMetadata,
+              claimedMachines: currentClaimedMachinesEntities,
               operatingMachine: machine,
               message: failure.message,
             ),
@@ -355,7 +417,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           //   );
           // });
         },
-        (_) {
+        (_) async {
           // Add to SharedPreferences with optional cycle time
           _sharedPreferencesService.claimMachine(
             machineId,
@@ -366,14 +428,31 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachines();
 
+          final (subscribedMachines, claimedMachines) = await _getMyMachines();
           emit(
             MyMachinesClaimed(
               subscribedMachineIds: currentMachineIds,
-              machines: currentMachines,
+              subscribedMachines: subscribedMachines,
               claimedMachineMetadata: updatedClaimedMetadata,
               operatingMachine: machine,
+              claimedMachines: claimedMachines,
             ),
           );
+          // unclaim the old
+          if (oldClaimedMachineId != null) {
+            final oldClaimedMachine = currentClaimedMachinesEntities.firstWhere(
+              (m) => m.machineId == oldClaimedMachineId,
+            );
+            emit(
+              MyMachinesUnclaimed(
+                subscribedMachineIds: currentMachineIds,
+                subscribedMachines: subscribedMachines,
+                claimedMachineMetadata: updatedClaimedMetadata,
+                operatingMachine: oldClaimedMachine,
+                claimedMachines: claimedMachines,
+              ),
+            );
+          }
 
           // wait for 1s, then emit
           // Future.delayed(const Duration(seconds: 1), () {
@@ -401,20 +480,23 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     try {
       final currentState = state;
       List<String> currentMachineIds = [];
-      List<ClaimedMachineMetadata> currentClaimedMachines = [];
+      List<ClaimedMachineMetadata> currentClaimedMachinesMetadata = [];
       List<MachineEntity> currentMachines = [];
+      List<MachineEntity> currentClaimedMachinesEntities = [];
 
       if (currentState is MyMachinesLoaded) {
         currentMachineIds = currentState.subscribedMachineIds;
-        currentClaimedMachines = currentState.claimedMachineMetadata;
-        currentMachines = currentState.machines ?? [];
+        currentClaimedMachinesMetadata = currentState.claimedMachineMetadata;
+        currentMachines = currentState.subscribedMachines ?? [];
+        currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
       }
 
       emit(
         MyMachinesClaiming(
           subscribedMachineIds: currentMachineIds,
-          machines: currentMachines,
-          claimedMachineMetadata: currentClaimedMachines,
+          subscribedMachines: currentMachines,
+          claimedMachines: currentClaimedMachinesEntities,
+          claimedMachineMetadata: currentClaimedMachinesMetadata,
           operatingMachine: machine,
         ),
       );
@@ -435,10 +517,11 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           emit(
             MyMachinesErrorClaiming(
               subscribedMachineIds: currentMachineIds,
-              machines: currentMachines,
-              claimedMachineMetadata: currentClaimedMachines,
+              subscribedMachines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachinesMetadata,
               operatingMachine: machine,
               message: failure.message,
+              claimedMachines: currentClaimedMachinesEntities,
             ),
           );
 
@@ -464,7 +547,10 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
           emit(
             MyMachinesUnclaimed(
               subscribedMachineIds: currentMachineIds,
-              machines: currentMachines,
+              subscribedMachines: currentMachines,
+              claimedMachines: currentClaimedMachinesEntities
+                  .filter((m) => m.machineId != machineId)
+                  .toList(),
               claimedMachineMetadata: updatedClaimedMetadata,
               operatingMachine: machine,
             ),

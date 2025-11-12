@@ -73,7 +73,7 @@ class SharedPreferencesService {
         machineId: machineId,
         cycleTime: cycleTime,
       );
-      // TODO: dcide if we want to support multiple claimed machines
+      // NOTE: we only allow one claimed machine at a time logically
       // existingMachines.add(claimedMachine);
       existingMachines.clear();
       existingMachines.add(claimedMachine);
