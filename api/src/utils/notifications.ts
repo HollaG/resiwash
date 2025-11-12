@@ -1,3 +1,6 @@
+import { Machine } from "../models/Machine";
+import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
+
 interface IClaimMapEntry {
   fcmToken: string;
   cycleTime: number;
@@ -113,3 +116,17 @@ export const getClaimants = (machineId: string): IClaimMapEntry[] => {
 
   return ClaimMap[machineId];
 };
+
+export const sendNotificationToClaimants = async (machine: Machine) => {
+  const claimants = getClaimants(machine.machineId.toString());
+  console.log("current ClaimMap:", ClaimMap);
+  for (const claimant of claimants) {
+    // send notification to claimant.fcmToken
+    sendClaimedMachineStatusChangedNotification({
+      fcmToken: claimant.fcmToken,
+      oldStatus: null,
+      newStatus: null,
+      machine
+    }).catch((e) => { }) // do nothing
+  }
+}

@@ -19,6 +19,7 @@ import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
 import { sendMachineStatusChangedNotification } from "../../../utils/firebase-messaging";
+import { getClaimants, sendNotificationToClaimants } from "../../../utils/notifications";
 
 // saves IN-MEMORY which machines have been sending data
 // TODO: migrate to Redis in future
@@ -539,6 +540,11 @@ export const createMultipleEvents = asyncHandler(
           oldStatus: machine.previousStatus,
           newStatus: machine.currentStatus,
         })
+
+        // send notification to claimant if applicable
+        sendNotificationToClaimants(machine).catch((e) => { }) // do nothing
+
+
 
       }
 
