@@ -5,6 +5,7 @@ import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import {
   claimMachine as _claimMachine,
   unclaimMachine as _unclaimMachine,
+  canPoke,
   getClaimants,
 } from "../../../utils/notifications";
 import { sendPokeNotification } from "../../../utils/firebase-messaging";
@@ -88,6 +89,10 @@ export const pokeClaimant = expressAsyncHandler(
         return sendErrorResponse(res, "Machine not found", 404);
       }
 
+      if (!canPoke(machineId)) {
+        return sendErrorResponse(res, "Poke cooldown active", 400);
+      }
+
       // now, poke the claimant
       const claimants = getClaimants(machineId);
 
@@ -95,9 +100,13 @@ export const pokeClaimant = expressAsyncHandler(
         return sendErrorResponse(res, "No claimants to poke", 400);
       } else {
         // it's a length-1 array
-        const claimant = claimants[0];
+        // const claimant = claimants[0];
 
-        await sendPokeNotification(machine, claimant.fcmToken);
+        // await sendPokeNotification(machine, claimant.fcmToken);
+
+        for (const claimant of claimants) {
+          await sendPokeNotification(machine, claimant.fcmToken);
+        }
 
         return sendOkResponse(res, { message: "Poke sent successfully" });
       }

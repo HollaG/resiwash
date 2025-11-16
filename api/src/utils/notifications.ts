@@ -15,6 +15,10 @@ const UserMap: {
   [fcmToken: string]: string[]; // machineId
 } = {};
 
+const LastPokeTimeMap: {
+  [machineId: string]: Date;
+} = {};
+
 const ClaimedUsers = new Set<string>();
 
 class ClaimError extends Error {
@@ -115,6 +119,8 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
   console.log("current ClaimMap:", ClaimMap);
   for (const claimant of claimants) {
     // send notification to claimant.fcmToken
+    // check the last poke time
+
     sendClaimedMachineStatusChangedNotification({
       fcmToken: claimant.fcmToken,
       oldStatus: null,
@@ -122,4 +128,23 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
       machine,
     }).catch((e) => {}); // do nothing
   }
+};
+
+export const canPoke = (machineId: string): boolean => {
+  const lastPokeTime = LastPokeTimeMap[machineId];
+  if (!lastPokeTime) {
+    LastPokeTimeMap[machineId] = new Date();
+    console.log("[poke] can poke machine:", machineId);
+    return true; // never poke before
+  }
+  const now = new Date();
+  const diffMs = now.getTime() - lastPokeTime.getTime();
+  const diffMinutes = diffMs / 60000;
+  if (diffMinutes >= 5) {
+    LastPokeTimeMap[machineId] = now;
+    console.log("[poke] can poke machine:", machineId);
+    return true;
+  }
+  console.log("[poke] cannot poke machine yet:", machineId);
+  return false;
 };
