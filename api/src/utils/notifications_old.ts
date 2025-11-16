@@ -12,7 +12,7 @@ const ClaimMap: {
 } = {};
 
 const UserMap: {
-  [fcmToken: string]: string[]; // machineId
+  [fcmToken: string]: string; // machineId
 } = {};
 
 const ClaimedUsers = new Set<string>();
@@ -25,28 +25,28 @@ class ClaimError extends Error {
 }
 
 // machine already claimed by someone else
-// class AlreadyClaimedError extends ClaimError {
-//   constructor() {
-//     super("Machine is already claimed by another user");
-//   }
-// }
+class AlreadyClaimedError extends ClaimError {
+  constructor() {
+    super("Machine is already claimed by another user");
+  }
+}
 
 // this user has already claimed another machine
-// class AlreadyClaimedSomethingElseError extends ClaimError {
-//   constructor() {
-//     super("You have already claimed another machine");
-//   }
-// }
+class AlreadyClaimedSomethingElseError extends ClaimError {
+  constructor() {
+    super("You have already claimed another machine");
+  }
+}
 
 export const unclaimMachine = (machineId: string, fcmToken: string) => {
   if (!ClaimMap[machineId]) {
     return;
   }
 
-  ClaimMap[machineId] = ClaimMap[machineId].filter(
-    (claim) => claim.fcmToken !== fcmToken
-  );
-  UserMap[fcmToken] = UserMap[fcmToken].filter((id) => id !== machineId);
+  // ClaimMap[machineId] = ClaimMap[machineId].filter(claim => claim.fcmToken !== fcmToken);
+  ClaimMap[machineId] = [];
+  delete UserMap[fcmToken];
+  // ClaimedUsers.delete(fcmToken);
 
   console.log("Current ClaimMap:", ClaimMap);
   console.log("Current UserMap:", UserMap);
@@ -73,25 +73,32 @@ export const claimMachine = (
   if (!ClaimMap[machineId]) {
     ClaimMap[machineId] = [];
   }
-  if (!UserMap[fcmToken]) {
-    UserMap[fcmToken] = [];
-  }
 
   if (ClaimMap[machineId].some((claim) => claim.fcmToken === fcmToken)) {
     // already claimed by this user
     return; // no error
   }
 
-  // if the user has already claimed another machine, unclaim it
-  // const previousMachineId = UserMap[fcmToken];
-  // if (previousMachineId) {
-  //   // unclaim previous machine
-  //   unclaimMachine(previousMachineId, fcmToken);
+  if (ClaimMap[machineId].length > 0) {
+    // already claimed by another user
+    throw new AlreadyClaimedError();
+  }
+
+  // if (ClaimedUsers.has(fcmToken)) {
+  //   // this user has already claimed another machine
+  //   throw new AlreadyClaimedSomethingElseError();
   // }
+  // ClaimedUsers.add(fcmToken);
+
+  // if the user has already claimed another machine, unclaim it
+  const previousMachineId = UserMap[fcmToken];
+  if (previousMachineId) {
+    // unclaim previous machine
+    unclaimMachine(previousMachineId, fcmToken);
+  }
 
   ClaimMap[machineId].push({ fcmToken, cycleTime, claimedAt });
-
-  UserMap[fcmToken].push(machineId);
+  UserMap[fcmToken] = machineId;
 
   console.log("Current ClaimMap:", ClaimMap);
   console.log("Current UserMap:", UserMap);
@@ -119,7 +126,7 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
       fcmToken: claimant.fcmToken,
       oldStatus: null,
       newStatus: null,
-      machine,
-    }).catch((e) => {}); // do nothing
+      machine
+    }).catch((e) => { }) // do nothing
   }
-};
+}
