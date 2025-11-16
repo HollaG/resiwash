@@ -29,6 +29,7 @@ class Tracker extends StatefulWidget {
 class _TrackerState extends State<Tracker> {
   late Timer _timer;
   late Timer _refreshTimer;
+  late Timer _fastRefreshTimer;
   // late Duration _timeSe;
 
   @override
@@ -56,6 +57,7 @@ class _TrackerState extends State<Tracker> {
   void dispose() {
     _timer.cancel();
     _refreshTimer.cancel();
+    _fastRefreshTimer.cancel();
     super.dispose();
   }
 
@@ -63,6 +65,7 @@ class _TrackerState extends State<Tracker> {
     if (widget.machine.currentStatus == MachineStatus.available) {
       // cancel the refresh timer
       _refreshTimer.cancel();
+      _fastRefreshTimer.cancel();
       return Text("Completed");
     }
     final cycleTime = widget.claimedMetadata.cycleTime;
@@ -85,13 +88,18 @@ class _TrackerState extends State<Tracker> {
       // Additional: if time left is negative, show "almost done"
       if (timeLeft.isNegative) {
         // change the refresh timer to refresh every 10 seconds instead
-        _refreshTimer.cancel();
-        _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-          print(
-            "debug refreshing machine data for ${widget.machine.machineId}",
-          );
-          context.read<MyMachinesCubit>().refreshClaimedMachines();
-        });
+        // if fastRefreshTimer is not set
+        if (!_fastRefreshTimer.isActive) {
+          _refreshTimer.cancel();
+          _fastRefreshTimer = Timer.periodic(const Duration(seconds: 10), (
+            timer,
+          ) {
+            print(
+              "debug refreshing machine data for ${widget.machine.machineId}",
+            );
+            context.read<MyMachinesCubit>().refreshClaimedMachines();
+          });
+        }
 
         return Text(
           "Almost done...",

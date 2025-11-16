@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
+import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/utils/local_notifications.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
@@ -37,6 +38,9 @@ void main() async {
   // get the service from Sl
   final firebaseNotificationService = sl<FirebaseNotificationService>();
   await firebaseNotificationService.initialize();
+
+  final liveNotificationService = sl<LiveNotificationService>();
+  await liveNotificationService.initialize();
 
   runApp(const MyApp());
 }

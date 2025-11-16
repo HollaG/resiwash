@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
+import 'package:resiwash/core/injections/area/area_service_locator.dart';
+import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -459,6 +461,12 @@ class _MachineRowState extends State<MachineRow> {
                     await context.read<MyMachinesCubit>().claimMachine(
                       widget.machine,
                       cycleTime: cycleTime,
+                    );
+
+                    // show a live notification
+                    sl<LiveNotificationService>().startActivity(
+                      machine: widget.machine,
+                      metadata: null,
                     );
                   }
                 } else {
