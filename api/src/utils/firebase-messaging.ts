@@ -64,6 +64,8 @@ export const sendMachineStatusChangedNotification = async ({
 };
 
 /**
+ * Send a data-only notification to the device, prompting it to handle the status change on-device.
+ * https://firebase.flutter.dev/docs/messaging/usage
  *
  * @param machine Machine object with `room` and `area` joined !!important
  */
@@ -81,15 +83,31 @@ export const sendClaimedMachineStatusChangedNotification = async ({
   const message: CustomMessage = {
     token: fcmToken,
 
-    notification: {
-      title: `${machine.name} now ${getReadableMachineStatus(
-        machine.currentStatus
-      )}`,
-      body: `${machine.room.name} @ ${machine.room.area.shortName}`,
-    },
+    // notification: {
+    //   title: `${machine.name} now ${getReadableMachineStatus(
+    //     machine.currentStatus
+    //   )}`,
+    //   body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+    // },
+    // android: {
+    //   notification: {
+    //     channelId: "claimed",
+    //   },
+    // },
     android: {
-      notification: {
-        channelId: "claimed",
+      priority: "high",
+    },
+    // Add APNS (Apple) config
+    apns: {
+      payload: {
+        aps: {
+          contentAvailable: true,
+        },
+      },
+      headers: {
+        "apns-push-type": "background",
+        "apns-priority": "5", // Must be `5` when `contentAvailable` is set to true.
+        "apns-topic": "io.flutter.plugins.firebase.messaging", // bundle identifier
       },
     },
     data: {
@@ -120,54 +138,54 @@ export const sendClaimedMachineStatusChangedNotification = async ({
  *
  * @param machine Machine object with `room` and `area` joined !!important
  */
-export const sendClaimedMachineStatusChangedNotifications = async ({
-  machine,
-  oldStatus,
-  newStatus,
-  fcmTokens,
-}: {
-  machine: Machine;
-  oldStatus: MachineStatus;
-  newStatus: MachineStatus;
-  fcmTokens: string[];
-}) => {
-  const message: CustomMulticastMessage = {
-    tokens: fcmTokens,
+// export const sendClaimedMachineStatusChangedNotifications = async ({
+//   machine,
+//   oldStatus,
+//   newStatus,
+//   fcmTokens,
+// }: {
+//   machine: Machine;
+//   oldStatus: MachineStatus;
+//   newStatus: MachineStatus;
+//   fcmTokens: string[];
+// }) => {
+//   const message: CustomMulticastMessage = {
+//     tokens: fcmTokens,
 
-    notification: {
-      title: `${machine.name} now ${getReadableMachineStatus(
-        machine.currentStatus
-      )}`,
-      body: `${machine.room.name} @ ${machine.room.area.shortName}`,
-    },
-    android: {
-      notification: {
-        channelId: "claimed",
-      },
-    },
-    data: {
-      machineId: machine.machineId.toString(),
-      machineName: machine.name,
-      machineRoomName: machine.room.name,
-      machineAreaShortName: machine.room.area.shortName,
-      machineCurrentStatus: machine.currentStatus,
-      machinePreviousStatus: machine.previousStatus,
+//     notification: {
+//       title: `${machine.name} now ${getReadableMachineStatus(
+//         machine.currentStatus
+//       )}`,
+//       body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+//     },
+//     android: {
+//       notification: {
+//         channelId: "claimed",
+//       },
+//     },
+//     data: {
+//       machineId: machine.machineId.toString(),
+//       machineName: machine.name,
+//       machineRoomName: machine.room.name,
+//       machineAreaShortName: machine.room.area.shortName,
+//       machineCurrentStatus: machine.currentStatus,
+//       machinePreviousStatus: machine.previousStatus,
 
-      channel: "claimed",
-    },
-  };
+//       channel: "claimed",
+//     },
+//   };
 
-  console.log("[🔥🏠] Sending message to tokens:", fcmTokens);
-  try {
-    const response = await getMessaging().sendEachForMulticast(message);
-    console.log("[🔥🏠] Successfully sent message:", response);
+//   console.log("[🔥🏠] Sending message to tokens:", fcmTokens);
+//   try {
+//     const response = await getMessaging().sendEachForMulticast(message);
+//     console.log("[🔥🏠] Successfully sent message:", response);
 
-    return response;
-  } catch (e) {
-    console.error("[🔥🏠] Error sending message:", e);
-    throw e;
-  }
-};
+//     return response;
+//   } catch (e) {
+//     console.error("[🔥🏠] Error sending message:", e);
+//     throw e;
+//   }
+// };
 
 export const sendPokeNotification = async (
   machine: Machine,
