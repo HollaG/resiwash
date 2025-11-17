@@ -54,16 +54,17 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
       child: BlocConsumer<OverviewCubit, OverviewState>(
         listener: (context, state) {
           // Listen for error states and show toast
-          if (state is OverviewError) {
-            showErrorMessage(
-              state.message,
-              onRetry: () {
-                context.read<OverviewCubit>().load(
-                  roomIds: loadedLocations.getAllRoomIds(),
-                );
-              },
-            );
-          }
+          // TODO: improve error handling here, not sure why this errorneously triggers
+          // if (state is OverviewError) {
+          //   showErrorMessage(
+          //     state.message,
+          //     onRetry: () {
+          //       context.read<OverviewCubit>().load(
+          //         roomIds: loadedLocations.getAllRoomIds(),
+          //       );
+          //     },
+          //   );
+          // }
         },
         builder: (context, state) {
           return Scaffold(

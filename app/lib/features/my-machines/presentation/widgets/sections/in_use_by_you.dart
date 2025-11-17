@@ -6,84 +6,225 @@ import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cub
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/tracker.dart';
 
-class InUseByYouSection extends StatelessWidget {
+class InUseByYouSection extends StatefulWidget {
   const InUseByYouSection({super.key});
+
+  @override
+  State<InUseByYouSection> createState() => _InUseByYouSectionState();
+}
+
+class _InUseByYouSectionState extends State<InUseByYouSection> {
+  bool isEditingClaimed = false;
+  bool canEditClaimed = false;
+
+  Future<int?> _dialogBuilder(BuildContext context) {
+    int selectedCycleTime = 30;
+
+    return showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.all(12),
+              title: const Text('Set cycle time'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Please choose your cycle time for the machine you are using.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Center(
+                    child: SegmentedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return (Theme.of(context).colorScheme.primary);
+                            }
+                            return Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh;
+                          },
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.onPrimary;
+                            }
+                            return Theme.of(context).colorScheme.onSurface;
+                          },
+                        ),
+                      ),
+                      segments: const <ButtonSegment<int>>[
+                        ButtonSegment<int>(value: 30, label: Text('30m')),
+                        ButtonSegment<int>(value: 45, label: Text('45m')),
+                        ButtonSegment<int>(value: 60, label: Text('60m')),
+                      ],
+                      selected: <int>{selectedCycleTime},
+                      onSelectionChanged: (Set<int> newSelection) {
+                        setState(() {
+                          selectedCycleTime = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+
+                  // Padding(
+                  //   padding: const EdgeInsets.fromLTRB(24.0, 0, 24, 0),
+                  //   child: Row(
+                  //     spacing: 20,
+                  //     children: [
+                  //       Expanded(child: Divider(), flex: 1),
+                  //       Text("or"),
+                  //       Expanded(child: Divider(), flex: 1),
+                  //     ],
+                  //   ),
+                  // ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Returns null
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).pop(selectedCycleTime); // Return selected time
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _onEditPressed(
     BuildContext context,
     // List<MachineEntity> subscribedMachines,
     // List<String> claimedMachineIds,
   ) {
+    if (!mounted) return;
+
+    // toggle isEditing
+    setState(() {
+      isEditingClaimed = !isEditingClaimed;
+    });
+    // _dialogBuilder(context).then((selectedCycleTime) {
+    // if (selectedCycleTime != null) {
+    //   context
+    //       .read<MyMachinesCubit>()
+    //       .updateClaimedMachineCycleTime(wi, cycleTime)
+    // }
+    // });
     // show a bottom sheet with a selectable list of machines
-    showModalBottomSheet(
-      context: context,
-      builder: (bottomSheetContext) {
-        return BlocProvider.value(
-          value: context.read<MyMachinesCubit>(), // reuse existing cubit
-          child: BlocBuilder<MyMachinesCubit, MyMachinesState>(
-            builder: (context, state) {
-              if (state is! MyMachinesLoaded) {
-                return Center(child: CircularProgressIndicator());
-              }
-              final subscribedMachines = state.subscribedMachines ?? [];
-              final claimedMeta = state.claimedMachineMetadata;
-              return SizedBox(
-                width: double.infinity,
-                height: 500,
-                child: Container(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Text(
-                        'Select machines',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      // Text("You can also swipe left twice to claim a machine."),
-                      SizedBox(height: 16),
-                      Expanded(
-                        child: ListView(
-                          children: subscribedMachines
-                              .map(
-                                (machine) => CheckboxListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: MachineRow(
-                                    machine: machine,
-                                    showIcon: false,
-                                    allowSwipe: false,
-                                  ),
-                                  value: claimedMeta
-                                      .map((e) => e.machineId)
-                                      .contains(machine.machineId),
-                                  onChanged: (newValue) {
-                                    if (newValue == true) {
-                                      context
-                                          .read<MyMachinesCubit>()
-                                          .claimMachine(machine);
-                                    } else {
-                                      context
-                                          .read<MyMachinesCubit>()
-                                          .unclaimMachine(machine);
-                                    }
-                                  },
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      },
-    );
+    // showModalBottomSheet(
+    //   context: context,
+    //   builder: (bottomSheetContext) {
+    //     return BlocProvider.value(
+    //       value: context.read<MyMachinesCubit>(), // reuse existing cubit
+    //       child: BlocBuilder<MyMachinesCubit, MyMachinesState>(
+    //         builder: (context, state) {
+    //           if (state is! MyMachinesLoaded) {
+    //             return Center(child: CircularProgressIndicator());
+    //           }
+    //           final subscribedMachines = state.subscribedMachines ?? [];
+    //           final claimedMeta = state.claimedMachineMetadata;
+    //           return SizedBox(
+    //             width: double.infinity,
+    //             height: 500,
+    //             child: Container(
+    //               padding: const EdgeInsets.all(24.0),
+    //               child: Column(
+    //                 children: [
+    //                   Text(
+    //                     'Select machines',
+    //                     style: Theme.of(context).textTheme.headlineSmall,
+    //                   ),
+    //                   // Text("You can also swipe left twice to claim a machine."),
+    //                   SizedBox(height: 16),
+    //                   Expanded(
+    //                     child: ListView(
+    //                       children: subscribedMachines
+    //                           .map(
+    //                             (machine) => CheckboxListTile(
+    //                               contentPadding: EdgeInsets.zero,
+    //                               title: MachineRow(
+    //                                 machine: machine,
+    //                                 showIcon: false,
+    //                                 allowSwipe: false,
+    //                               ),
+    //                               value: claimedMeta
+    //                                   .map((e) => e.machineId)
+    //                                   .contains(machine.machineId),
+    //                               onChanged: (newValue) {
+    //                                 if (newValue == true) {
+    //                                   context
+    //                                       .read<MyMachinesCubit>()
+    //                                       .claimMachine(machine);
+    //                                 } else {
+    //                                   context
+    //                                       .read<MyMachinesCubit>()
+    //                                       .unclaimMachine(machine);
+    //                                 }
+    //                               },
+    //                             ),
+    //                           )
+    //                           .toList(),
+    //                     ),
+    //                   ),
+    //                 ],
+    //               ),
+    //             ),
+    //           );
+    //         },
+    //       ),
+    //     );
+    //   },
+    // );
+  }
+
+  // There's no "saving" needed as it is live
+  void _onFinishPressed() {
+    // toggle isEditing
+    setState(() {
+      isEditingClaimed = !isEditingClaimed;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<MyMachinesCubit, MyMachinesState>(
+    return BlocConsumer<MyMachinesCubit, MyMachinesState>(
+      listener: (context, state) {
+        // no-op
+        if (state is MyMachinesLoaded &&
+            state.claimedMachineMetadata.isNotEmpty) {
+          setState(() {
+            canEditClaimed = true;
+          });
+        } else {
+          setState(() {
+            isEditingClaimed = false;
+            canEditClaimed = false;
+          });
+        }
+      },
       builder: (context, state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,19 +258,61 @@ class InUseByYouSection extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Text(
+                      //   "Swipe to edit",
+                      //   style: Theme.of(context).textTheme.bodySmall,
+                      // ),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    if (state is! MyMachinesLoaded) return;
-                    _onEditPressed(context);
-                  },
-                  label: Text("Edit"),
-                  icon: Icon(Icons.edit),
+                AnimatedOpacity(
+                  opacity: canEditClaimed ? 1 : 0,
+                  duration: Duration(milliseconds: 100),
+                  child: AnimatedSwitcher(
+                    duration: Duration(milliseconds: 100),
+                    child: isEditingClaimed
+                        ? FilledButton.icon(
+                            style: ButtonStyle(),
+                            key: ValueKey('finish_button'),
+                            onPressed: _onFinishPressed,
+                            icon: Icon(Icons.check),
+                            label: Text("Finish"),
+                          )
+                        : OutlinedButton.icon(
+                            key: ValueKey('edit_button'),
+                            onPressed: () {
+                              _onEditPressed(context);
+                            },
+                            label: Text("Edit"),
+                            icon: Icon(Icons.edit),
+                          ),
+                  ),
                 ),
-                // IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+                // if (!isEditingClaimed)
+                //   AnimatedOpacity(
+                //     opacity: canEditClaimed ? 1.0 : 0,
+                //     duration: Duration(milliseconds: 100),
+                //     child: OutlinedButton.icon(
+                //       onPressed: () {
+                //         if (state is! MyMachinesLoaded) return;
+                //         _onEditPressed(context);
+                //       },
+                //       label: Text("Edit"),
+                //       icon: Icon(Icons.edit),
+                //     ),
+                //   ),
+                // // IconButton(onPressed: () {}, icon: Icon(Icons.add)),
+                // if (isEditingClaimed)
+                //   AnimatedOpacity(
+                //     opacity: canEditClaimed ? 1.0 : 0,
+                //     duration: Duration(milliseconds: 100),
+                //     child: FilledButton.icon(
+                //       onPressed: _onFinishPressed,
+                //       icon: Icon(Icons.check),
+                //       label: Text("Finish"),
+                //     ),
+                //   ),
               ],
             ),
 
@@ -147,6 +330,7 @@ class InUseByYouSection extends StatelessWidget {
                     ? state.claimedMachineMetadata
                           .map(
                             (claimedMeta) => Tracker(
+                              isEditing: isEditingClaimed,
                               claimedMetadata: claimedMeta,
                               machine: (state.claimedMachines).firstWhere(
                                 (machine) =>

@@ -20,6 +20,10 @@ Future<void> setupServiceLocator() async {
   );
   await sl.allReady();
 
+  sl.registerSingleton<FirebaseNotificationService>(
+    FirebaseNotificationService(),
+  );
+
   setupRoomServiceLocator();
   setupMachineServiceLocator();
   setupAreaServiceLocator();
@@ -29,10 +33,6 @@ Future<void> setupServiceLocator() async {
   );
 
   setupMyMachinesServiceLocator();
-
-  sl.registerSingleton<FirebaseNotificationService>(
-    FirebaseNotificationService(),
-  );
 
   sl.registerSingleton<LiveNotificationService>(LiveNotificationService());
 }

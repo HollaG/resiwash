@@ -10,6 +10,7 @@ class MyMachinesUseCase {
   MyMachinesUseCase({required this.repository});
 
   // Additional operations
+  // claiming with a new cycle time will simply update the cycle time
   Future<Either<Failure, void>> claim(
     String machineId, {
     required int cycleTime,
@@ -28,6 +29,17 @@ class MyMachinesUseCase {
     return await repository.unclaimMachine(
       machineId: machineId,
       params: UnclaimMachineParams(fcmToken: fcmToken),
+    );
+  }
+
+  Future<Either<Failure, void>> updateClaim(
+    String machineId, {
+    required int cycleTime,
+    required String fcmToken,
+  }) async {
+    return await repository.claimMachine(
+      machineId: machineId,
+      params: ClaimMachineParams(cycleTime: cycleTime, fcmToken: fcmToken),
     );
   }
 }

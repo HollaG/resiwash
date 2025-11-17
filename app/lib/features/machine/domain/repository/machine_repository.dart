@@ -25,4 +25,9 @@ abstract interface class MachineRepository {
     required String machineId,
     required ClaimMachineParams params,
   });
+
+  Future<Either<Failure, void>> updateClaim({
+    required String machineId,
+    required ClaimMachineParams params,
+  });
 }

@@ -111,6 +111,26 @@ class MachineRemoteDatasource {
     }
   }
 
+  Future<void> updateClaim({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/update",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
   Future<void> unclaimMachine({
     required String machineId,
     required UnclaimMachineParams params,

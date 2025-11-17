@@ -77,4 +77,20 @@ class MachineRepositoryImpl implements MachineRepository {
       return Left(Failure());
     }
   }
+
+  @override
+  Future<Either<Failure, void>> updateClaim({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      await dataSource.claimMachine(machineId: machineId, params: params);
+      return const Right(null);
+    } on Failure catch (e) {
+      print("MachineRepositoryImpl claimMachine error: ${e.message}");
+      return Left(e);
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
 }

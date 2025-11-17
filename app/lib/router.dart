@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 
 final router = GoRouter(
   initialLocation: AppRoutes.home,
+  navigatorKey: navigatorKey,
 
   routes: [
     StatefulShellRoute.indexedStack(
@@ -56,7 +57,12 @@ final router = GoRouter(
               name: 'machineDetail',
               builder: (context, state) {
                 final machineId = state.pathParameters['machineId']!;
-                return MachineDetailScreen(machineId: machineId);
+                return MachineDetailScreen(
+                  key: ValueKey(
+                    'machine_$machineId',
+                  ), // Force rebuild when machineId changes
+                  machineId: machineId,
+                );
               },
             ),
           ],
@@ -82,8 +88,6 @@ final router = GoRouter(
     ),
   ],
 );
-
-final _routerKey = GlobalKey<NavigatorState>();
 
 class AppRoutes {
   AppRoutes._();

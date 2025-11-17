@@ -33,7 +33,12 @@ class MyMachinesScreen extends StatelessWidget {
                       // section 1:
                       // "In use by you"
                       // list of in use by you
-                      InUseByYouSection(),
+                      AnimatedSize(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.fastOutSlowIn,
+                        alignment: Alignment.topCenter,
+                        child: InUseByYouSection(),
+                      ),
 
                       // section 2:
                       // "Subscribed Machines"
@@ -53,7 +58,7 @@ class MyMachinesScreen extends StatelessWidget {
               ),
             ),
             onRefresh: () async {
-              context.read<MyMachinesCubit>().loadNotifyableMachines();
+              await context.read<MyMachinesCubit>().refreshMyMachines();
             },
           ),
         );

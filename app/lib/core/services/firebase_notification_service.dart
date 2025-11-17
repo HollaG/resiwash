@@ -5,6 +5,15 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/local_notifications.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 
+enum CustomFirebaseMessageChannel { claimed, subscribed, poke }
+
+CustomFirebaseMessageChannel getChannelFromString(String channelString) {
+  return CustomFirebaseMessageChannel.values.firstWhere(
+    (e) => e.name == channelString,
+    orElse: () => throw Exception("Unknown channel: $channelString"),
+  );
+}
+
 class FirebaseNotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
@@ -13,12 +22,15 @@ class FirebaseNotificationService {
     return await _firebaseMessaging.getToken() ?? "";
   }
 
+  /// When the app is opened from a FIREBASE notification, NOT a local notification
   void _handleMessageWhenOpenedFromNotification(RemoteMessage message) {
     // Handle the message and navigate to specific screen if needed
     appLog.i(
       "[FirebaseNotificationService] App opened from notification: $message",
     );
     // You can add navigation logic here based on message data
+
+    _handleMessageWhenInApp(message);
   }
 
   void _handleMessageWhenInApp(RemoteMessage message) {
@@ -32,25 +44,41 @@ class FirebaseNotificationService {
     // AndroidNotification android = message.notification?.android;
 
     // display the message contents in appLog
-    appLog.i("[FirebaseNotificationService] Notification: ${message.data}");
+    appLog.i(
+      "[FirebaseNotificationService] Notification: ${message.data} of type ${message.data['channel']}",
+    );
 
     if (message.data.containsKey("channel")) {
-      String channel = message.data["channel"];
+      // Parse the string value to the enum
+      final channelString = message.data["channel"] as String;
+      final channel = CustomFirebaseMessageChannel.values.firstWhere(
+        (e) => e.name == channelString,
+        orElse: () => throw Exception("Unknown channel: $channelString"),
+      );
       appLog.i("[FirebaseNotificationService] channel: $channel");
       // Handle different channels if needed
 
-      if (channel == "claimed") {
-        //
-      }
+      /// Subscribed: show notification directly as set from BE
+      /// Claimed:
+      switch (channel) {
+        case CustomFirebaseMessageChannel.subscribed:
+          // Handle subscribed channel
+          LocalNotificationHandler.instance.showSubscribed(message);
 
-      if (channel == "subscribed") {
-        // show an in-app notification
-        if (message.notification != null) {
-          String title = message.notification?.title ?? "Notification";
-          String body = message.notification?.body ?? "";
+          break;
 
-          LocalNotificationHandler.instance.showFirebaseNotification(message);
-        }
+        case CustomFirebaseMessageChannel.claimed:
+          // Handle claimed channel
+          LocalNotificationHandler.instance.showClaimedIncomingNotification(
+            message,
+          );
+          break;
+        case CustomFirebaseMessageChannel.poke:
+          // Handle poke channel
+          LocalNotificationHandler.instance.showPoke(message);
+          break;
+        default:
+          appLog.w("[FirebaseNotificationService] Unhandled channel: $channel");
       }
     }
   }
@@ -90,6 +118,10 @@ class FirebaseNotificationService {
       // Android: display on foreground
       // note: android is handled in android/app/src/main/AndroidManifest.xml:
       // https://firebase.flutter.dev/docs/messaging/notifications/
+
+      // print the token for debug
+      final fcmToken = await _firebaseMessaging.getToken();
+      print('FCM Token: $fcmToken');
     } catch (e) {
       print("Error initializing permissions: $e");
     }

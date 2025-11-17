@@ -47,4 +47,12 @@ class MachineEntity {
     this.previousStatusActiveTime,
     this.lastAvailableTime,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MachineEntity &&
+          runtimeType == other.runtimeType &&
+          machineId == other.machineId &&
+          lastChangeTime == other.lastChangeTime;
 }

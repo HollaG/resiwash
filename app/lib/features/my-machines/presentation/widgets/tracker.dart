@@ -15,11 +15,13 @@ import 'package:go_router/go_router.dart';
 class Tracker extends StatefulWidget {
   final MachineEntity machine;
   final ClaimedMachineMetadata claimedMetadata;
+  final bool isEditing;
 
   const Tracker({
     super.key,
     required this.machine,
     required this.claimedMetadata,
+    required this.isEditing,
   });
 
   @override
@@ -29,7 +31,8 @@ class Tracker extends StatefulWidget {
 class _TrackerState extends State<Tracker> {
   late Timer _timer;
   late Timer _refreshTimer;
-  late Timer _fastRefreshTimer;
+  Timer _fastRefreshTimer = Timer(const Duration(seconds: 0), () {});
+  int selectedCycleTime = 30;
   // late Duration _timeSe;
 
   @override
@@ -38,13 +41,11 @@ class _TrackerState extends State<Tracker> {
 
     // Start a periodic timer that updates every second
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      print("debug Tracker timer tick");
       setState(() {});
     });
 
     // Optionally, you can have another timer to refresh data from server every minute
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      print("debug refreshing machine data for ${widget.machine.machineId}");
       // Here you would typically call a method to refresh the machine data
       // For example:
       // context.read<MachineCubit>().refreshMachineData(widget.machine.machineId);
@@ -65,7 +66,11 @@ class _TrackerState extends State<Tracker> {
     if (widget.machine.currentStatus == MachineStatus.available) {
       // cancel the refresh timer
       _refreshTimer.cancel();
-      _fastRefreshTimer.cancel();
+
+      // if fastRefreshTimer is active, cancel it
+      if (_fastRefreshTimer.isActive) {
+        _fastRefreshTimer.cancel();
+      }
       return Text("Completed");
     }
     final cycleTime = widget.claimedMetadata.cycleTime;
@@ -75,7 +80,6 @@ class _TrackerState extends State<Tracker> {
     }
 
     final lastAvailableTime = widget.machine.lastAvailableTime;
-    print("debug lastAvailableTime $lastAvailableTime");
     if (lastAvailableTime != null) {
       // calculate time left in X min X sec
       final totalCycleDuration = Duration(minutes: cycleTime);
@@ -193,7 +197,6 @@ class _TrackerState extends State<Tracker> {
           (timeSinceAvailable.inSeconds / totalCycleDuration.inSeconds * 100)
               .clamp(0, 100)
               .toInt();
-      print("debug calculated lastAvailableTime percentDone $percentDone");
       return percentDone;
     }
 
@@ -206,10 +209,95 @@ class _TrackerState extends State<Tracker> {
           (timeSinceChange.inSeconds / totalCycleDuration.inSeconds * 100)
               .clamp(0, 100)
               .toInt();
-      print("debug calculated lastChangeTime percentDone $percentDone");
       return percentDone;
     }
     return -1;
+  }
+
+  Future<int?> _dialogBuilder(BuildContext context, int initialCycleTime) {
+    int selectedCycleTime = initialCycleTime;
+    return showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.all(12),
+              title: const Text('Set cycle time'),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Please choose your cycle time for the machine you are using.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Center(
+                    child: SegmentedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return (Theme.of(context).colorScheme.primary);
+                            }
+                            return Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh;
+                          },
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.onPrimary;
+                            }
+                            return Theme.of(context).colorScheme.onSurface;
+                          },
+                        ),
+                      ),
+                      segments: const <ButtonSegment<int>>[
+                        ButtonSegment<int>(value: 30, label: Text('30m')),
+                        ButtonSegment<int>(value: 45, label: Text('45m')),
+                        ButtonSegment<int>(value: 60, label: Text('60m')),
+                      ],
+                      selected: <int>{selectedCycleTime},
+                      onSelectionChanged: (Set<int> newSelection) {
+                        setState(() {
+                          selectedCycleTime = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Returns null
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    print("Selected cycle time: $selectedCycleTime");
+                    Navigator.of(
+                      context,
+                    ).pop(selectedCycleTime); // Return selected time
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -221,108 +309,96 @@ class _TrackerState extends State<Tracker> {
         color: context.accent.colorContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          // top widget
-          InkWell(
-            onTap: () {
-              // Navigate to machine details page
-              context.push(
-                Uri(
-                  path: AppRoutes.buildMachineDetailRoute(
-                    widget.machine.machineId,
-                  ),
-                ).toString(),
-                extra: {'machine': widget.machine},
-              );
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                spacing: 12,
-                children: [
-                  MachineStatusIndicator(
-                    status: widget.machine.currentStatus,
-                    size: BoxSize.large,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.machine.name,
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        Text(
-                          "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName}",
-                        ),
-                      ],
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.fastOutSlowIn,
+        alignment: Alignment.topCenter,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // top widget
+            InkWell(
+              onTap: () {
+                // Navigate to machine details page
+                context.push(
+                  Uri(
+                    path: AppRoutes.buildMachineDetailRoute(
+                      widget.machine.machineId,
                     ),
-                  ),
-                  widget.machine.type == MachineType.washer
-                      ? AssetIcons.washerIcon(context)
-                      : AssetIcons.dryerIcon(context),
-                ],
+                  ).toString(),
+                  extra: {'machine': widget.machine},
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  spacing: 12,
+                  children: [
+                    MachineStatusIndicator(
+                      status: widget.machine.currentStatus,
+                      size: BoxSize.large,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.machine.name,
+                            style: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          Text(
+                            "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName}",
+                          ),
+                        ],
+                      ),
+                    ),
+                    widget.machine.type == MachineType.washer
+                        ? AssetIcons.washerIcon(context)
+                        : AssetIcons.dryerIcon(context),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // todo
-          SizedBox(height: 16),
-          Row(
-            spacing: 24,
-            children: [
-              Stack(
-                children: [
-                  Center(
-                    child: SizedBox(
+            // todo
+            SizedBox(height: 16),
+            Row(
+              spacing: 24,
+              children: [
+                Stack(
+                  children: [
+                    Center(
+                      child: SizedBox(
+                        width: 96,
+                        height: 96,
+                        child: CircularProgressIndicator(
+                          value: _calculatePercentDone(context) / 100,
+                          strokeAlign: -1,
+                          strokeWidth: 16,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            MachineStatusIndicator.getConnectorColor(
+                              context,
+                              widget.machine.currentStatus,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
                       width: 96,
                       height: 96,
-                      child: CircularProgressIndicator(
-                        value: _calculatePercentDone(context) / 100,
-                        strokeAlign: -1,
-                        strokeWidth: 16,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          MachineStatusIndicator.getConnectorColor(
-                            context,
-                            widget.machine.currentStatus,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: MachineStatusIndicator.getIndicatorColor(
-                            context,
-                            widget.machine.currentStatus,
-                          ),
-                          width: 2,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                    ),
-                  ),
-
-                  SizedBox(
-                    width: 96,
-                    height: 96,
-
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
                       child: Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: MachineStatusIndicator.getIndicatorColor(
+                              context,
+                              widget.machine.currentStatus,
+                            ),
                             width: 2,
                           ),
                           shape: BoxShape.circle,
@@ -330,74 +406,141 @@ class _TrackerState extends State<Tracker> {
                         alignment: Alignment.center,
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 96.0,
-                    height: 96.0,
 
-                    child: Center(
-                      child: Container(
-                        width: 96 - 16 * 2 - 2,
-                        height: 96 - 16 * 2 - 2,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Theme.of(context).colorScheme.surface,
-                          boxShadow: [
-                            BoxShadow(
-                              // color: Colors.black.withOpacity(0.25),
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.3),
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                    SizedBox(
+                      width: 96,
+                      height: 96,
+
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2,
                             ),
-                          ],
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          "${_calculatePercentDone(context)}%",
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 2,
-                children: [
-                  // cycle indicator
-                  Row(
-                    spacing: 4,
-                    children: [
-                      Icon(
-                        Icons.timer,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.tertiary,
-                      ),
-                      Text(
-                        "${widget.claimedMetadata.cycleTime} minute cycle",
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.tertiary,
+                    SizedBox(
+                      width: 96.0,
+                      height: 96.0,
+
+                      child: Center(
+                        child: Container(
+                          width: 96 - 16 * 2 - 2,
+                          height: 96 - 16 * 2 - 2,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Theme.of(context).colorScheme.surface,
+                            boxShadow: [
+                              BoxShadow(
+                                // color: Colors.black.withOpacity(0.25),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "${_calculatePercentDone(context)}%",
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary,
+                                ),
+                          ),
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 2,
+                  children: [
+                    // cycle indicator
+                    Row(
+                      spacing: 4,
+                      children: [
+                        Icon(
+                          Icons.timer,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
+                        Text(
+                          "${widget.claimedMetadata.cycleTime} minute cycle",
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
+                        ),
+                      ],
+                    ),
+
+                    // time left
+                    _calculateTimeLeftText(context),
+
+                    // time since started
+                    _calculateTimeSinceText(context),
+                  ],
+                ),
+              ],
+            ),
+
+            Visibility(
+              visible: widget.isEditing,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      context.read<MyMachinesCubit>().unclaimMachine(
+                        widget.machine,
+                      );
+                    },
+                    style: ButtonStyle(
+                      // backgroundColor: WidgetStateProperty.all<Color>(
+                      //   Theme.of(context).colorScheme.primaryContainer,
+                      // ),
+                      foregroundColor: WidgetStateProperty.all<Color>(
+                        Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    child: const Text("Unclaim"),
                   ),
-
-                  // time left
-                  _calculateTimeLeftText(context),
-
-                  // time since started
-                  _calculateTimeSinceText(context),
+                  TextButton.icon(
+                    onPressed: () {
+                      int initialCycleTime =
+                          widget.claimedMetadata.cycleTime ??
+                          30; // default to 30 if null
+                      _dialogBuilder(context, initialCycleTime).then((newTime) {
+                        if (newTime != null) {
+                          // Update the cycle time in the cubit
+                          if (mounted) {
+                            context.read<MyMachinesCubit>().updateCycleTime(
+                              widget.machine,
+                              newTime,
+                            );
+                          }
+                        }
+                      });
+                    },
+                    label: Text("Edit cycle time"),
+                    icon: Icon(Icons.edit),
+                  ),
                 ],
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

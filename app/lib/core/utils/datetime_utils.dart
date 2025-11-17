@@ -47,7 +47,7 @@ class DateTimeUtils {
     if (dateTime == null) return 'Unknown';
     // return in the format of: dd MMM yyyy
     // e.g., 01 Jan 2023
-    final dateFormat = DateFormat("dd MMM yyyy, H:mm:ss a");
+    final dateFormat = DateFormat("dd MMM yyyy, h:mm:ss a");
     return dateFormat.format(dateTime);
   }
 

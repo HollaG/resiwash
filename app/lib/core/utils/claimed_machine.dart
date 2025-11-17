@@ -2,9 +2,9 @@ import 'dart:convert';
 
 class ClaimedMachineMetadata {
   final String machineId;
-  final int? cycleTime;
+  final int cycleTime;
 
-  ClaimedMachineMetadata({required this.machineId, this.cycleTime});
+  ClaimedMachineMetadata({required this.machineId, required this.cycleTime});
 
   // Convert to JSON
   Map<String, dynamic> toJson() {
@@ -15,7 +15,7 @@ class ClaimedMachineMetadata {
   factory ClaimedMachineMetadata.fromJson(Map<String, dynamic> json) {
     return ClaimedMachineMetadata(
       machineId: json['machineId'] as String,
-      cycleTime: json['cycleTime'] as int?,
+      cycleTime: json['cycleTime'] as int,
     );
   }
 

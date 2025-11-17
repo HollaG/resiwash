@@ -6,6 +6,7 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
+import 'package:resiwash/core/utils/local_notifications.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
@@ -42,7 +43,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
         .getSubscribedMachines();
 
     final claimedMachineMetadata = _sharedPreferencesService
-        .getClaimedMachines();
+        .getClaimedMachinesMetadata();
 
     final machineIdsToLoad = <String>{
       ...subscribedMachineIds,
@@ -106,7 +107,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
             .getSubscribedMachines();
 
         final claimedMachineMetadata = _sharedPreferencesService
-            .getClaimedMachines();
+            .getClaimedMachinesMetadata();
 
         emit(
           MyMachinesLoaded(
@@ -126,9 +127,56 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     }
   }
 
+  Future<void> refreshMyMachines() async {
+    final currentState = state;
+    if (currentState is MyMachinesLoaded) {
+      try {
+        List<String> currentMachineIds = [];
+        List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+        List<MachineEntity> currentSubscribedMachines = [];
+        List<MachineEntity> currentClaimedMachinesEntities = [];
+
+        if (currentState is MyMachinesLoaded) {
+          currentMachineIds = currentState.subscribedMachineIds;
+          currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+          currentSubscribedMachines = currentState.subscribedMachines ?? [];
+          currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
+        }
+
+        emit(
+          MyMachinesRefreshing(
+            subscribedMachineIds: currentMachineIds,
+            subscribedMachines: currentSubscribedMachines,
+            claimedMachineMetadata: currentClaimedMachineMetadata,
+            claimedMachines: currentClaimedMachinesEntities,
+          ),
+        );
+
+        var (subscribedMachines, claimedMachines) = await _getMyMachines();
+
+        final subscribedMachineIds = _sharedPreferencesService
+            .getSubscribedMachines();
+
+        final claimedMachineMetadata = _sharedPreferencesService
+            .getClaimedMachinesMetadata();
+
+        emit(
+          MyMachinesLoaded(
+            subscribedMachineIds: subscribedMachineIds,
+            subscribedMachines: subscribedMachines,
+            claimedMachineMetadata: claimedMachineMetadata,
+            claimedMachines: claimedMachines,
+          ),
+        );
+      } catch (e) {
+        appLog.e('Error refreshing claimed machines: $e');
+        // Optionally, you can emit an error state or keep the current state
+      }
+    }
+  }
+
   /// REFRESHES
   /// Refresh claimed machines only
-
   Future<void> refreshClaimedMachines() async {
     // TODO: emit loading state
     final currentState = state;
@@ -349,7 +397,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
   /// NOTE: the storage supports claiming multiple machines. However, we restrict it to one-to-one logically.
   ///       If we ever expand in the future, we can.
   ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
-  Future<void> claimMachine(MachineEntity machine, {int? cycleTime}) async {
+  Future<void> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
     try {
       final currentState = state;
@@ -386,7 +434,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
       final myMachinesEither = await _myMachinesUseCase.claim(
         machineId,
-        cycleTime: 30, // for now
+        cycleTime: cycleTime, // for now
         fcmToken: fcmToken,
       );
 
@@ -405,28 +453,15 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
               message: failure.message,
             ),
           );
-
-          // // Restore previous state after a delay
-          // Future.delayed(const Duration(seconds: 2), () {
-          //   emit(
-          //     MyMachinesLoaded(
-          //       subscribedMachineIds: currentMachineIds,
-          //       machines: currentMachines,
-          //       claimedMachineMetadata: currentClaimedMachines,
-          //     ),
-          //   );
-          // });
         },
         (_) async {
           // Add to SharedPreferences with optional cycle time
-          _sharedPreferencesService.claimMachine(
-            machineId,
-            cycleTime: cycleTime,
-          );
+          final updatedClaimedMetadataForThisMachine = _sharedPreferencesService
+              .claimMachine(machineId, cycleTime: cycleTime);
 
           // Reload state to reflect changes
           final updatedClaimedMetadata = _sharedPreferencesService
-              .getClaimedMachines();
+              .getClaimedMachinesMetadata();
 
           final (subscribedMachines, claimedMachines) = await _getMyMachines();
           emit(
@@ -438,6 +473,12 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
               claimedMachines: claimedMachines,
             ),
           );
+
+          LocalNotificationHandler.instance.showClaimedNotification(
+            machine,
+            updatedClaimedMetadataForThisMachine,
+          );
+
           // unclaim the old
           if (oldClaimedMachineId != null) {
             final oldClaimedMachine = currentClaimedMachinesEntities.firstWhere(
@@ -453,17 +494,6 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
               ),
             );
           }
-
-          // wait for 1s, then emit
-          // Future.delayed(const Duration(seconds: 1), () {
-          //   emit(
-          //     MyMachinesLoaded(
-          //       subscribedMachineIds: currentMachineIds,
-          //       machines: currentMachines,
-          //       claimedMachineMetadata: updatedClaimedMetadata,
-          //     ),
-          //   );
-          // });
 
           appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
         },
@@ -542,7 +572,123 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
 
           // Reload state to reflect changes
           final updatedClaimedMetadata = _sharedPreferencesService
-              .getClaimedMachines();
+              .getClaimedMachinesMetadata();
+
+          emit(
+            MyMachinesUnclaimed(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              claimedMachines: currentClaimedMachinesEntities
+                  .filter((m) => m.machineId != machineId)
+                  .toList(),
+              claimedMachineMetadata: updatedClaimedMetadata,
+              operatingMachine: machine,
+            ),
+          );
+
+          // wait for 1s, then emit
+          // Future.delayed(const Duration(seconds: 1), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: updatedClaimedMetadata,
+          //     ),
+          //   );
+          // });
+
+          appLog.i('Unclaimed machine: $machineId');
+        },
+      );
+    } catch (e) {
+      appLog.e('Error unclaiming machine $machineId: $e');
+    }
+  }
+
+  Future<void> unclaimMachineId(String machineId) async {
+    try {
+      final currentState = state;
+      List<String> currentMachineIds = [];
+      List<ClaimedMachineMetadata> currentClaimedMachinesMetadata = [];
+      List<MachineEntity> currentMachines = [];
+      List<MachineEntity> currentClaimedMachinesEntities = [];
+
+      // current state
+      appLog.i("current state: $currentState");
+
+      if (currentState is MyMachinesLoaded) {
+        currentMachineIds = currentState.subscribedMachineIds;
+        currentClaimedMachinesMetadata = currentState.claimedMachineMetadata;
+        currentMachines = currentState.subscribedMachines ?? [];
+        currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
+      }
+
+      // debug print all lists
+      appLog.i('Current Machine IDs: $currentMachineIds');
+      appLog.i(
+        'Current Claimed Machines Metadata: $currentClaimedMachinesMetadata',
+      );
+      appLog.i('Current Machines: $currentMachines');
+      appLog.i(
+        'Current Claimed Machines Entities: $currentClaimedMachinesEntities',
+      );
+
+      final machine = currentClaimedMachinesEntities.firstWhere(
+        (m) => m.machineId == machineId,
+      );
+
+      emit(
+        MyMachinesClaiming(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          claimedMachines: currentClaimedMachinesEntities,
+          claimedMachineMetadata: currentClaimedMachinesMetadata,
+          operatingMachine: machine,
+        ),
+      );
+
+      // get fcm token
+      final fcmToken = await _notificationService.getFcmToken();
+
+      // Call use case to claim machine
+      final result = await _myMachinesUseCase.unclaim(
+        machineId,
+        fcmToken: fcmToken,
+      );
+      result.fold(
+        (failure) {
+          appLog.e('Error unclaiming machine $machineId: ${failure.message}');
+
+          // // Emit error state with the actual error message
+          emit(
+            MyMachinesErrorClaiming(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachinesMetadata,
+              operatingMachine: machine,
+              message: failure.message,
+              claimedMachines: currentClaimedMachinesEntities,
+            ),
+          );
+
+          // // Restore previous state after a delay
+          // Future.delayed(const Duration(seconds: 2), () {
+          //   emit(
+          //     MyMachinesLoaded(
+          //       subscribedMachineIds: currentMachineIds,
+          //       machines: currentMachines,
+          //       claimedMachineMetadata: currentClaimedMachines,
+          //     ),
+          //   );
+          // });
+        },
+        (_) {
+          // Remove from SharedPreferences
+          _sharedPreferencesService.unclaimMachine(machineId);
+
+          // Reload state to reflect changes
+          final updatedClaimedMetadata = _sharedPreferencesService
+              .getClaimedMachinesMetadata();
 
           emit(
             MyMachinesUnclaimed(
@@ -579,18 +725,138 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     return _sharedPreferencesService.isMachineClaimed(machineId);
   }
 
-  /// Update the cycle time for a claimed machine
-  void updateClaimedMachineCycleTime(String machineId, int? cycleTime) {
+  Future<void> updateCycleTime(MachineEntity machine, int cycleTime) async {
+    final machineId = machine.machineId;
     try {
-      _sharedPreferencesService.updateClaimedMachineCycleTime(
-        machineId,
-        cycleTime,
+      final currentState = state;
+      List<String> currentMachineIds = [];
+      List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+      List<MachineEntity> currentMachines = [];
+      List<MachineEntity> currentClaimedMachinesEntities = [];
+
+      if (currentState is MyMachinesLoaded) {
+        currentMachineIds = currentState.subscribedMachineIds;
+        currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+        currentMachines = currentState.subscribedMachines ?? [];
+        currentClaimedMachinesEntities = currentState.claimedMachines ?? [];
+      }
+
+      final oldClaimedMachineId = currentClaimedMachineMetadata.isNotEmpty
+          ? currentClaimedMachineMetadata.first.machineId
+          : null;
+
+      emit(
+        MyMachinesClaiming(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          operatingMachine: machine,
+          claimedMachines: currentClaimedMachinesEntities,
+        ),
       );
 
-      // State doesn't change for this operation (IDs remain the same)
-      appLog.i('Updated cycle time for machine: $machineId to $cycleTime');
+      // get fcm token
+      final fcmToken = await _notificationService.getFcmToken();
+
+      // Call use case to claim machine
+
+      final myMachinesEither = await _myMachinesUseCase.updateClaim(
+        machineId,
+        cycleTime: cycleTime,
+        fcmToken: fcmToken,
+      );
+
+      myMachinesEither.fold(
+        (failure) {
+          appLog.e('Error claiming machine $machineId: ${failure.message}');
+
+          // // Emit error state with the actual error message
+          emit(
+            MyMachinesErrorClaiming(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              claimedMachineMetadata: currentClaimedMachineMetadata,
+              claimedMachines: currentClaimedMachinesEntities,
+              operatingMachine: machine,
+              message: failure.message,
+            ),
+          );
+        },
+        (_) async {
+          // Add to SharedPreferences with optional cycle time
+          _sharedPreferencesService.updateClaimedMachineCycleTime(
+            machineId,
+            cycleTime,
+          );
+
+          // // Reload state to reflect changes
+          final updatedClaimedMetadata = _sharedPreferencesService
+              .getClaimedMachinesMetadata();
+
+          // final (subscribedMachines, claimedMachines) = await _getMyMachines();
+          emit(
+            MyMachinesClaimed(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              claimedMachineMetadata: updatedClaimedMetadata,
+              operatingMachine: machine,
+              claimedMachines: currentClaimedMachinesEntities,
+            ),
+          );
+          // // unclaim the old
+          // if (oldClaimedMachineId != null) {
+          //   final oldClaimedMachine = currentClaimedMachinesEntities.firstWhere(
+          //     (m) => m.machineId == oldClaimedMachineId,
+          //   );
+          //   emit(
+          //     MyMachinesClaimed(
+          //       subscribedMachineIds: currentMachineIds,
+          //       subscribedMachines: subscribedMachines,
+          //       claimedMachineMetadata: updatedClaimedMetadata,
+          //       operatingMachine: oldClaimedMachine,
+          //       claimedMachines: claimedMachines,
+          //     ),
+          //   );
+          // }
+
+          appLog.i(
+            'Updated claim for machine: $machineId with cycleTime: $cycleTime',
+          );
+        },
+      );
     } catch (e) {
-      appLog.e('Error updating cycle time for machine $machineId: $e');
+      appLog.e('Error claiming machine $machineId: $e');
+    }
+  }
+
+  /// Update the cycle time for a claimed machine
+  void updateClaimedMachineCycleTime(
+    MachineEntity machine,
+    int? cycleTime,
+  ) async {
+    try {
+      // _sharedPreferencesService.updateClaimedMachineCycleTime(
+      //   machineId,
+      //   cycleTime,
+      // );
+
+      // get fcm token
+      final fcmToken = await _notificationService.getFcmToken();
+
+      await unclaimMachine(machine);
+      print("-------------- unclaimed");
+      await claimMachine(machine, cycleTime: cycleTime ?? 30);
+
+      // send to backend
+
+      // State doesn't change for this operation (IDs remain the same)
+      appLog.i(
+        'Updated cycle time for machine: ${machine.machineId} to $cycleTime',
+      );
+    } catch (e) {
+      appLog.e(
+        'Error updating cycle time for machine ${machine.machineId}: $e',
+      );
     }
   }
 }

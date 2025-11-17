@@ -60,11 +60,11 @@ class SharedPreferencesService {
 
   // Claim a machine with optional cycle time
   // remmeber to unclaim any other claimed machine the user has
-  void claimMachine(String machineId, {int? cycleTime}) {
-    final existingMachines = getClaimedMachines();
+  ClaimedMachineMetadata claimMachine(String machineId, {int cycleTime = 30}) {
+    final existingMachinesMetadata = getClaimedMachinesMetadata();
 
     // Check if already claimed
-    final alreadyClaimed = existingMachines.any(
+    final alreadyClaimed = existingMachinesMetadata.any(
       (m) => m.machineId == machineId,
     );
 
@@ -74,18 +74,25 @@ class SharedPreferencesService {
         cycleTime: cycleTime,
       );
       // NOTE: we only allow one claimed machine at a time logically
+      // [feature1]
       // existingMachines.add(claimedMachine);
-      existingMachines.clear();
-      existingMachines.add(claimedMachine);
+      existingMachinesMetadata.clear();
+      existingMachinesMetadata.add(claimedMachine);
       // Encode all claimed machines to JSON strings
-      final encodedMachines = existingMachines.map((m) => m.encode()).toList();
+      final encodedMachines = existingMachinesMetadata
+          .map((m) => m.encode())
+          .toList();
       _prefs.setStringList(claimedMachinesKey, encodedMachines);
+
+      return claimedMachine;
     }
+
+    return existingMachinesMetadata.firstWhere((m) => m.machineId == machineId);
   }
 
   // Unclaim a machine
   void unclaimMachine(String machineId) {
-    final existingMachines = getClaimedMachines();
+    final existingMachines = getClaimedMachinesMetadata();
     existingMachines.removeWhere((m) => m.machineId == machineId);
 
     // Encode remaining claimed machines
@@ -94,7 +101,7 @@ class SharedPreferencesService {
   }
 
   // Get all claimed machines
-  List<ClaimedMachineMetadata> getClaimedMachines() {
+  List<ClaimedMachineMetadata> getClaimedMachinesMetadata() {
     final encodedMachines = _prefs.getStringList(claimedMachinesKey) ?? [];
     return encodedMachines
         .map((encoded) => ClaimedMachineMetadata.decode(encoded))
@@ -103,13 +110,13 @@ class SharedPreferencesService {
 
   // Check if a machine is claimed
   bool isMachineClaimed(String machineId) {
-    final claimedMachines = getClaimedMachines();
+    final claimedMachines = getClaimedMachinesMetadata();
     return claimedMachines.any((m) => m.machineId == machineId);
   }
 
   // Update cycle time for a claimed machine
-  void updateClaimedMachineCycleTime(String machineId, int? cycleTime) {
-    final existingMachines = getClaimedMachines();
+  void updateClaimedMachineCycleTime(String machineId, int cycleTime) {
+    final existingMachines = getClaimedMachinesMetadata();
     final index = existingMachines.indexWhere((m) => m.machineId == machineId);
 
     if (index != -1) {

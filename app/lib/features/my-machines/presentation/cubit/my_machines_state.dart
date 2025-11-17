@@ -36,6 +36,15 @@ class MyMachinesLoaded extends MyMachinesState {
   ];
 }
 
+class MyMachinesRefreshing extends MyMachinesLoaded {
+  const MyMachinesRefreshing({
+    required super.subscribedMachineIds,
+    required super.subscribedMachines,
+    required super.claimedMachineMetadata,
+    required super.claimedMachines,
+  });
+}
+
 class MyMachinesError extends MyMachinesState {
   final String message;
 

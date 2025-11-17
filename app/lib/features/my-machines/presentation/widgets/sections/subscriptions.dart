@@ -4,15 +4,15 @@ import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart'
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
 
+import 'package:implicitly_animated_list/implicitly_animated_list.dart';
+
 class SubscriptionsSection extends StatelessWidget {
   const SubscriptionsSection({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<MyMachinesCubit, MyMachinesState>(
-      listener: (context, state) {
-        print("SubscriptionsSection state changed: $state");
-      },
+      listener: (context, state) {},
       builder: (context, state) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,21 +52,37 @@ class SubscriptionsSection extends StatelessWidget {
             if (state is MyMachinesLoading)
               Center(child: CircularProgressIndicator()),
 
-            if (state is MyMachinesLoaded)
-              Column(
-                children:
-                    state.subscribedMachines != null &&
-                        state.subscribedMachines!.isNotEmpty
-                    ? state.subscribedMachines
-                          .map((machine) => MachineRow(machine: machine))
-                          .toList()
-                    : [
-                        Text(
-                          "You are not subscribed to any machines.",
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
+            if (state is MyMachinesLoaded &&
+                state.subscribedMachines != null &&
+                state.subscribedMachines.isNotEmpty)
+              ImplicitlyAnimatedList(
+                physics: NeverScrollableScrollPhysics(),
+                // key: _listKey,
+                itemData: state.subscribedMachines,
+                itemBuilder: (_, machine) {
+                  return MachineRow(
+                    key: ValueKey(machine.machineId),
+                    machine: machine,
+                  );
+                },
+                shrinkWrap: true,
               ),
+
+            // if (state is MyMachinesLoaded)
+            //   Column(
+            //     children:
+            //         state.subscribedMachines != null &&
+            //             state.subscribedMachines!.isNotEmpty
+            //         ? state.subscribedMachines
+            //               .map((machine) => MachineRow(machine: machine))
+            //               .toList()
+            //         : [
+            //             Text(
+            //               "You are not subscribed to any machines.",
+            //               style: Theme.of(context).textTheme.bodyMedium,
+            //             ),
+            //           ],
+            //   ),
           ],
         );
       },
