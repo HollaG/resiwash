@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
+import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
-import 'package:resiwash/core/utils/local_notifications.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
@@ -474,7 +475,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
             ),
           );
 
-          LocalNotificationHandler.instance.showClaimedNotification(
+          sl<LocalNotificationService>().showClaimedNotification(
             machine,
             updatedClaimedMetadataForThisMachine,
           );

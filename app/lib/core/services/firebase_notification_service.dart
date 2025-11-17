@@ -2,7 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
-import 'package:resiwash/core/utils/local_notifications.dart';
+import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 
 enum CustomFirebaseMessageChannel { claimed, subscribed, poke }
@@ -63,19 +63,19 @@ class FirebaseNotificationService {
       switch (channel) {
         case CustomFirebaseMessageChannel.subscribed:
           // Handle subscribed channel
-          LocalNotificationHandler.instance.showSubscribed(message);
+          sl<LocalNotificationService>().showSubscribed(message);
 
           break;
 
         case CustomFirebaseMessageChannel.claimed:
           // Handle claimed channel
-          LocalNotificationHandler.instance.showClaimedIncomingNotification(
+          sl<LocalNotificationService>().showClaimedIncomingNotification(
             message,
           );
           break;
         case CustomFirebaseMessageChannel.poke:
           // Handle poke channel
-          LocalNotificationHandler.instance.showPoke(message);
+          sl<LocalNotificationService>().showPoke(message);
           break;
         default:
           appLog.w("[FirebaseNotificationService] Unhandled channel: $channel");

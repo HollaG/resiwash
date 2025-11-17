@@ -8,7 +8,7 @@ import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
-import 'package:resiwash/core/utils/local_notifications.dart';
+import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
@@ -39,18 +39,18 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   appLog.i('[BG Handler] Received FCM: $message');
 
-  await LocalNotificationHandler.instance.ensureInitializedForBackground();
+  await sl<LocalNotificationService>().ensureInitializedForBackground();
 
   CustomFirebaseMessageChannel channel = getChannelFromString(
     message.data['channel'],
   );
 
   if (channel == CustomFirebaseMessageChannel.poke) {
-    LocalNotificationHandler.instance.showPoke(message);
+    sl<LocalNotificationService>().showPoke(message);
   } else if (channel == CustomFirebaseMessageChannel.claimed) {
-    LocalNotificationHandler.instance.showClaimedIncomingNotification(message);
+    sl<LocalNotificationService>().showClaimedIncomingNotification(message);
   } else if (channel == CustomFirebaseMessageChannel.subscribed) {
-    LocalNotificationHandler.instance.showSubscribed(message);
+    sl<LocalNotificationService>().showSubscribed(message);
   }
 
   return;
@@ -123,7 +123,7 @@ void notificationTapBackground(NotificationResponse response) async {
     }
   } else {
     switch (response.actionId) {
-      case LocalNotificationHandler.stopClaimActionId:
+      case LocalNotificationService.stopClaimActionId:
         {
           // Stop claim alerts
           final payload = response.payload;
@@ -163,7 +163,7 @@ void notificationTapBackground(NotificationResponse response) async {
           }
           break;
         }
-      case LocalNotificationHandler.acknowledgePokeActionId:
+      case LocalNotificationService.acknowledgePokeActionId:
         {
           // Acknowledge poke (TODO implement)
           // final payload = response.payload;
@@ -218,7 +218,7 @@ Future<void> main() async {
   // ------------------------------------------------------------
   // 2) CREATE NOTIFICATION CHANNELS
   // ------------------------------------------------------------
-  await LocalNotificationHandler.instance.setupLocalNotifications();
+  await sl<LocalNotificationService>().initialize();
 
   // ------------------------------------------------------------
   // 3) REGISTER FCM BACKGROUND HANDLER (AFTER CHANNELS!)

@@ -11,28 +11,20 @@ import "package:resiwash/features/machine/data/models/machine_model.dart";
 
 import '../../main.dart'; // import your global flutterLocalNotificationsPlugin
 
-class LocalNotificationHandler {
-  // Singleton
-  LocalNotificationHandler._();
-  static final LocalNotificationHandler _instance =
-      LocalNotificationHandler._();
-  static LocalNotificationHandler get instance => _instance;
-
+/// Service for managing local notifications
+///
+/// This service handles:
+/// - Creating and managing notification channels (Android) / categories (iOS)
+/// - Showing different types of notifications (subscribed, claimed, poke)
+/// - Managing persistent notifications (timers, countdowns)
+class LocalNotificationService {
   // Channels
   late AndroidNotificationChannel subscriptionChannel;
   late AndroidNotificationChannel claimedChannel;
   late AndroidNotificationChannel pokeChannel;
+  late AndroidNotificationChannel channelCountdown;
 
-  // TOOD: ios equivalent
-  late AndroidNotificationChannel channelCountdown =
-      const AndroidNotificationChannel(
-        'countdown_channel',
-        'Countdown Notifications',
-        description: 'Notifications for countdown timers.',
-        importance: Importance.high,
-      );
-
-  // IOS categories
+  // iOS categories
   late DarwinNotificationCategory subscriptionCategory;
   late DarwinNotificationCategory claimedCategory;
   late DarwinNotificationCategory pokeCategory;
@@ -44,11 +36,13 @@ class LocalNotificationHandler {
   // static Notification IDs
   static const int claimedTimerNotificationId = 0;
 
-  // Called once in main()
-  Future<void> setupLocalNotifications() async {
-    // -----------------------------
-    // ANDROID CHANNELS
-    // -----------------------------
+  // Initialize notification channels and categories
+  Future<void> initialize() async {
+    await _setupAndroidChannels();
+    await _setupIOSCategories();
+  }
+
+  Future<void> _setupAndroidChannels() async {
     subscriptionChannel = const AndroidNotificationChannel(
       'subscriptions',
       'Subscribed Machine Updates',
@@ -60,7 +54,7 @@ class LocalNotificationHandler {
       'claimed',
       'Claimed Machine Updates',
       description: 'High priority alerts for claimed machines.',
-      importance: Importance.max, // HEADS UP
+      importance: Importance.max,
     );
 
     pokeChannel = const AndroidNotificationChannel(
@@ -70,7 +64,13 @@ class LocalNotificationHandler {
       importance: Importance.high,
     );
 
-    // CREATE ALL CHANNELS
+    channelCountdown = const AndroidNotificationChannel(
+      'countdown_channel',
+      'Countdown Notifications',
+      description: 'Notifications for countdown timers.',
+      importance: Importance.high,
+    );
+
     final androidPlugin = flutterLocalNotificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -79,10 +79,10 @@ class LocalNotificationHandler {
     await androidPlugin?.createNotificationChannel(subscriptionChannel);
     await androidPlugin?.createNotificationChannel(claimedChannel);
     await androidPlugin?.createNotificationChannel(pokeChannel);
+    await androidPlugin?.createNotificationChannel(channelCountdown);
+  }
 
-    // -----------------------------
-    // IOS CATEGORIES
-    // -----------------------------
+  Future<void> _setupIOSCategories() async {
     subscriptionCategory = const DarwinNotificationCategory('subscriptions');
     claimedCategory = const DarwinNotificationCategory('claimed');
     pokeCategory = DarwinNotificationCategory(
@@ -104,23 +104,6 @@ class LocalNotificationHandler {
 
   // Called for setup in background handler
   Future<void> ensureInitializedForBackground() async {
-    // plugin already global, but isolate does not share it
-    // const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    // const iosInit = DarwinInitializationSettings();
-    // const settings = InitializationSettings(android: androidInit, iOS: iosInit);
-
-    // await flutterLocalNotificationsPlugin.initialize(settings);
-
-    // // Recreate channels (safe because Android ignores duplicates)
-    // final androidPlugin = flutterLocalNotificationsPlugin
-    //     .resolvePlatformSpecificImplementation<
-    //       AndroidFlutterLocalNotificationsPlugin
-    //     >();
-
-    // await androidPlugin?.createNotificationChannel(subscriptionChannel);
-    // await androidPlugin?.createNotificationChannel(claimedChannel);
-    // await androidPlugin?.createNotificationChannel(pokeChannel);
-
     const initAndroid = AndroidInitializationSettings('@mipmap/launcher_icon');
     const initIOS = DarwinInitializationSettings();
 
@@ -133,29 +116,9 @@ class LocalNotificationHandler {
       initSettings,
       onDidReceiveNotificationResponse: notificationTapBackground,
     );
-    await LocalNotificationHandler.instance.setupLocalNotifications();
-  }
-  // ---------------------------------
-  // HANDLERS
-  // ---------------------------------
-  // data: {
-  //     machineId: machine.machineId.toString(),
-  //     machineName: machine.name,
-  //     machineRoomName: machine.room.name,
-  //     machineAreaShortName: machine.room.area.shortName,
-  //     machineCurrentStatus: machine.currentStatus,
-  //     machinePreviousStatus: machine.previousStatus,
 
-  //     channel: "claimed",
-  //   },
-  void handleClaimedDataNotification(RemoteMessage message) {
-    final data = message.data;
-    final machineId = data['machineId'] as String?;
+    await initialize();
   }
-
-  // -------------------------------------------------------
-  // USE CORRECT CHANNELS
-  // -------------------------------------------------------
 
   void showSubscribed(RemoteMessage msg) {
     final n = msg.notification;
@@ -211,9 +174,63 @@ class LocalNotificationHandler {
     );
   }
 
-  // Show a persistent timer, with the end time being cycle time + lastAvailableTime
-  // should ONLY be called when the machine status changes to "IN_USE"
-  // TODO: iOS implementation
+  void showPoke(RemoteMessage msg) {
+    final n = msg.data;
+
+    flutterLocalNotificationsPlugin.show(
+      n.hashCode,
+      n['title'],
+      n['body'],
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          pokeChannel.id,
+          pokeChannel.name,
+          importance: Importance.max,
+          priority: Priority.defaultPriority,
+          actions: [
+            AndroidNotificationAction(
+              stopClaimActionId,
+              'Stop alerts',
+              showsUserInterface: true,
+            ),
+            AndroidNotificationAction(
+              acknowledgePokeActionId,
+              'Acknowledge',
+              showsUserInterface: true,
+            ),
+          ],
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: pokeCategory.identifier,
+        ),
+      ),
+      payload: jsonEncode({
+        "machineId": n['machineId'],
+        "channel": n['channel'],
+      }),
+    );
+  }
+
+  // Display a notification depending on machine status
+  void showClaimedNotification(
+    MachineEntity machine,
+    ClaimedMachineMetadata metadata,
+  ) {
+    switch (machine.currentStatus) {
+      case MachineStatus.inUse:
+        _showClaimedTime(machine, metadata);
+        break;
+      case MachineStatus.finishing:
+        _showClaimFinishingSoonNotification(machine, metadata);
+        break;
+      case MachineStatus.available:
+        _showClaimCompletedNotification(machine);
+        break;
+      default:
+        break;
+    }
+  }
+
   void _showClaimedTime(
     MachineEntity machine,
     ClaimedMachineMetadata metadata,
@@ -227,8 +244,8 @@ class LocalNotificationHandler {
         ? seconds
         : seconds -
               DateTime.now().difference(machine.lastAvailableTime!).inSeconds;
-    final AndroidNotificationDetails
-    androidNotificationDetailsChronotmeter = AndroidNotificationDetails(
+
+    final androidDetails = AndroidNotificationDetails(
       channelCountdown.id,
       channelCountdown.name,
       channelDescription: channelCountdown.description,
@@ -239,19 +256,15 @@ class LocalNotificationHandler {
           DateTime.now().millisecondsSinceEpoch +
           (secondsLeftWhenCalled * 1000),
       usesChronometer: true,
-      // largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
       chronometerCountDown: true,
       channelAction: AndroidNotificationChannelAction.createIfNotExists,
-      // actions: const [
-      //   AndroidNotificationAction('pause', 'PAUSE', cancelNotification: false),
-      //   AndroidNotificationAction('stop', 'STOP', cancelNotification: true),
-      // ],
     );
+
     flutterLocalNotificationsPlugin.show(
       claimedTimerNotificationId,
       "${machine.name} @ ${machine.room?.name} running...",
       "Expected to finish by $expectedEndTime",
-      NotificationDetails(android: androidNotificationDetailsChronotmeter),
+      NotificationDetails(android: androidDetails),
     );
   }
 
@@ -268,8 +281,7 @@ class LocalNotificationHandler {
         : seconds -
               DateTime.now().difference(machine.lastAvailableTime!).inSeconds;
 
-    final AndroidNotificationDetails
-    androidNotificationDetailsChronotmeter = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       channelCountdown.id,
       channelCountdown.name,
       channelDescription: channelCountdown.description,
@@ -280,20 +292,15 @@ class LocalNotificationHandler {
           DateTime.now().millisecondsSinceEpoch +
           (secondsLeftWhenCalled * 1000),
       usesChronometer: true,
-      // largeIcon: const DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
       chronometerCountDown: true,
       channelAction: AndroidNotificationChannelAction.createIfNotExists,
-      // actions: const [
-      //   AndroidNotificationAction('pause', 'PAUSE', cancelNotification: false),
-      //   AndroidNotificationAction('stop', 'STOP', cancelNotification: true),
-      // ],
     );
 
     flutterLocalNotificationsPlugin.show(
       claimedTimerNotificationId,
       "${machine.name} finishing soon!",
       "Please prepare to clear your laundry. Expected to finish by $expectedEndTime",
-      NotificationDetails(android: androidNotificationDetailsChronotmeter),
+      NotificationDetails(android: androidDetails),
     );
   }
 
@@ -313,65 +320,13 @@ class LocalNotificationHandler {
     );
   }
 
-  void showPoke(RemoteMessage msg) {
-    final n = msg.data;
-
-    flutterLocalNotificationsPlugin.show(
-      n.hashCode,
-      n['title'],
-      n['body'],
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          pokeChannel.id,
-          pokeChannel.name,
-          importance: Importance.max,
-          priority: Priority.defaultPriority,
-          actions: [
-            AndroidNotificationAction(
-              LocalNotificationHandler.stopClaimActionId,
-              'Stop alerts',
-              showsUserInterface:
-                  true, // impt: see https://pub.dev/packages/flutter_local_notifications#notification-actions
-            ),
-            AndroidNotificationAction(
-              LocalNotificationHandler.acknowledgePokeActionId,
-              'Acknowledge',
-              showsUserInterface: true,
-            ),
-          ],
-        ),
-        iOS: DarwinNotificationDetails(
-          categoryIdentifier: pokeCategory.identifier,
-        ),
-      ),
-      payload: jsonEncode({
-        "machineId": n['machineId'],
-        "channel": n['channel'],
-      }),
-    );
+  /// Cancel a specific notification
+  Future<void> cancelNotification(int id) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
   }
 
-  // display a notification, depending on the status:
-  // inuse: showClaimedTime
-  // finishing: showClaimFinishingSoonNotification
-  // done: showClaimCompletedNotification
-  void showClaimedNotification(
-    MachineEntity machine,
-    ClaimedMachineMetadata metadata,
-  ) {
-    switch (machine.currentStatus) {
-      case MachineStatus.inUse:
-        _showClaimedTime(machine, metadata);
-        break;
-      case MachineStatus.finishing:
-        _showClaimFinishingSoonNotification(machine, metadata);
-        break;
-      case MachineStatus.available:
-        _showClaimCompletedNotification(machine);
-        break;
-      default:
-        // do nothing
-        break;
-    }
+  /// Cancel all notifications
+  Future<void> cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
   }
 }

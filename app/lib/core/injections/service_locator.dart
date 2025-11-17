@@ -5,6 +5,7 @@ import 'package:resiwash/core/injections/my-machines/my_machines_service_locator
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
+import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +24,8 @@ Future<void> setupServiceLocator() async {
   sl.registerSingleton<FirebaseNotificationService>(
     FirebaseNotificationService(),
   );
+
+  sl.registerSingleton<LocalNotificationService>(LocalNotificationService());
 
   setupRoomServiceLocator();
   setupMachineServiceLocator();
