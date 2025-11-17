@@ -81,10 +81,12 @@ export const sendClaimedMachineStatusChangedNotification = async ({
   const message: CustomMessage = {
     token: fcmToken,
 
-    // notification: {
-    //   title: `${machine.name} now ${getReadableMachineStatus(machine.currentStatus)}`,
-    //   body: `${machine.room.name} @ ${machine.room.area.shortName}`,
-    // },
+    notification: {
+      title: `${machine.name} now ${getReadableMachineStatus(
+        machine.currentStatus
+      )}`,
+      body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+    },
     android: {
       notification: {
         channelId: "claimed",
@@ -132,10 +134,12 @@ export const sendClaimedMachineStatusChangedNotifications = async ({
   const message: CustomMulticastMessage = {
     tokens: fcmTokens,
 
-    // notification: {
-    //   title: `${machine.name} now ${getReadableMachineStatus(machine.currentStatus)}`,
-    //   body: `${machine.room.name} @ ${machine.room.area.shortName}`,
-    // },
+    notification: {
+      title: `${machine.name} now ${getReadableMachineStatus(
+        machine.currentStatus
+      )}`,
+      body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+    },
     android: {
       notification: {
         channelId: "claimed",
@@ -178,8 +182,15 @@ export const sendPokeNotification = async (
     // android: {
     //   notification: {
     //     channelId: "poke",
+    //     priority: "high",
     //   },
     // },
+
+    apns: {
+      headers: {
+        "apns-priority": "5",
+      },
+    },
     data: {
       machineId: machine.machineId.toString(),
       channel: "poke",
