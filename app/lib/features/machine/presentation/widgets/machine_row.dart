@@ -8,8 +8,12 @@ import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_state.dart'
+    as sub_state;
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
+    as claim_state;
 import 'package:resiwash/router.dart';
 import 'package:resiwash/theme.dart';
 
@@ -64,13 +68,13 @@ class _MachineRowState extends State<MachineRow> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Now, we do this separately, because we don't want to listen to MyMachinesCubit load success.
-      bool isClaimed = context.read<MyMachinesCubit>().isMachineClaimed(
+      // Check subscription and claim status from the respective cubits
+      bool isClaimed = context.read<ClaimCubit>().isMachineClaimed(
         widget.machine.machineId,
       );
-      bool isSubscribed = context.read<MyMachinesCubit>().isSubscribedToMachine(
-        widget.machine.machineId,
-      );
+      bool isSubscribed = context
+          .read<SubscriptionCubit>()
+          .isSubscribedToMachine(widget.machine.machineId);
 
       setState(() {
         subscriptionState = isSubscribed
@@ -181,106 +185,139 @@ class _MachineRowState extends State<MachineRow> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<MyMachinesCubit, MyMachinesState>(
-      /// NOTE: Since the MyMachinesCubit is provided higher up in the tree,
-      ///       other MachineRows will receive state updates from this MachineRow, and vice versa.
-      ///       We can listen to `state.operatingMachine.machineId` to filter out irrelevant updates.
-      listener: (context, state) {
-        if (state is MyMachinesLoaded) {}
-
-        if (state is MyMachinesClaiming &&
-            state.operatingMachine.machineId == widget.machine.machineId) {
-          // change internal state to loading
-          setState(() {
-            claimState = ClaimState.loading;
-          });
-        }
-
-        if ((state is MyMachinesClaimed &&
-                state.operatingMachine.machineId == widget.machine.machineId) ||
-            (state is MyMachinesUnclaimed &&
-                state.operatingMachine.machineId == widget.machine.machineId)) {
-          // change internal state to success
-          setState(() {
-            claimState = state is MyMachinesClaimed
-                ? ClaimState.successClaiming
-                : ClaimState.successUnclaiming;
-          });
-
-          // change back to normal 1s later
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
+    return MultiBlocListener(
+      listeners: [
+        // Listen to ClaimCubit for claim state changes
+        BlocListener<ClaimCubit, claim_state.ClaimState>(
+          listener: (context, state) {
+            if (state is claim_state.Claiming &&
+                state.operatingMachine.machineId == widget.machine.machineId) {
+              // change internal state to loading
               setState(() {
-                bool isClaimed = context
-                    .read<MyMachinesCubit>()
-                    .isMachineClaimed(widget.machine.machineId);
+                claimState = ClaimState.loading;
+              });
+            }
+
+            if ((state is claim_state.Claimed &&
+                    state.operatingMachine.machineId ==
+                        widget.machine.machineId) ||
+                (state is claim_state.Unclaimed &&
+                    state.operatingMachine.machineId ==
+                        widget.machine.machineId)) {
+              // change internal state to success
+              setState(() {
+                claimState = state is claim_state.Claimed
+                    ? ClaimState.successClaiming
+                    : ClaimState.successUnclaiming;
+              });
+
+              // change back to normal 1s later
+              Future.delayed(const Duration(seconds: 1), () {
+                if (mounted) {
+                  setState(() {
+                    bool isClaimed = context
+                        .read<ClaimCubit>()
+                        .isMachineClaimed(widget.machine.machineId);
+                    claimState = isClaimed
+                        ? ClaimState.claimed
+                        : ClaimState.notClaimed;
+                  });
+                }
+              });
+            }
+
+            if (state is claim_state.ClaimOperationError &&
+                state.operatingMachine.machineId == widget.machine.machineId) {
+              // reset to previous state on error
+              bool isClaimed = context.read<ClaimCubit>().isMachineClaimed(
+                widget.machine.machineId,
+              );
+
+              setState(() {
                 claimState = isClaimed
                     ? ClaimState.claimed
                     : ClaimState.notClaimed;
               });
+
+              print('Error claiming machine: ${state.message}');
+              // show error message in snackbar only if this route is currently active
+              // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
+              if (!TickerMode.of(context)) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
             }
-          });
-        }
-
-        if (state is MyMachinesSubscribing &&
-            state.operatingMachine.machineId == widget.machine.machineId) {
-          // change internal state to loading
-          setState(() {
-            subscriptionState = SubscriptionState.loading;
-          });
-        }
-
-        if (state is MyMachinesSubscribed &&
-                state.operatingMachine.machineId == widget.machine.machineId ||
-            (state is MyMachinesUnsubscribed &&
-                state.operatingMachine.machineId == widget.machine.machineId)) {
-          // change internal state to success
-          setState(() {
-            subscriptionState = state is MyMachinesSubscribed
-                ? SubscriptionState.successSubscribing
-                : SubscriptionState.successUnsubscribing;
-          });
-
-          // change back to normal 1s later
-          Future.delayed(const Duration(seconds: 1), () {
-            if (mounted) {
+          },
+        ),
+        // Listen to SubscriptionCubit for subscription state changes
+        BlocListener<SubscriptionCubit, sub_state.SubscriptionState>(
+          listener: (context, state) {
+            if (state is sub_state.Subscribing &&
+                state.operatingMachine.machineId == widget.machine.machineId) {
+              // change internal state to loading
               setState(() {
-                bool isSubscribed = context
-                    .read<MyMachinesCubit>()
-                    .isSubscribedToMachine(widget.machine.machineId);
+                subscriptionState = SubscriptionState.loading;
+              });
+            }
+
+            if ((state is sub_state.Subscribed &&
+                    state.operatingMachine.machineId ==
+                        widget.machine.machineId) ||
+                (state is sub_state.Unsubscribed &&
+                    state.operatingMachine.machineId ==
+                        widget.machine.machineId)) {
+              // change internal state to success
+              setState(() {
+                subscriptionState = state is sub_state.Subscribed
+                    ? SubscriptionState.successSubscribing
+                    : SubscriptionState.successUnsubscribing;
+              });
+
+              // change back to normal 1s later
+              Future.delayed(const Duration(seconds: 1), () {
+                if (mounted) {
+                  setState(() {
+                    bool isSubscribed = context
+                        .read<SubscriptionCubit>()
+                        .isSubscribedToMachine(widget.machine.machineId);
+                    subscriptionState = isSubscribed
+                        ? SubscriptionState.subscribed
+                        : SubscriptionState.notSubscribed;
+                  });
+                }
+              });
+            }
+
+            if (state is sub_state.SubscriptionOperationError &&
+                state.operatingMachine.machineId == widget.machine.machineId) {
+              // reset to previous state on error
+              bool isSubscribed = context
+                  .read<SubscriptionCubit>()
+                  .isSubscribedToMachine(widget.machine.machineId);
+
+              setState(() {
                 subscriptionState = isSubscribed
                     ? SubscriptionState.subscribed
                     : SubscriptionState.notSubscribed;
               });
+
+              print('Error subscribing to machine: ${state.message}');
+              if (!TickerMode.of(context)) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
             }
-          });
-        }
-
-        if (state is MyMachinesErrorClaiming &&
-            state.operatingMachine.machineId == widget.machine.machineId) {
-          // reset to previous state on error
-          bool isClaimed = context.read<MyMachinesCubit>().isMachineClaimed(
-            widget.machine.machineId,
-          );
-
-          setState(() {
-            claimState = isClaimed ? ClaimState.claimed : ClaimState.notClaimed;
-          });
-
-          print('Error claiming machine: ${state.message}');
-          // show error message in snackbar only if this route is currently active
-          // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
-          if (!TickerMode.of(context)) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is MyMachinesLoaded) {
+          },
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
           final location = MachineDisplayUtils.getLocationLabel(widget.machine);
           final time = MachineDisplayUtils.getStatusLabel(widget.machine);
           String subscribeText = "";
@@ -436,12 +473,12 @@ class _MachineRowState extends State<MachineRow> {
               // wait 1s
               if (direction == DismissDirection.endToStart) {
                 if (subscriptionState == SubscriptionState.subscribed) {
-                  await context.read<MyMachinesCubit>().unsubscribeFromMachine(
-                    widget.machine,
-                  );
+                  await context
+                      .read<SubscriptionCubit>()
+                      .unsubscribeFromMachine(widget.machine);
                 } else if (subscriptionState ==
                     SubscriptionState.notSubscribed) {
-                  await context.read<MyMachinesCubit>().subscribeToMachine(
+                  await context.read<SubscriptionCubit>().subscribeToMachine(
                     widget.machine,
                   );
                 } else {
@@ -449,7 +486,7 @@ class _MachineRowState extends State<MachineRow> {
                 }
               } else if (direction == DismissDirection.startToEnd) {
                 if (claimState == ClaimState.claimed) {
-                  await context.read<MyMachinesCubit>().unclaimMachine(
+                  await context.read<ClaimCubit>().unclaimMachine(
                     widget.machine,
                   );
                 } else if (claimState == ClaimState.notClaimed) {
@@ -458,7 +495,7 @@ class _MachineRowState extends State<MachineRow> {
 
                   // Only claim if user confirmed (didn't cancel)
                   if (cycleTime != null && mounted) {
-                    await context.read<MyMachinesCubit>().claimMachine(
+                    await context.read<ClaimCubit>().claimMachine(
                       widget.machine,
                       cycleTime: cycleTime,
                     );
@@ -568,10 +605,8 @@ class _MachineRowState extends State<MachineRow> {
               ),
             ),
           );
-        }
-
-        return CircularProgressIndicator();
-      },
+        },
+      ),
     );
   }
 }

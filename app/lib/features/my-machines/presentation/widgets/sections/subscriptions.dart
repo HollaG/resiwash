@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_state.dart'
+    as sub_state;
 
 import 'package:implicitly_animated_list/implicitly_animated_list.dart';
 
@@ -11,7 +12,7 @@ class SubscriptionsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<MyMachinesCubit, MyMachinesState>(
+    return BlocConsumer<SubscriptionCubit, sub_state.SubscriptionState>(
       listener: (context, state) {},
       builder: (context, state) {
         return Column(
@@ -49,16 +50,16 @@ class SubscriptionsSection extends StatelessWidget {
               ],
             ),
             // List of machines in use by the user
-            if (state is MyMachinesLoading)
+            if (state is sub_state.SubscriptionLoading)
               Center(child: CircularProgressIndicator()),
 
-            if (state is MyMachinesLoaded &&
+            if (state is sub_state.SubscriptionLoaded &&
                 state.subscribedMachines != null &&
-                state.subscribedMachines.isNotEmpty)
+                state.subscribedMachines!.isNotEmpty)
               ImplicitlyAnimatedList(
                 physics: NeverScrollableScrollPhysics(),
                 // key: _listKey,
-                itemData: state.subscribedMachines,
+                itemData: state.subscribedMachines!,
                 itemBuilder: (_, machine) {
                   return MachineRow(
                     key: ValueKey(machine.machineId),

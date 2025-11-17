@@ -7,7 +7,7 @@ import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:resiwash/theme.dart';
 import 'package:go_router/go_router.dart';
@@ -47,9 +47,7 @@ class _TrackerState extends State<Tracker> {
     // Optionally, you can have another timer to refresh data from server every minute
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       // Here you would typically call a method to refresh the machine data
-      // For example:
-      // context.read<MachineCubit>().refreshMachineData(widget.machine.machineId);
-      context.read<MyMachinesCubit>().refreshClaimedMachines();
+      context.read<ClaimCubit>().refreshClaimedMachines();
     });
   }
 
@@ -101,7 +99,7 @@ class _TrackerState extends State<Tracker> {
             print(
               "debug refreshing machine data for ${widget.machine.machineId}",
             );
-            context.read<MyMachinesCubit>().refreshClaimedMachines();
+            context.read<ClaimCubit>().refreshClaimedMachines();
           });
         }
 
@@ -502,9 +500,7 @@ class _TrackerState extends State<Tracker> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      context.read<MyMachinesCubit>().unclaimMachine(
-                        widget.machine,
-                      );
+                      context.read<ClaimCubit>().unclaimMachine(widget.machine);
                     },
                     style: ButtonStyle(
                       // backgroundColor: WidgetStateProperty.all<Color>(
@@ -525,7 +521,7 @@ class _TrackerState extends State<Tracker> {
                         if (newTime != null) {
                           // Update the cycle time in the cubit
                           if (mounted) {
-                            context.read<MyMachinesCubit>().updateCycleTime(
+                            context.read<ClaimCubit>().updateCycleTime(
                               widget.machine,
                               newTime,
                             );

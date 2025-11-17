@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
+    as claim_state;
 import 'package:resiwash/features/my-machines/presentation/widgets/tracker.dart';
 
 class InUseByYouSection extends StatefulWidget {
@@ -210,10 +211,10 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<MyMachinesCubit, MyMachinesState>(
+    return BlocConsumer<ClaimCubit, claim_state.ClaimState>(
       listener: (context, state) {
         // no-op
-        if (state is MyMachinesLoaded &&
+        if (state is claim_state.ClaimLoaded &&
             state.claimedMachineMetadata.isNotEmpty) {
           setState(() {
             canEditClaimed = true;
@@ -317,12 +318,13 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
             ),
 
             // List of machines in use by the user
-            if (state is MyMachinesLoading)
+            if (state is claim_state.ClaimLoading)
               Center(child: CircularProgressIndicator()),
 
             // claimed machines
-            if (state is MyMachinesLoaded &&
-                state.claimedMachines.isNotEmpty &&
+            if (state is claim_state.ClaimLoaded &&
+                state.claimedMachines != null &&
+                state.claimedMachines!.isNotEmpty &&
                 state.claimedMachineMetadata.isNotEmpty)
               Column(
                 spacing: 8,
@@ -332,7 +334,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                             (claimedMeta) => Tracker(
                               isEditing: isEditingClaimed,
                               claimedMetadata: claimedMeta,
-                              machine: (state.claimedMachines).firstWhere(
+                              machine: (state.claimedMachines!).firstWhere(
                                 (machine) =>
                                     machine.machineId == claimedMeta.machineId,
                               ),

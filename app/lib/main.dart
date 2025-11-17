@@ -10,7 +10,8 @@ import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
@@ -133,17 +134,15 @@ void notificationTapBackground(NotificationResponse response) async {
               final machineId = data['machineId'] as String;
 
               try {
-                // Get the context - MyMachinesCubit is available at app level
-
-                // Get the Cubit from the app-level BlocProvider
-                final cubit = sl<MyMachinesCubit>();
+                // Get the ClaimCubit from the app-level BlocProvider
+                final claimCubit = sl<ClaimCubit>();
 
                 // Navigate to the My Machines page to show the user what's happening
                 navigatorKey.currentState?.pushNamed(AppRoutes.myMachines);
 
                 // Perform the unclaim action
-                await cubit.loadNotifyableMachines(); // ensure latest data
-                await cubit.unclaimMachineId(machineId);
+                await claimCubit.loadClaimedMachines(); // ensure latest data
+                await claimCubit.unclaimMachineById(machineId);
 
                 scaffoldMessengerKey.currentState?.showSnackBar(
                   SnackBar(content: Text('Successfully stopped claim alerts.')),
@@ -260,9 +259,12 @@ class MyApp extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
+        // Subscription cubit for managing machine notifications
         BlocProvider(
-          create: (_) => sl<MyMachinesCubit>()..loadNotifyableMachines(),
+          create: (_) => sl<SubscriptionCubit>()..loadSubscribedMachines(),
         ),
+        // Claim cubit for managing claimed machines
+        BlocProvider(create: (_) => sl<ClaimCubit>()..loadClaimedMachines()),
         BlocProvider(
           create: (_) => sl<RoomDetailCubit>(instanceName: 'roomCubit'),
         ),

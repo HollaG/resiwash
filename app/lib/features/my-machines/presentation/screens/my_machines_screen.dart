@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_state.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/issues_reported.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/subscriptions.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/usage_history.dart';
-import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
 
 class MyMachinesScreen extends StatelessWidget {
   const MyMachinesScreen({super.key});
@@ -58,7 +58,11 @@ class MyMachinesScreen extends StatelessWidget {
               ),
             ),
             onRefresh: () async {
-              await context.read<MyMachinesCubit>().refreshMyMachines();
+              // Refresh both subscription and claim cubits
+              await Future.wait([
+                context.read<SubscriptionCubit>().refreshSubscribedMachines(),
+                context.read<ClaimCubit>().refreshClaimedMachines(),
+              ]);
             },
           ),
         );
