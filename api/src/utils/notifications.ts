@@ -1,6 +1,11 @@
 import { Machine } from "../models/Machine";
 import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
 
+// Important things to decide
+// Should we allow multiple users to claim the same machine?
+// If we allow multiple users to claim the machine, how do we handle the cycleTime?
+// the feature for showing estimated time remaining will take whos cycleTime?
+
 interface IClaimMapEntry {
   fcmToken: string;
   cycleTime: number;
@@ -25,6 +30,12 @@ class ClaimError extends Error {
   constructor(message: string) {
     super(message);
     this.name = this.constructor.name;
+  }
+}
+
+class NotClaimedError extends ClaimError {
+  constructor() {
+    super("Machine is not claimed");
   }
 }
 
@@ -104,6 +115,31 @@ export const claimMachine = (
   // setTimeout(() => {
   //   ClaimMap[machineId] = ClaimMap[machineId].filter(claim => claim.fcmToken !== fcmToken);
   // }, expirationTime.getTime() - claimedAt.getTime());
+};
+
+export const updateCycleTime = (
+  machineId: string,
+  fcmToken: string,
+  cycleTime: number
+) => {
+  if (!ClaimMap[machineId]) {
+    throw new NotClaimedError();
+  }
+  for (const claim of ClaimMap[machineId]) {
+    if (claim.fcmToken === fcmToken) {
+      claim.cycleTime = cycleTime;
+      console.log(
+        "Updated cycle time for",
+        fcmToken,
+        "on machine",
+        machineId,
+        "to",
+        cycleTime
+      );
+      return true;
+    }
+  }
+  throw new NotClaimedError();
 };
 
 export const getClaimants = (machineId: string): IClaimMapEntry[] => {

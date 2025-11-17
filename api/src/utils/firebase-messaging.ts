@@ -171,20 +171,20 @@ export const sendPokeNotification = async (
 ) => {
   const message: CustomMessage = {
     token: fcmToken,
-    notification: {
-      title: `Reminder: ${machine.name}`,
-      body: `Please clear your clothes from ${machine.room.name} @ ${machine.room.area.shortName}`,
-    },
-    android: {
-      notification: {
-        channelId: "poke",
-      },
-    },
+    // notification: {
+    //   title: `Reminder: ${machine.name}`,
+    //   body: `Please clear your clothes from ${machine.room.name} @ ${machine.room.area.shortName}`,
+    // },
+    // android: {
+    //   notification: {
+    //     channelId: "poke",
+    //   },
+    // },
     data: {
       machineId: machine.machineId.toString(),
       channel: "poke",
-      // title: `Reminder: ${machine.name}`,
-      // body: `Please clear your clothes from ${machine.room.name} @ ${machine.room.area.shortName}`,
+      title: `Reminder: ${machine.name}`,
+      body: `Please clear your clothes from ${machine.name} (${machine.room.name} @ ${machine.room.area.shortName})`,
     },
   };
   console.log("[🔥🏠] Sending Poke message to token:", fcmToken);

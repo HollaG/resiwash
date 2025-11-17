@@ -115,3 +115,28 @@ export const pokeClaimant = expressAsyncHandler(
     }
   }
 );
+
+export const updateClaimCycle = expressAsyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const { machineId } = req.params;
+      const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
+
+      // first, check for valid machineId in DB
+      const machine = await AppDataSource.getRepository("Machine").findOneBy({
+        machineId: parseInt(machineId),
+      });
+
+      if (!machine) {
+        return sendErrorResponse(res, "Machine not found", 404);
+      }
+
+      // now, claim the machine
+      _claimMachine(machineId, fcmToken, cycleTime);
+
+      sendOkResponse(res, { message: "Machine claimed successfully" });
+    } catch (error) {
+      return sendErrorResponse(res, error.message, 400);
+    }
+  }
+);
