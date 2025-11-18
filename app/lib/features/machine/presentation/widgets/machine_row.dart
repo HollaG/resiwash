@@ -501,10 +501,10 @@ class _MachineRowState extends State<MachineRow> {
                     );
 
                     // show a live notification
-                    sl<LiveNotificationService>().startActivity(
-                      machine: widget.machine,
-                      metadata: null,
-                    );
+                    // sl<LiveNotificationService>().startActivity(
+                    //   machine: widget.machine,
+                    //   metadata: null,
+                    // );
                   }
                 } else {
                   return null;

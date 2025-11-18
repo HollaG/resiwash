@@ -108,6 +108,15 @@ class SharedPreferencesService {
         .toList();
   }
 
+  ClaimedMachineMetadata? getClaimedMachineMetadata(String machineId) {
+    final claimedMachines = getClaimedMachinesMetadata();
+    try {
+      return claimedMachines.firstWhere((m) => m.machineId == machineId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Check if a machine is claimed
   bool isMachineClaimed(String machineId) {
     final claimedMachines = getClaimedMachinesMetadata();

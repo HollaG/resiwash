@@ -33,7 +33,7 @@ class SubscriptionLoaded extends SubscriptionState {
 }
 
 /// Refreshing subscribed machines list
-class SubscriptionRefreshing extends SubscriptionState {
+class SubscriptionRefreshing extends SubscriptionLoaded {
   const SubscriptionRefreshing({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
@@ -41,7 +41,7 @@ class SubscriptionRefreshing extends SubscriptionState {
 }
 
 /// Currently subscribing to a machine
-class Subscribing extends SubscriptionState {
+class Subscribing extends SubscriptionLoaded {
   final MachineEntity operatingMachine;
 
   const Subscribing({
@@ -52,7 +52,7 @@ class Subscribing extends SubscriptionState {
 }
 
 /// Successfully subscribed to a machine
-class Subscribed extends SubscriptionState {
+class Subscribed extends SubscriptionLoaded {
   final MachineEntity operatingMachine;
 
   const Subscribed({
@@ -63,7 +63,7 @@ class Subscribed extends SubscriptionState {
 }
 
 /// Successfully unsubscribed from a machine
-class Unsubscribed extends SubscriptionState {
+class Unsubscribed extends SubscriptionLoaded {
   final MachineEntity operatingMachine;
 
   const Unsubscribed({
@@ -74,7 +74,7 @@ class Unsubscribed extends SubscriptionState {
 }
 
 /// Error subscribing/unsubscribing
-class SubscriptionOperationError extends SubscriptionState {
+class SubscriptionOperationError extends SubscriptionLoaded {
   final String message;
   final MachineEntity operatingMachine;
 

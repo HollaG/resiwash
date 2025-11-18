@@ -34,7 +34,7 @@ class ClaimLoaded extends ClaimState {
 }
 
 /// Refreshing claimed machines list
-class ClaimRefreshing extends ClaimState {
+class ClaimRefreshing extends ClaimLoaded {
   const ClaimRefreshing({
     required super.claimedMachineMetadata,
     required super.claimedMachines,
@@ -42,7 +42,7 @@ class ClaimRefreshing extends ClaimState {
 }
 
 /// Currently claiming/unclaiming a machine
-class Claiming extends ClaimState {
+class Claiming extends ClaimLoaded {
   final MachineEntity operatingMachine;
 
   const Claiming({
@@ -53,7 +53,7 @@ class Claiming extends ClaimState {
 }
 
 /// Successfully claimed a machine
-class Claimed extends ClaimState {
+class Claimed extends ClaimLoaded {
   final MachineEntity operatingMachine;
 
   const Claimed({
@@ -64,7 +64,7 @@ class Claimed extends ClaimState {
 }
 
 /// Successfully unclaimed a machine
-class Unclaimed extends ClaimState {
+class Unclaimed extends ClaimLoaded {
   final MachineEntity operatingMachine;
 
   const Unclaimed({
@@ -75,7 +75,7 @@ class Unclaimed extends ClaimState {
 }
 
 /// Error claiming/unclaiming
-class ClaimOperationError extends ClaimState {
+class ClaimOperationError extends ClaimLoaded {
   final String message;
   final MachineEntity operatingMachine;
 

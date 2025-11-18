@@ -30,7 +30,7 @@ class FirebaseNotificationService {
     );
     // You can add navigation logic here based on message data
 
-    _handleMessageWhenInApp(message);
+    // _handleMessageWhenInApp(message);
   }
 
   void _handleMessageWhenInApp(RemoteMessage message) {
@@ -68,10 +68,31 @@ class FirebaseNotificationService {
           break;
 
         case CustomFirebaseMessageChannel.claimed:
-          // Handle claimed channel
-          sl<LocalNotificationService>().showClaimedIncomingNotification(
-            message,
-          );
+          // TODO: IMPLEMENT
+          //
+          // data: {
+          //       machineId: machine.machineId.toString(),
+          //       machineName: machine.name,
+          //       machineRoomName: machine.room.name,
+          //       machineAreaShortName: machine.room.area.shortName,
+          //       machineCurrentStatus: machine.currentStatus,
+          //       machinePreviousStatus: machine.previousStatus,
+
+          //       channel: "claimed",
+          //     },
+
+          // need to update the claimed notification
+          // as well as force a refresh of the claimed machines in app
+          // get the metadata
+          // final machineId = message.data['machineId'] as String;
+          // final metadata = sl<SharedPreferencesService>().getClaimedMachineMetadata(machineId);
+          // if (metadata == null) {
+          //   appLog.w(
+          //     "[FirebaseNotificationService] No claimed metadata found for machineId: $machineId",
+          //   );
+          //   return;
+          // }
+          // sl<LocalNotificationService>().showClaimedNotification(message);
           break;
         case CustomFirebaseMessageChannel.poke:
           // Handle poke channel

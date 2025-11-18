@@ -325,6 +325,10 @@ class LocalNotificationService {
     await flutterLocalNotificationsPlugin.cancel(id);
   }
 
+  Future<void> cancelClaimedNotification() async {
+    await flutterLocalNotificationsPlugin.cancel(claimedTimerNotificationId);
+  }
+
   /// Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();

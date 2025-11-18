@@ -213,6 +213,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
   Widget build(BuildContext context) {
     return BlocConsumer<ClaimCubit, claim_state.ClaimState>(
       listener: (context, state) {
+        print("debug claim inusebyyou $state");
         // no-op
         if (state is claim_state.ClaimLoaded &&
             state.claimedMachineMetadata.isNotEmpty) {

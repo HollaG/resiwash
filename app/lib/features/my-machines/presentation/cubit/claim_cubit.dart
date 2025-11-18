@@ -278,6 +278,9 @@ class ClaimCubit extends Cubit<ClaimState> {
           // Remove from SharedPreferences
           _sharedPreferencesService.unclaimMachine(machineId);
 
+          // Cancel claimed notification
+          sl<LocalNotificationService>().cancelClaimedNotification();
+
           // Reload state to reflect changes
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachinesMetadata();
@@ -391,6 +394,13 @@ class ClaimCubit extends Cubit<ClaimState> {
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachinesMetadata();
 
+          // refresh the notification
+          sl<LocalNotificationService>().showClaimedNotification(
+            machine,
+            updatedClaimedMetadata.firstWhere(
+              (meta) => meta.machineId == machineId,
+            ),
+          );
           emit(
             Claimed(
               claimedMachineMetadata: updatedClaimedMetadata,
