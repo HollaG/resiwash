@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Sensor } from "../../../models/Sensor";
+import { Room } from "../../../models/Room";
+import { Machine } from "../../../models/Machine";
 import { Request, Response } from "express";
 import { SensorToMachine } from "../../../models/SensorToMachine";
 
@@ -69,7 +71,7 @@ export const setSensorApiKey = asyncHandler(
     const { apiKey, roomId } = req.body;
 
     if (!apiKey && !roomId) {
-      res.status(400).json({ error: "apiKey and roomId are required" });
+      res.status(400).json({ error: "apiKey or roomId is required" });
       return;
     }
 
@@ -88,23 +90,26 @@ export const setSensorApiKey = asyncHandler(
       sensorId: Number(req.params.id),
     });
 
-    const room = await AppDataSource.getRepository("Room").findOneBy({
-      roomId: Number(roomId),
-    });
-
-    if (roomId && !room) {
-      res.status(404).json({ error: "Room not found" });
-      return;
-    }
-
     if (!sensor) {
       res.status(404).json({ error: "Sensor not found" });
       return;
     }
 
-    if (apiKey != null) sensor.apiKey = apiKey;
+    let room: Room | null = null;
+    if (roomId != null) {
+      room = await AppDataSource.getRepository(Room).findOneBy({
+        roomId: Number(roomId),
+      });
 
-    if (roomId != null) sensor.room = { roomId: Number(roomId) } as any; // Type assertion to match the Room type
+      if (!room) {
+        res.status(404).json({ error: "Room not found" });
+        return;
+      }
+    }
+
+    if (apiKey != null) sensor.apiKey = apiKey;
+    if (room != null) sensor.room = room;
+
     await sensorRepository.save(sensor);
 
     sendOkResponse(res, sensor);
@@ -168,18 +173,19 @@ export const setSensorLink = asyncHandler(
     }
 
     // validate machine existence
-    const machine = await AppDataSource.getRepository("Machine").findOneBy({
+    const machine = await AppDataSource.getRepository(Machine).findOneBy({
       machineId: Number(machineId),
     });
     if (!machine) {
       res.status(404).json({ error: "Machine not found" });
       return;
     }
+
     const newLinks = new SensorToMachine();
-    newLinks.sensor = { sensorId: sensor.sensorId } as any; // Type assertion to match the Sensor type
+    newLinks.sensor = sensor;
     newLinks.source = source;
     newLinks.localId = localId;
-    newLinks.machine = { machineId: Number(machineId) } as any; // Type assertion to match the Machine type
+    newLinks.machine = machine;
 
     await sensorToMachineRepository.save(newLinks);
 

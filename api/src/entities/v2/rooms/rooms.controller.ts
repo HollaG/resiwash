@@ -83,15 +83,15 @@ export const createRoom = async (req: Request, res: Response) => {
     return sendErrorResponse(res, { message: "Area ID is required" }, 400);
   }
 
-  const room = new Room();
-  room.name = name;
-  room.location = location || null;
-  room.description = description || null;
-  room.imageUrl = imageUrl || null;
-  room.shortName = shortName || null;
-  room.area = { areaId: Number(areaId) } as any; // type assertion to satisfy TypeScript
-
   const roomRepository = AppDataSource.getRepository(Room);
+  const room = roomRepository.create({
+    name,
+    location: location || null,
+    description: description || null,
+    imageUrl: imageUrl || null,
+    shortName: shortName || null,
+    area: { areaId: Number(areaId) },
+  });
   await roomRepository.save(room);
 
   sendOkResponse(res, room);

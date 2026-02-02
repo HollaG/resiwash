@@ -102,7 +102,7 @@ export const createMachine = async (req: Request, res: Response) => {
   machine.label = label || null;
   machine.type = type || null;
   machine.imageUrl = imageUrl || null;
-  machine.room = { roomId: Number(roomId) } as any; // type assertion to satisfy TypeScript
+  machine.roomId = Number(roomId);
 
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);

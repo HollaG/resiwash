@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+/*
+  Tailwind v4: map `dark:` variant to our `.light` class.
+  This matches the existing class usage like `bg-dark-* dark:bg-light-*`.
+*/
+@custom-variant dark (&:where(.light, .light *));
+
+@theme {
+  /* Font families */
+  --font-sans: 'Work Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-brand: 'Outfit', var(--font-sans);
+
+  /* Brand accent */
+  --color-accent-dark: var(--accent);
+  --color-accent-light: var(--accent);
+
+  /* Surfaces */
+  --color-dark-bg: var(--bg);
+  --color-dark-surface: var(--surface);
+  --color-dark-border: var(--border-color);
+  --color-dark-border-outer: var(--border-outer);
+  --color-dark-border-inner: var(--border-inner);
+
+  --color-light-bg: var(--bg);
+  --color-light-surface: var(--surface);
+  --color-light-border: var(--border-color);
+  --color-light-border-outer: var(--border-outer);
+  --color-light-border-inner: var(--border-inner);
+
+  /* Text */
+  --color-dark-text-primary: var(--text-primary);
+  --color-dark-text-secondary: var(--text-secondary);
+  --color-light-text-primary: var(--text-primary);
+  --color-light-text-secondary: var(--text-secondary);
+
+  /* Status colors */
+  --color-status-available: #00ff88;
+  --color-status-inUse: #ffcc00;
+  --color-status-finishing: #ffaa00;
+  --color-status-issues: #666666;
+  --color-status-unknown: #444444;
+}
+
+/* Default dark mode */
+:root {
+  --bg: #171717;
+  --bg-rgb: 23, 23, 23;
+  --surface: #1a1a1a;
+  --border-color: rgba(255, 122, 0, 0.35);
+  --border-outer: rgba(255, 122, 0, 0.5);
+  --border-inner: rgba(255, 122, 0, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #888888;
+  --accent: #ff7a00;
+
+  --status-available: 0, 255, 136;
+  --status-inUse: 255, 204, 0;
+  --status-finishing: 255, 170, 0;
+  --status-issues: 102, 102, 102;
+  --status-unknown: 68, 68, 68;
+}
+
+/* Light mode */
+.light {
+  --bg: #ffffff;
+  --bg-rgb: 255, 255, 255;
+  --surface: #f5f5f5;
+  --border-color: rgba(255, 122, 0, 0.5);
+  --border-outer: rgba(255, 122, 0, 0.2);
+  --border-inner: rgba(255, 122, 0, 0.5);
+  --text-primary: #0a0a0a;
+  --text-secondary: #666666;
+  --accent: #ff7a00;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+/* Show pointer cursor for interactive elements */
+a[href],
+area[href],
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary,
+label[for],
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+* {
+  transition: background-color 200ms ease,
+              color 200ms ease,
+              border-color 200ms ease;
+}
+
+.status-changed {
+  animation: statusGlow 1s ease-in-out;
+}
+
+@keyframes statusGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(var(--status-color), 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(var(--status-color), 0.8),
+                0 0 40px rgba(var(--status-color), 0.4);
+  }
+}
+
+/* Utility classes using CSS variables */
+.bg-app { background-color: var(--bg); }
+.bg-surface { background-color: var(--surface); }
+.border-app { border-color: var(--border-color); }
+.border-app-outer { border-color: var(--border-outer); }
+.border-app-inner { border-color: var(--border-inner); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-accent { color: var(--accent); }
+.bg-accent { background-color: var(--accent); }
+.border-accent { border-color: var(--accent); }
+
+.font-brand { font-family: "Outfit", "Work Sans", system-ui, sans-serif; }
+
+@keyframes resiwashFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes resiwashFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes resiwashSheetIn {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes resiwashSheetOut {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
+}

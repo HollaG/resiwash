@@ -7,7 +7,6 @@ import { Machine } from "../../../models/Machine";
 import { GetQueryBoolean, MachineType } from "../../../core/types";
 import { UpdateEvent } from "../../../models/UpdateEvent";
 import { RawEvent } from "../../../models/RawEvent";
-import { machine } from "os";
 
 interface GetMachinesRequest {
   areaIds?: string[]; // todo, we don't need to filter by this anyway
@@ -224,7 +223,7 @@ export const createMachine = async (req: Request, res: Response) => {
   machine.label = label || null;
   machine.type = type || null;
   machine.imageUrl = imageUrl || null;
-  machine.room = { roomId: Number(roomId) } as any; // type assertion to satisfy TypeScript
+  machine.roomId = Number(roomId);
 
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);

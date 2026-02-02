@@ -30,54 +30,7 @@ export const getEvents = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
-  // to implement!
-  // // expected fields: statusCode, machineId
-  // // optional fields: status
-  // // todo: authentication via API key
-  // console.log("createEvent", req.body);
-  // const { status, machineId, statusCode } = req.body;
-  // try {
-  //   const event = await saveEvent({ status, machineId, statusCode });
-  //   sendOkResponse(res, event);
-  // } catch (error) {
-  //   console.error("Error saving event:", error);
-  //   return sendErrorResponse(res, error.message, 500);
-  // }
-  // // if (statusCode === undefined) {
-  // //   return sendErrorResponse(res, "Status code is required", 400);
-  // // }
-  // // if (!machineId || Number(machineId) <= 0) {
-  // //   return sendErrorResponse(res, "Machine ID is required", 400);
-  // // }
-  // // const eventRepository = AppDataSource.getRepository(UpdateEvent);
-  // // // get the latest event for the machine
-  // // const latestEvent = await eventRepository.findOne({
-  // //   where: {
-  // //     machine: { machineId: Number(machineId) },
-  // //   },
-  // //   order: {
-  // //     timestamp: "DESC",
-  // //   },
-  // // });
-  // // // if the latest event is NOT the same as the new event, OR there is no latest event, create a new event
-  // // if (!latestEvent || latestEvent.statusCode !== statusCode) {
-  // //   const event = new UpdateEvent();
-  // //   event.statusCode = statusCode;
-  // //   event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
-  // //   await eventRepository.save(event);
-  // //   sendOkResponse(res, event);
-  // // } else {
-  // //   // update the machine's lastUpdated timestamp
-  // //   const machine = await AppDataSource.getRepository(Machine).findOne({
-  // //     where: { machineId: Number(machineId) },
-  // //   });
-  // //   if (!machine) {
-  // //     return sendErrorResponse(res, "Machine not found", 404);
-  // //   }
-  // //   machine.lastUpdated = new Date(); // update the lastUpdated timestamp
-  // //   await AppDataSource.getRepository(Machine).save(machine);
-  // //   return sendOkResponse(res, latestEvent); // return the latest event
-  // // }
+  return sendErrorResponse(res, { message: "Not implemented" }, 501);
 });
 
 type EspEvent = {
@@ -158,7 +111,6 @@ export const createMultipleEvents = asyncHandler(
     const machineIds = sensorLinks.map((link) => link.machineId);
     const machineRepository = AppDataSource.getRepository(Machine);
 
-    console.log("createMultipleEvents debug machineIds", machineIds);
 
     const latestEvents = await actualEventRepository
       .createQueryBuilder("event")
@@ -195,7 +147,7 @@ export const createMultipleEvents = asyncHandler(
           rawEvent.status = status;
 
           rawEvent.readings = readings;
-          rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
+          rawEvent.machine = machine.machine;
           rawEvents.push(rawEvent);
 
           // --------- for actual events ---------
@@ -218,7 +170,7 @@ export const createMultipleEvents = asyncHandler(
             const event = new UpdateEvent();
 
             event.status = status;
-            event.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
+            event.machine = machine.machine;
 
             // await actualEventRepository.save(event);
 
@@ -250,11 +202,6 @@ export const createMultipleEvents = asyncHandler(
     });
     await machineRepository.save(machinesToUpdate);
 
-    console.log("createMultipleEvents debug actualEvents", actualEvents);
-    console.log(
-      "createMultipleEvents debug machineIdsToUpdate",
-      machineIdsToUpdate
-    );
     const savedActualEvents = await actualEventRepository.save(actualEvents);
 
     // ------- actual events get saved only if there is a state change -------
@@ -291,38 +238,6 @@ export const createMultipleEvents = asyncHandler(
     // const events = await Promise.allSettled(
     //   // will never reject
     //   data.map((item) => saveEvent(item))
-    // );
-    // if (events.some((event) => event.status === "rejected")) {
-    //   const errors = events
-    //     .filter((event) => event.status === "rejected")
-    //     .map((event) => (event as PromiseRejectedResult).reason);
-    //   console.log("error: ", errors)
-    //   return sendErrorResponse(res, errors, 500);
-    // }
-    // sendOkResponse(
-    //   res,
-    //   events.map((event) => (event as PromiseFulfilledResult<any>).value)
-    // );
-
-    // const eventRepository = AppDataSource.getRepository(UpdateEvent);
-
-    // const events = data.map((item) => {
-    //   if (item.statusCode === undefined) {
-    //     throw new Error("Status code is required");
-    //   }
-
-    //   if (!item.machineId || Number(item.machineId) <= 0) {
-    //     throw new Error("Machine ID is required");
-    //   }
-
-    //   const event = new UpdateEvent();
-    //   event.statusCode = item.statusCode;
-    //   event.machine = { machineId: Number(item.machineId) } as any; // type assertion to satisfy TypeScript
-
-    //   return event;
-    // });
-
-    // await eventRepository.save(events);
   }
 );
 
@@ -381,7 +296,7 @@ const saveEvent = async ({
   // always save to raw events
   const rawEvent = new RawEvent();
   rawEvent.statusCode = rawStatusCode;
-  rawEvent.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+  rawEvent.machine = machine;
   const rawEventRepository = AppDataSource.getRepository(RawEvent);
   await rawEventRepository.save(rawEvent);
 
@@ -395,7 +310,7 @@ const saveEvent = async ({
   if (!latestEvent || latestEvent.status !== debouncedStatus) {
     const event = new UpdateEvent();
     event.status = debouncedStatus;
-    event.machine = { machineId: Number(machineId) } as any; // type assertion to satisfy TypeScript
+    event.machine = machine;
 
     await eventRepository.save(event);
 
