@@ -1,75 +1,122 @@
 .timelineScrollContainer {
   overflow-x: auto;
-  /* padding: 0 24px; */
 }
+
 .timelineContainer {
+  --marker-size: 22px;
+
   display: flex;
-  flex-direction: row-reverse;
-  gap: 0px;
-  padding: 4rem 24px;
+  flex-direction: row;
   align-items: center;
+  gap: 0;
+
   width: fit-content;
-  margin-left: auto;
+  padding: 56px 24px 72px;
 }
 
-.timelineItem {
+.timelineGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+}
+
+.segment {
+  height: 3px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.point {
   position: relative;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  flex: 0 0 auto;
 }
 
-.timelineConnectorContainer {
+.marker {
+  width: var(--marker-size);
+  height: var(--marker-size);
+  border-radius: 6px;
+}
+
+.markerFinishing {
   position: relative;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  border-radius: 6px;
+  border: 3px dashed;
+  box-sizing: border-box;
+  background: transparent;
 }
 
-.timelineConnector {
-  height: 2px;
-  width: 100px;
+
+.timeLabel {
+  position: absolute;
+  top: calc(var(--marker-size) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-secondary);
 }
 
-.timelineConnectorLabel {
+.segmentToNow {
+  position: relative;
+  height: 3px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+.durationLabel {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.nowMarker {
+  position: relative;
+  width: 3px;
+  height: var(--marker-size);
+  flex: 0 0 auto;
+}
+
+.nowTick {
   position: absolute;
   left: 0;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  text-align: center;
+  top: -3px;
+  width: 3px;
+  height: calc(var(--marker-size) + 6px);
+  border-radius: 999px;
 }
 
-.timelineLabel {
+.nowTimeLabel {
   position: absolute;
+  top: calc(var(--marker-size) + 12px);
+  right: -8px;
+
   white-space: nowrap;
-  width: 70px;
-  text-align: center;
+  text-align: right;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--text-secondary);
 }
 
-.timelineLabelBottom {
-  top: 24px;
-  left: -20px;
-}
-
-.timelineSeparatorContainer {
-  position: relative;
-}
-
-.timelineSeparator {
-  width: 2px;
-  height: 16px;
-}
-
-.timelineSeparatorLabel {
-  position: absolute;
-  white-space: nowrap;
-
-  left: -32px;
-  width: 70px;
-  text-align: center;
-
-  font-weight: 600;
-
-  &.top {
-    top: -30px;
-  }
-  &.bottom {
-    top: 24px;
-  }
-}

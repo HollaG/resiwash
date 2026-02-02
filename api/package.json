@@ -6,7 +6,8 @@
       "build": "npx tsc",
       "start": "ts-node src/index.ts",
       "dev": "nodemon src/index.ts",
-      "typeorm": "typeorm-ts-node-commonjs"
+      "typeorm": "typeorm-ts-node-commonjs",
+      "check-db": "ts-node src/check-db.ts"
    },
    "author": "",
    "license": "ISC",

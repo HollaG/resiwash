@@ -1,149 +1,147 @@
-import { MachineEvent } from "../../types/datatypes";
-import { getColorForMachineStatus } from "../../utils/indicatorHelper";
-import { StatusIndicator } from "../status-indicator/StatusIndicator";
-import { differenceInMilliseconds, endOfDay, format, isSameDay, startOfDay } from "date-fns";
-import styles from "./index.module.css";
-import { useEffect, useRef } from "react";
-// should be sorted descending by createdAt
-//
+import { useEffect, useMemo, useRef } from 'react';
+import { differenceInMinutes, format } from 'date-fns';
+import { MachineEvent, MachineStatus } from '../../types/datatypes';
+import styles from './index.module.css';
+
+const MARKER_SIZE_PX = 22;
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function formatTime(timestamp: string | Date) {
+  return format(new Date(timestamp), 'h:mm a').toLowerCase();
+}
+
+function formatDurationShort(minutesTotal: number) {
+  const minutes = Math.max(0, Math.floor(minutesTotal));
+  if (minutes >= 43200) return `${Math.floor(minutes / 43200)}m`; // 30d
+  if (minutes >= 10080) return `${Math.floor(minutes / 10080)}w`; // 7d
+  if (minutes >= 1440) return `${Math.floor(minutes / 1440)}d`; // 24h
+  if (minutes >= 60) return `${Math.floor(minutes / 60)}h`;
+  return `${minutes}m`;
+}
+
+function getStatusColor(status: MachineStatus) {
+  switch (status) {
+    case MachineStatus.AVAILABLE:
+      return 'var(--color-status-available)';
+    case MachineStatus.IN_USE:
+      return 'var(--color-status-inUse)';
+    case MachineStatus.FINISHING:
+      return 'var(--color-status-finishing)';
+    case MachineStatus.HAS_ISSUES:
+      return 'var(--color-status-issues)';
+    case MachineStatus.UNKNOWN:
+    default:
+      return 'var(--color-status-unknown)';
+  }
+}
+
+function getSegmentWidthPx(from: string | Date, to: string | Date) {
+  const minutes = Math.max(1, differenceInMinutes(new Date(to), new Date(from)));
+  return clampNumber(Math.round(minutes * 1.25), 60, 280);
+}
+
+function TimelineMarker({ status }: { status: MachineStatus }) {
+  const color = getStatusColor(status);
+
+  if (status === MachineStatus.FINISHING) {
+    return (
+      <div
+        className={styles.markerFinishing}
+        style={{ borderColor: color }}
+        aria-label="Finishing"
+        role="img"
+      />
+    );
+  }
+
+  return (
+    <div
+      className={styles.marker}
+      style={{ backgroundColor: color }}
+      aria-label={status}
+      role="img"
+    />
+  );
+}
 
 export const CustomTimeline = ({ events }: { events: MachineEvent[] }) => {
   const ref = useRef<HTMLDivElement>(null);
+
+  const { pointsAsc, currentStatus } = useMemo(() => {
+    const sortedDesc = [...(events ?? [])].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    return {
+      pointsAsc: [...sortedDesc].reverse(),
+      currentStatus: sortedDesc[0]?.status ?? MachineStatus.UNKNOWN,
+    };
+  }, [events]);
 
   useEffect(() => {
     if (ref.current) {
       ref.current.scrollLeft = ref.current.scrollWidth;
     }
-  }, []);
+  }, [pointsAsc.length]);
 
-  if (!events || events.length === 0) {
+  if (!pointsAsc.length) {
     return <div>No events available</div>;
   }
 
-  const elements = events.flatMap((event, index) => {
-    let laterEventTime = null;
-    if (index > 0) {
-      laterEventTime = events[index - 1].timestamp;
-    } else {
-      laterEventTime = new Date().toISOString(); // Use current time for the first event
-    }
+  const now = new Date();
+  const lastPoint = pointsAsc[pointsAsc.length - 1];
 
-    // min width = 50 px
-    // for every minute, add 1 px to the width
-    // up to a max of 3 hours (12 * 25px = 300px)
-    const timeDifference = new Date(laterEventTime).getTime() - new Date(event.timestamp).getTime();
-    const timeInMinutes = Math.floor(timeDifference / 60000); // Convert to minutes
-    const width = Math.min(150, Math.max(80, timeInMinutes * 1.5)); // Ensure width is between 50px and 300px
-
-
-    // if the previous event and current one crosses a day, need to add a TimelineSeparator
-    if (!isSameDay(new Date(laterEventTime), new Date(event.timestamp))) {
-      // left width is from laterEventTime to the start of the day of laterEventTime
-      // right with is from the start of the day of laterEventTime to the current event, OR just timeDifference minus left time
-      const msSinceStartOfDay = differenceInMilliseconds(laterEventTime, startOfDay(new Date(laterEventTime)));
-      const minutesSinceStartOfDay = Math.floor(msSinceStartOfDay / 60000); // left
-
-      const msTillEndOfDay = differenceInMilliseconds(endOfDay(new Date(event.timestamp)), new Date(event.timestamp));
-      const minutesTillEndOfDay = Math.floor(msTillEndOfDay / 60000); // right
-
-      // note: (since start) + (till end) should equal timeDifference
-      const leftWidth = Math.min(150, Math.max(40, minutesSinceStartOfDay * 1.5));
-      const rightWidth = Math.min(150, Math.max(40, minutesTillEndOfDay * 1.5));
-
-      // using the startOfDay(new Date(laterEventTime)), format the date as 8 May, 2 June, 15 July, etc
-      const label = format(startOfDay(new Date(laterEventTime)), 'd MMM');
-
-      return [
-        <TimelineConnector key={`${index}-1`} event={event} width={leftWidth} />,
-        <TimelineSeparator key={`${index}-2`} event={event} labelTop={label} />,
-        <TimelineConnector key={`${index}-3`} event={event} width={rightWidth} />,
-        <TimelineEvent key={`${index}-4`} event={event} />,
-      ]
-
-
-
-      // const leftWidth = (new Date(laterEventTime).setHours(0, 0, 0, 0) - new Date(event.timestamp).getTime()) / 60000 * 1.5;
-      // const rightWidth = Math.max(0, width - leftWidth);
-      // console.log({ leftWidth, rightWidth, width })
-    } else {
-      // first event
-      // should add a time label
-      // if > 60m show hours
-      // if > 24h, show days
-      // if > 7 days, show weeks
-      // if > 30 days, show months
-      let label = ''
-      if (timeInMinutes > 60) {
-        label = `${Math.floor(timeInMinutes / 60)}h`;
-      } else if (timeInMinutes > 1440) { // 24 hours
-        label = `${Math.floor(timeInMinutes / 1440)}d`;
-      } else if (timeInMinutes > 10080) { // 7 days
-        label = `${Math.floor(timeInMinutes / 10080)}w`;
-      } else if (timeInMinutes > 43200) { // 30 days
-        label = `${Math.floor(timeInMinutes / 43200)}m`;
-      } else {
-        label = `${timeInMinutes}m`;
-      }
-
-      // todo: if the first event was yesterday, it will not show the time label becuase it will be in the other if-block
-
-      return [<TimelineConnector key={`${index}-1`} event={event} width={width} label={index === 0 ? label : undefined} />, <TimelineEvent key={`${index}-2`} event={event} />,];
-
-    }
-
-
-  })
-
-  // SPECIAL: replace the first Timeline
-
-  // add a TimelineSeparator at the start, with the label being "Now"
-  elements.unshift(
-    <TimelineSeparator key={`now`} event={events[0]} labelTop="Now" labelBottom={format(new Date(), 'h:mm aaa').toLowerCase()} />
+  const nowSegmentWidth = getSegmentWidthPx(lastPoint.timestamp, now);
+  const nowSegmentMinutes = Math.max(
+    0,
+    differenceInMinutes(now, new Date(lastPoint.timestamp))
   );
 
-  // add a timelineSeparator at the end, with the label being the last event's startOfDay
-  const lastEvent = events[events.length - 1];
-  elements.push(
-    ...[<TimelineConnector event={lastEvent} width={50} />, <TimelineSeparator key={`end`} event={lastEvent} labelTop={format(startOfDay(new Date(lastEvent.timestamp)), 'd MMM')} />]
-  );
+  return (
+    <div className={styles.timelineScrollContainer} ref={ref}>
+      <div className={styles.timelineContainer} style={{ ['--marker-size' as any]: `${MARKER_SIZE_PX}px` }}>
+        {pointsAsc.map((point, index) => {
+          const previous = pointsAsc[index - 1];
+          const segmentWidth = previous
+            ? getSegmentWidthPx(previous.timestamp, point.timestamp)
+            : null;
 
-  return <div style={{ overflowX: 'auto' }} ref={ref}>
-    <div className={styles.timelineContainer}>
-      {elements}
+          return (
+            <div key={`${point.eventId}-${point.timestamp}`} className={styles.timelineGroup}>
+              {segmentWidth !== null && (
+                <div
+                  className={styles.segment}
+                  style={{ width: `${segmentWidth}px`, backgroundColor: getStatusColor(previous.status) }}
+                />
+              )}
+
+              <div className={styles.point}>
+                <TimelineMarker status={point.status} />
+                <div className={styles.timeLabel}>{formatTime(point.timestamp)}</div>
+              </div>
+            </div>
+          );
+        })}
+
+        <div
+          className={styles.segmentToNow}
+          style={{ width: `${nowSegmentWidth}px`, backgroundColor: getStatusColor(currentStatus) }}
+        >
+          <div className={styles.durationLabel}>{formatDurationShort(nowSegmentMinutes)}</div>
+        </div>
+
+        <div className={styles.nowMarker}>
+          <div
+            className={styles.nowTick}
+            style={{ backgroundColor: getStatusColor(currentStatus) }}
+          />
+          <div className={styles.nowTimeLabel}>{formatTime(now)}</div>
+        </div>
+
+      </div>
     </div>
-  </div>
-
-
-}
-
-const TimelineEvent = ({ event }: { event: MachineEvent }) => {
-  const formatTime = (timestamp: string | Date) => {
-    const date = new Date(timestamp);
-    return format(date, 'h:mm aaa').toLowerCase();
-  };
-
-  return <div className={styles.timelineItem}>
-    <StatusIndicator status={event.status} />
-    <div className={`${styles.timelineLabel} ${styles.timelineLabelBottom}`} style={{ position: 'absolute' }}>{formatTime(event.timestamp)}</div>
-
-  </div>
-}
-
-const TimelineConnector = ({ event, width, label }: { event: MachineEvent, width?: number, label?: string }) => {
-  const color = getColorForMachineStatus(event.status);
-
-  return <div className={styles.timelineConnectorContainer}>
-    <div className={styles.timelineConnector} style={{ backgroundColor: color, width: `${width}px` }} />
-    <div className={styles.timelineConnectorLabel}>{label}</div>
-  </div>;
-}
-
-const TimelineSeparator = ({ event, labelTop, labelBottom }: { event: MachineEvent, labelTop?: string, labelBottom?: string }) => {
-  const color = getColorForMachineStatus(event.status);
-  return <div className={styles.timelineSeparatorContainer}>
-
-    <div className={styles.timelineSeparator} style={{ backgroundColor: color }} />
-    <div className={`${styles.timelineSeparatorLabel} ${styles.top}`}>{labelTop}</div>
-    <div className={`${styles.timelineSeparatorLabel} ${styles.bottom}`}>{labelBottom}</div>
-  </div>
+  );
 };

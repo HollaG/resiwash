@@ -19,7 +19,10 @@ import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
 import { sendMachineStatusChangedNotification } from "../../../utils/firebase-messaging";
-import { getClaimants, sendNotificationToClaimants } from "../../../utils/notifications";
+import {
+  getClaimants,
+  sendNotificationToClaimants,
+} from "../../../utils/notifications";
 
 // saves IN-MEMORY which machines have been sending data
 // TODO: migrate to Redis in future
@@ -34,7 +37,7 @@ interface GetEventsRequest {
 export const getEvents = asyncHandler(
   async (
     req: Request<unknown, unknown, unknown, GetEventsRequest>,
-    res: Response
+    res: Response,
   ) => {
     req.log.info("getEvents", req.query);
 
@@ -95,7 +98,7 @@ export const getEvents = asyncHandler(
       }
       sendOkResponse(res, events);
     }
-  }
+  },
 );
 
 /**
@@ -127,7 +130,7 @@ interface GetEventsFormattedResponse {
 export const getEventsFormatted = asyncHandler(
   async (
     req: Request<unknown, unknown, unknown, GetEventsFormattedRequest>,
-    res: Response<GetEventsFormattedResponse, unknown>
+    res: Response<GetEventsFormattedResponse, unknown>,
   ) => {
     req.log.info("getEventsFormatted", req.query);
     try {
@@ -252,7 +255,7 @@ export const getEventsFormatted = asyncHandler(
       console.error("Error in getEventsFormatted", err);
       return sendErrorResponse(res, "Internal server error", 500);
     }
-  }
+  },
 );
 
 export const createEvent = asyncHandler(async (req: Request, res: Response) => {
@@ -345,7 +348,7 @@ export const createMultipleEvents = asyncHandler(
     }
 
     console.log(
-      `received createMultipleEvents request from sensor ${macAddress}`
+      `received createMultipleEvents request from sensor ${macAddress}`,
     );
 
     // check to see if valid macAddress exists
@@ -375,7 +378,7 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(
         res,
         "No machine links found for the sensor",
-        404
+        404,
       );
     }
 
@@ -419,7 +422,7 @@ export const createMultipleEvents = asyncHandler(
           // todo: we can change this such that it is the processed status instead, maybe?
 
           rawEvent.readings = readings;
-          rawEvent.machine = { machineId: machine.machineId } as any; // type assertion to satisfy TypeScript
+          rawEvent.machine = machine.machine;
           rawEvents.push(rawEvent);
 
           // --------- process the actual event using each dryer / washer ---------
@@ -451,7 +454,7 @@ export const createMultipleEvents = asyncHandler(
           } else {
             status = rawStatus; // fallback to raw status
             console.warn(
-              `No active machine found for machineId: ${machine.machineId}, using raw status`
+              `No active machine found for machineId: ${machine.machineId}, using raw status`,
             );
           }
 
@@ -470,7 +473,7 @@ export const createMultipleEvents = asyncHandler(
 
           // find the latest event for this machine
           const latestEvent = latestEvents.find(
-            (event) => event.machine.machineId === machine.machineId
+            (event) => event.machine.machineId === machine.machineId,
           );
 
           if (!latestEvent || latestEvent.status !== status) {
@@ -490,7 +493,7 @@ export const createMultipleEvents = asyncHandler(
     // ------- raw events always get saved -------
     // for all raw events, update the machine's lastUpdated timestamp
     const machineIdsToUpdate = rawEvents.map(
-      (event) => event.machine.machineId
+      (event) => event.machine.machineId,
     );
 
     // machinesToUpdate contains all machines that were sent an event
@@ -513,7 +516,7 @@ export const createMultipleEvents = asyncHandler(
     // set the currentStatus to the new status
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
-        (m) => m.machineId === event.machine.machineId
+        (m) => m.machineId === event.machine.machineId,
       );
       if (machine) {
         const now = new Date();
@@ -522,9 +525,10 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-            (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
-            1000
-          )
+              (machine.lastChangeTime.getTime() -
+                machine.lastUpdated!.getTime()) /
+                1000,
+            )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
@@ -539,16 +543,11 @@ export const createMultipleEvents = asyncHandler(
           machine: machine,
           oldStatus: machine.previousStatus,
           newStatus: machine.currentStatus,
-        })
+        });
 
         // send notification to claimant if applicable
-        sendNotificationToClaimants(machine).catch((e) => { }) // do nothing
-
-
-
+        sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
       }
-
-
     });
     await machineRepository.save(machinesToUpdate);
 
@@ -602,5 +601,5 @@ export const createMultipleEvents = asyncHandler(
     // });
 
     // await eventRepository.save(events);
-  }
+  },
 );

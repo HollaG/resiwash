@@ -23,7 +23,7 @@ interface GetMachinesRequest {
 export const getMachines = asyncHandler(
   async (
     req: Request<unknown, unknown, unknown, GetMachinesRequest>,
-    res: Response
+    res: Response,
   ) => {
     req.log.info("getMachines", req.query);
     const {
@@ -171,7 +171,7 @@ export const getMachines = asyncHandler(
 
     // // to display how long ago the machine was in this status, use lastChangeTime
     // // example message: Changed to `${currentStatus}` ${new Date(currentTimestamp).toLocaleTimeString()} ago (from ${previousStatus})
-  }
+  },
 );
 
 interface GetMachineRequest {
@@ -182,7 +182,7 @@ interface GetMachineRequest {
 export const getMachine = asyncHandler(
   async (
     req: Request<{ machineId: string }, unknown, unknown, GetMachineRequest>,
-    res: Response
+    res: Response,
   ) => {
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
@@ -229,7 +229,7 @@ export const getMachine = asyncHandler(
     machine.events = events;
 
     sendOkResponse(res, machine);
-  }
+  },
 );
 
 export const createMachine = async (req: Request, res: Response) => {
@@ -263,7 +263,7 @@ export const createMachine = async (req: Request, res: Response) => {
   machine.label = label || null;
   machine.type = type || null;
   machine.imageUrl = imageUrl || null;
-  machine.room = { roomId: Number(roomId) } as any; // type assertion to satisfy TypeScript
+  machine.roomId = Number(roomId);
 
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);
@@ -288,7 +288,7 @@ export const deleteMachine = asyncHandler(
     await machineRepository.remove(machine);
 
     sendOkResponse(res, { message: "Machine deleted successfully" });
-  }
+  },
 );
 
 export const updateMachine = asyncHandler(
@@ -329,5 +329,5 @@ export const updateMachine = asyncHandler(
     await machineRepository.save(machine);
 
     sendOkResponse(res, machine);
-  }
+  },
 );

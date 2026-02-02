@@ -1,24 +1,15 @@
-// Import styles of packages that you've installed.
-// All packages except `@mantine/hooks` require styles imports
-import '@mantine/core/styles.css';
-
-import { Stack } from '@mantine/core';
-
 import { AdminPage } from './pages/admin/AdminPage';
-import { Home } from './pages/home/Home';
-
-
+import { HomeRedesign } from './pages/home/HomeRedesign';
+import { Header } from './components/layout/Header';
 
 export default function App() {
+  // Simple routing based on pathname
+  const isAdminPage = window.location.pathname.includes('/admin');
 
-  // if url contains /admin, show admin page
-  if (window.location.pathname.includes('/admin')) {
-    return <Stack py="xl"><AdminPage /></Stack>
-  } else {
-    // setPage(Pages.HOME);
-    return <Stack py="xl"><Home /> </Stack>
-  }
-
-
-
+  return (
+    <div className="min-h-screen bg-app text-primary">
+      <Header />
+      {isAdminPage ? <AdminPage /> : <HomeRedesign />}
+    </div>
+  );
 }

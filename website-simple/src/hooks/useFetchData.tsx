@@ -3,7 +3,7 @@ import { ServerResponse } from "../types/datatypes";
 import { BASE_URL } from "../types/enums";
 import auth from "../core/firebase";
 
-// const BASE_URL = "https://resiwash.marcussoh.com/api/v1";
+// const BASE_URL = "https://resiwash.marcussoh.com/api/v2";
 // Change to your local API URL
 
 export const useFetchData = <T,>(url: string) => {
