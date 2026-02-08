@@ -45,6 +45,15 @@ export const claimMachine = expressAsyncHandler(
         return sendErrorResponse(res, "Machine not found", 404);
       }
 
+      // This has to be set before calling setMachineManualStatus, as re-saving will overwrite any changes made in that function.
+      // The `if` block only runs for manual machines. Note that cycleTime is also set in the setMachineManualStatus function,
+      // however we still need to set it here as well for non-manual machines.
+      // Cycle time is set in the setMachineManualStatus function as it's also used in the API call for manual status updates, from the browser.
+      // The browser has no concept of claiming, so we need to set cycle time in both places.
+      // TODO: refactor the browser one to use this claimMachine method, and just ignore the fcmToken.
+      machine.currentCycleTime = cycleTime;
+      await AppDataSource.getRepository(Machine).save(machine);
+
       // if the machine is manual mode, we also need to set the status
       console.log({ machine });
       if (machine.isManualEntry) {
@@ -63,9 +72,6 @@ export const claimMachine = expressAsyncHandler(
 
       // now, claim the machine
       _claimMachine(machineId, fcmToken, cycleTime);
-
-      machine.currentCycleTime = cycleTime;
-      await AppDataSource.getRepository(Machine).save(machine);
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
