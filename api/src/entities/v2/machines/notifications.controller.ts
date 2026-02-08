@@ -56,6 +56,7 @@ export const claimMachine = expressAsyncHandler(
             cycleTime,
           });
         } catch (error: any) {
+          console.error(error);
           return sendErrorResponse(res, error.message, 400);
         }
       }

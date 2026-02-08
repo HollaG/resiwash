@@ -98,8 +98,8 @@ export async function setMachineManualStatus(
         : 0; // calculate how long the machine was in the previous status in seconds
     machine.lastAvailableTime = now;
     machine.lastChangeTime = now;
+    machine.previousStatus = machine.currentStatus;
     machine.currentStatus = status;
-    machine.previousStatus = status;
     machine.lastUpdated = now;
     machine.currentCycleTime = cycleTime;
 
