@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/features/machine/domain/usecases/get_machine_usecase.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/my-machines/domain/usecases/my_machines_usecase.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/my_machines_cubit.dart';
@@ -39,6 +40,7 @@ void setupMyMachinesServiceLocator() {
       notificationService: sl<FirebaseNotificationService>(),
       listMachinesUseCase: sl<ListMachinesUseCase>(),
       myMachinesUseCase: sl<MyMachinesUseCase>(),
+      getMachineUseCase: sl<GetMachineUseCase>(),
     ),
   );
 }

@@ -30,6 +30,7 @@ class BaseView extends StatelessWidget {
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
           indicatorColor: Colors.transparent,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           onDestinationSelected: _goBranch,
           destinations: [
             _menuItem(
@@ -46,13 +47,13 @@ class BaseView extends StatelessWidget {
               icon: Icons.local_laundry_service,
               label: 'My Machines',
             ),
-            _menuItem(
-              context,
-              index: 2,
-              currentIndex: navigationShell.currentIndex,
-              icon: Icons.settings,
-              label: 'Settings',
-            ),
+            // _menuItem(
+            //   context,
+            //   index: 2,
+            //   currentIndex: navigationShell.currentIndex,
+            //   icon: Icons.settings,
+            //   label: 'Settings',
+            // ),
           ],
         ),
       ),

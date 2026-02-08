@@ -7,7 +7,9 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
+import 'package:resiwash/features/machine/domain/usecases/get_machine_usecase.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/my-machines/domain/usecases/my_machines_usecase.dart';
 import 'claim_state.dart';
@@ -24,16 +26,19 @@ class ClaimCubit extends Cubit<ClaimState> {
   final FirebaseNotificationService _notificationService;
   final ListMachinesUseCase _listMachinesUseCase;
   final MyMachinesUseCase _myMachinesUseCase;
+  final GetMachineUseCase _getMachineUseCase;
 
   ClaimCubit({
     required SharedPreferencesService sharedPreferencesService,
     required FirebaseNotificationService notificationService,
     required ListMachinesUseCase listMachinesUseCase,
     required MyMachinesUseCase myMachinesUseCase,
+    required GetMachineUseCase getMachineUseCase,
   }) : _sharedPreferencesService = sharedPreferencesService,
        _notificationService = notificationService,
        _listMachinesUseCase = listMachinesUseCase,
        _myMachinesUseCase = myMachinesUseCase,
+       _getMachineUseCase = getMachineUseCase,
        super(const ClaimInitial());
 
   /// Load claimed machines from local storage and fetch their data
@@ -197,12 +202,6 @@ class ClaimCubit extends Cubit<ClaimState> {
             ),
           );
 
-          // Show notification
-          sl<LocalNotificationService>().showClaimedNotification(
-            machine,
-            updatedClaimedMetadataForThisMachine,
-          );
-
           // If there was an old claimed machine, emit unclaimed for it
           if (oldClaimedMachineId != null && currentClaimedMachines != null) {
             try {
@@ -221,6 +220,30 @@ class ClaimCubit extends Cubit<ClaimState> {
               appLog.w('Old claimed machine not found: $oldClaimedMachineId');
             }
           }
+
+          // refresh the machine, then show the claim status
+          // Show notification
+
+          final params = GetMachineParams(extra: false);
+          final updatedMachineEither = await _getMachineUseCase.call(
+            machineId: machineId,
+            params: params,
+          );
+
+          updatedMachineEither.fold(
+            (failure) {
+              // If refresh fails, still show notification with old machine data
+              appLog.w('Failed to refresh machine data: ${failure.message}');
+              // TODO: show error notif
+            },
+            (updatedMachine) {
+              // Show notification with refreshed machine data
+              sl<LocalNotificationService>().showClaimedNotification(
+                updatedMachine,
+                updatedClaimedMetadataForThisMachine,
+              );
+            },
+          );
 
           appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
         },
