@@ -4,7 +4,11 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Machine } from "../../../models/Machine";
-import { GetQueryBoolean, MachineType } from "../../../core/types";
+import {
+  GetQueryBoolean,
+  MachineStatus,
+  MachineType,
+} from "../../../core/types";
 import { UpdateEvent } from "../../../models/UpdateEvent";
 import { RawEvent } from "../../../models/RawEvent";
 import { machine } from "os";
@@ -265,6 +269,14 @@ export const createMachine = async (req: Request, res: Response) => {
   machine.imageUrl = imageUrl || null;
   machine.roomId = Number(roomId);
 
+  machine.currentStatus = MachineStatus.AVAILABLE;
+  machine.previousStatus = MachineStatus.AVAILABLE;
+  machine.lastChangeTime = new Date();
+  machine.lastAvailableTime = new Date();
+  machine.isManualEntry = true;
+  machine.previousStatusActiveTime = 0;
+  machine.lastUpdated = new Date();
+
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);
 
@@ -331,3 +343,163 @@ export const updateMachine = asyncHandler(
     sendOkResponse(res, machine);
   },
 );
+
+const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
+
+// TODO: implement getTimeOptions based on possible cycleTimes
+export const getTimeOptions = () => {}; //
+
+interface ManualSetStatusRequest {
+  status: MachineStatus;
+  cycleTime?: number;
+  fcmToken?: string; // todo
+}
+// For manually setting a machine to used (via QR code, etc)
+// POST /api/v{version}/machines/:machineId/manual
+export const manualSetStatus = asyncHandler(
+  async (
+    req: Request<{ machineId: string }, {}, ManualSetStatusRequest>,
+    res: Response,
+  ) => {
+    const machineId = parseInt(req.params.machineId, 10);
+    if (isNaN(machineId)) {
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
+    }
+
+    const { status, cycleTime, fcmToken } = req.body;
+
+    const machineRepository = AppDataSource.getRepository(Machine);
+    const machine = await machineRepository.findOneBy({ machineId });
+
+    if (!machine) {
+      return sendErrorResponse(res, { message: "Machine not found" }, 404);
+    }
+
+    if (cycleTime && (typeof cycleTime !== "number" || cycleTime < 0)) {
+      return sendErrorResponse(
+        res,
+        { message: "Cycle time must be a positive number" },
+        400,
+      );
+    }
+
+    if (!machine.isManualEntry) {
+      return sendErrorResponse(
+        res,
+        { message: "Manual status update not allowed for this machine" },
+        403,
+      );
+    }
+
+    console.log(
+      "manual set status",
+      { status, cycleTime },
+      " for machine ",
+      machine.machineId,
+    );
+
+    // create new UpdateEvent without sensor data
+    const updateEvent = new UpdateEvent();
+    updateEvent.machine = machine;
+    updateEvent.status = status;
+    updateEvent.readings = []; // indicate manual update
+    updateEvent.machine = machine;
+    updateEvent.cycleTime = cycleTime || null;
+
+    const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
+    await updateEventRepository.save(updateEvent);
+
+    // if status is set to MachineStatus.IN_USE and cycleTime is provided, set lastAvailableTime
+    if (status === MachineStatus.IN_USE && cycleTime && cycleTime > 5) {
+      // similar logic as events.controller.ts:createMultipleEvents
+      const now = new Date();
+      machine.previousStatusActiveTime =
+        machine.lastChangeTime && machine.lastUpdated
+          ? Math.floor(
+              (machine.lastChangeTime?.getTime() -
+                machine.lastUpdated?.getTime()) /
+                1000,
+            )
+          : 0; // calculate how long the machine was in the previous status in seconds
+      machine.lastAvailableTime = now;
+      machine.lastChangeTime = now;
+      machine.currentStatus = status;
+      machine.previousStatus = status;
+      machine.lastUpdated = now;
+
+      await machineRepository.save(machine);
+      const timeout = setTimeout(
+        () => {
+          updateMachineStatusAfterTime(MachineStatus.FINISHING, machine);
+        },
+        cycleTime * 60 * 1000 - 5 * 60 * 1000,
+        // 10000,
+      ); // convert minutes to milliseconds
+      if (TIMEOUT_TRACKER[machine.machineId]) {
+        clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+      }
+      TIMEOUT_TRACKER[machine.machineId] = timeout;
+
+      return sendOkResponse(res, {
+        message: `Machine status set to ${status} for ${cycleTime} minutes`,
+      });
+    } else {
+      // invalid cycleTime
+      return sendErrorResponse(
+        res,
+        { message: "Cycle time must be provided and greater than 5" },
+        400,
+      );
+    }
+  },
+);
+
+const updateMachineStatusAfterTime = async (
+  status: MachineStatus,
+  machine: Machine,
+) => {
+  const machineRepository = AppDataSource.getRepository(Machine);
+
+  machine.previousStatusActiveTime = machine.lastChangeTime
+    ? Math.floor(
+        (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+          1000,
+      )
+    : 0; // calculate how long the machine was in the previous status in seconds
+  machine.previousStatus = machine.previousStatus;
+  machine.currentStatus = status;
+  machine.lastChangeTime = new Date();
+  machine.lastUpdated = new Date();
+
+  const updateEvent = new UpdateEvent();
+  updateEvent.machine = machine;
+  updateEvent.status = status;
+  updateEvent.readings = []; // indicate manual update
+  const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
+  await updateEventRepository.save(updateEvent);
+
+  await machineRepository.save(machine);
+
+  console.log(
+    `Machine ${machine.machineId} status updated to ${status} after manual cycle time`,
+  );
+
+  if (status === MachineStatus.FINISHING) {
+    const timeout = setTimeout(
+      () => {
+        updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machine);
+      },
+      5 * 60 * 1000,
+    );
+    if (TIMEOUT_TRACKER[machine.machineId]) {
+      clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+    }
+    TIMEOUT_TRACKER[machine.machineId] = timeout;
+  } else {
+    // clear timeout tracker
+    if (TIMEOUT_TRACKER[machine.machineId]) {
+      clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+      delete TIMEOUT_TRACKER[machine.machineId];
+    }
+  }
+};

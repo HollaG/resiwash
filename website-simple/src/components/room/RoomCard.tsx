@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Tooltip } from '@mantine/core';
-import { MachineStatusOverview, MachineStatus } from '@/types/datatypes';
+import { MachineStatusOverview, MachineStatus, convertMachineStatusToString } from '@/types/datatypes';
 import { StatusBadge } from '@/components/machine/StatusBadge';
 import { MachineGrid } from './MachineGrid';
 import { MachineCell } from './MachineCell';
@@ -91,6 +91,7 @@ export function RoomCard({
 
   // Check if data is stale (older than 30 minutes)
   const oldestDataTime = machines.reduce((oldest, machine) => {
+    if (machine.isManualEntry) return oldest;
     const machineTime = new Date(machine.lastUpdated).getTime();
     return machineTime < oldest ? machineTime : oldest;
   }, Date.now());
@@ -130,7 +131,7 @@ export function RoomCard({
                   {sortedWashers.map((machine) => (
                     <Tooltip
                       key={machine.machineId}
-                      label={`${shortMachineLabel(machine.label, machine.type, machine.name)}: ${machine.currentStatus.replace(/_/g, ' ')}`}
+                      label={`${shortMachineLabel(machine.label, machine.type, machine.name)}: ${convertMachineStatusToString(machine.currentStatus)}`}
                       withArrow
                     >
                       <div className="shrink-0">
@@ -161,7 +162,7 @@ export function RoomCard({
                   {sortedDryers.map((machine) => (
                     <Tooltip
                       key={machine.machineId}
-                      label={`${shortMachineLabel(machine.label, machine.type, machine.name)}: ${machine.currentStatus.replace(/_/g, ' ')}`}
+                      label={`${shortMachineLabel(machine.label, machine.type, machine.name)}: ${convertMachineStatusToString(machine.currentStatus)}`}
                       withArrow
                     >
                       <div className="shrink-0">
@@ -208,53 +209,53 @@ export function RoomCard({
                     <div key={key} className="h-[88px]" aria-hidden />
                   );
 
-                   const renderMachineOrPlaceholder = (slot: string, key: string) => {
-                     const machine = machineBySlot.get(slot);
-                     if (machine) {
-                       return (
-                         <MachineCell
-                           key={key}
-                           machine={machine}
-                           onClick={() => onMachineClick(machine.machineId)}
-                           isStale={isStale}
-                         />
-                       );
-                     }
-
+                  const renderMachineOrPlaceholder = (slot: string, key: string) => {
+                    const machine = machineBySlot.get(slot);
+                    if (machine) {
                       return (
-                        <button
+                        <MachineCell
                           key={key}
-                          type="button"
-                          onClick={() => toast(`Missing machine: ${slot}`)}
-                          className={cn(
-                            'group relative flex h-[88px] flex-col items-start justify-between overflow-hidden',
-                            'rounded-md border-2 border-dashed border-dark-border-inner bg-dark-surface p-3',
-                            'hover:border-accent-dark hover:bg-dark-border-inner',
-                            'dark:border-light-border-inner dark:bg-light-surface',
-                            'dark:hover:border-accent-light dark:hover:bg-light-border-inner',
-                            'transition-all duration-200',
-                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-dark dark:focus-visible:ring-accent-light'
-                          )}
-                          aria-label={`Missing machine ${slot}`}
-                        >
-                          <span className="font-mono text-base font-semibold text-dark-text-primary dark:text-light-text-primary">
-                            {slot}
-                          </span>
-                          <span className="font-mono text-xs text-dark-text-secondary dark:text-light-text-secondary">
-                            Missing
-                          </span>
-                        </button>
+                          machine={machine}
+                          onClick={() => onMachineClick(machine.machineId)}
+                          isStale={isStale}
+                        />
                       );
-                    };
+                    }
 
-                    return [
-                     dryerSlot ? renderMachineOrPlaceholder(dryerSlot, `dryer-${dryerSlot}`) : renderEmpty(`dryer-empty-${rowIndex}`),
-                     washerSlot ? renderMachineOrPlaceholder(washerSlot, `washer-${washerSlot}`) : renderEmpty(`washer-empty-${rowIndex}`),
-                   ];
-                 })}
-               </div>
-             </div>
-           ) : roomId === 4 ? (
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toast(`Missing machine: ${slot}`)}
+                        className={cn(
+                          'group relative flex h-[88px] flex-col items-start justify-between overflow-hidden',
+                          'rounded-md border-2 border-dashed border-dark-border-inner bg-dark-surface p-3',
+                          'hover:border-accent-dark hover:bg-dark-border-inner',
+                          'dark:border-light-border-inner dark:bg-light-surface',
+                          'dark:hover:border-accent-light dark:hover:bg-light-border-inner',
+                          'transition-all duration-200',
+                          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-dark dark:focus-visible:ring-accent-light'
+                        )}
+                        aria-label={`Missing machine ${slot}`}
+                      >
+                        <span className="font-mono text-base font-semibold text-dark-text-primary dark:text-light-text-primary">
+                          {slot}
+                        </span>
+                        <span className="font-mono text-xs text-dark-text-secondary dark:text-light-text-secondary">
+                          Missing
+                        </span>
+                      </button>
+                    );
+                  };
+
+                  return [
+                    dryerSlot ? renderMachineOrPlaceholder(dryerSlot, `dryer-${dryerSlot}`) : renderEmpty(`dryer-empty-${rowIndex}`),
+                    washerSlot ? renderMachineOrPlaceholder(washerSlot, `washer-${washerSlot}`) : renderEmpty(`washer-empty-${rowIndex}`),
+                  ];
+                })}
+              </div>
+            </div>
+          ) : roomId === 4 ? (
             <div className="space-y-2">
               <div className="grid grid-cols-4 gap-2">
                 <div className="col-span-2 font-mono text-xs font-semibold text-secondary">Dryers</div>
@@ -274,18 +275,18 @@ export function RoomCard({
                     <div key={key} className="h-[88px]" aria-hidden />
                   );
 
-                   const renderMachineOrPlaceholder = (slot: string, key: string) => {
-                     const machine = machineBySlot.get(slot);
-                     if (machine) {
-                       return (
-                         <MachineCell
-                           key={key}
-                           machine={machine}
-                           onClick={() => onMachineClick(machine.machineId)}
-                           isStale={isStale}
-                         />
-                       );
-                     }
+                  const renderMachineOrPlaceholder = (slot: string, key: string) => {
+                    const machine = machineBySlot.get(slot);
+                    if (machine) {
+                      return (
+                        <MachineCell
+                          key={key}
+                          machine={machine}
+                          onClick={() => onMachineClick(machine.machineId)}
+                          isStale={isStale}
+                        />
+                      );
+                    }
 
                     return (
                       <button

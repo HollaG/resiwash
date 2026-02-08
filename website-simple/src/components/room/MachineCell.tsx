@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Tooltip } from '@mantine/core';
-import { MachineStatusOverview } from '@/types/datatypes';
+import { convertMachineStatusToString, MachineStatus, MachineStatusOverview } from '@/types/datatypes';
 import { shortMachineLabel } from '@/utils/helpers';
 import { StatusBadge } from '@/components/machine/StatusBadge';
 import { cn } from '@/lib/utils';
@@ -33,7 +33,7 @@ export function MachineCell({ machine, onClick, className, isStale = false }: Ma
     .replace(' hours', 'h')
     .replace(' hour', 'h');
 
-  const statusDisplay = machine.currentStatus.replace(/_/g, ' ');
+  const statusDisplay = convertMachineStatusToString(machine.currentStatus);
   const staleTooltip = isStale
     ? `⚠️ Data may not be accurate - sensor appears offline`
     : `${shortMachineLabel(machine.label, machine.type, machine.name)} • ${statusDisplay} • Updated ${timeAgo} ago`;

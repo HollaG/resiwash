@@ -2,7 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { urlBuilder } from "../../utils/helpers";
 import { MachineStatusOverview } from "../../types/datatypes";
 
-export const useLocationMachines = ({ roomId }: { roomId: number }) => {
+export const useLocationMachines = ({
+  roomId,
+  load = true,
+}: {
+  roomId: number;
+  load?: boolean;
+}) => {
   const { data, isLoading, error } = useQuery<MachineStatusOverview[]>({
     queryKey: ["machineInfo", roomId],
     queryFn: async ({ queryKey }) => {
@@ -17,6 +23,7 @@ export const useLocationMachines = ({ roomId }: { roomId: number }) => {
       }
       return data.data as MachineStatusOverview[];
     },
+    enabled: load,
   });
 
   return { data, isLoading, error };

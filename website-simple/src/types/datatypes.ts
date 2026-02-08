@@ -31,7 +31,6 @@ export type MachineEvent = {
   readings: Reading[];
 };
 
-
 export type Machine = {
   machineId: number;
   name: string;
@@ -43,6 +42,11 @@ export type Machine = {
   lastUpdated: string; // or `Date`
   lastChangeTime: string; // when the machine last changed status
   roomId: number; // ID of the room this machine is in
+  currentStatus?: MachineStatus;
+  previousStatus?: MachineStatus;
+  previousStatusActiveTime?: number;
+  lastAvailableTime?: Date;
+  isManualEntry: boolean;
 };
 
 export type Room = {

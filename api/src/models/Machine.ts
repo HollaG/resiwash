@@ -81,4 +81,6 @@ export class Machine {
   @Column({ type: "timestamp", nullable: true })
   lastAvailableTime: Date;
 
+  @Column({ default: false })
+  isManualEntry: boolean; // Whether this machine can be manually updated e.g. by QR code
 }

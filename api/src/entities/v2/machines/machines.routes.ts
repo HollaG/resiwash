@@ -9,6 +9,7 @@ import {
   deleteMachine,
   getMachine,
   getMachines,
+  manualSetStatus,
   updateMachine,
 } from "./machines.controller";
 import {
@@ -30,5 +31,7 @@ router.post("/:machineId/claim", claimMachine);
 router.post("/:machineId/unclaim", unclaimMachine);
 router.post("/:machineId/poke", pokeClaimant);
 router.post("/:machineId/update", updateClaimCycle);
+
+router.post("/:machineId/manual", manualSetStatus);
 
 module.exports = router;

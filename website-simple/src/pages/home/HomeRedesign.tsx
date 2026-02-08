@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSavedLocations } from '@/hooks/useSavedLocations';
 import { useLocationInfo } from '@/hooks/query/useLocationInfo';
 import { useLocationMachines } from '@/hooks/query/useLocationMachines';
@@ -24,6 +24,7 @@ export function HomeRedesign() {
   const { data: availableLocations } = useLocationInfo();
   const [selectedMachine, setSelectedMachine] = useState<MachineStatusOverview | null>(null);
 
+  console.log({ availableLocations })
   // Flatten saved locations to get individual rooms
   const savedRooms = Object.entries(savedLocations).flatMap(([areaId, roomIds]) =>
     roomIds.map((roomId) => ({
@@ -168,7 +169,7 @@ function RoomCardWrapper({
 
   if (isLoading || !machines || !area || !room) {
     return (
-      <div className="h-64 animate-pulse rounded-lg border bg-surface" 
+      <div className="h-64 animate-pulse rounded-lg border bg-surface"
         style={{ borderColor: 'var(--border-color)' }} />
     );
   }

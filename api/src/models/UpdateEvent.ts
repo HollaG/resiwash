@@ -24,6 +24,9 @@ export class UpdateEvent {
   @Column({ type: "enum", enum: MachineStatus, nullable: true })
   status: MachineStatus;
 
+  @Column({ type: "int", nullable: true })
+  cycleTime: number; // in minutes // update this for future metadata tracking
+
   // deprecated
   // use status instead
   @Column({ nullable: true })
