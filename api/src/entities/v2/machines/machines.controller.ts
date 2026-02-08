@@ -4,6 +4,7 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Machine } from "../../../models/Machine";
+import { setMachineManualStatus } from "../../../services/machines.service";
 import {
   GetQueryBoolean,
   MachineStatus,
@@ -377,88 +378,21 @@ export const manualSetStatus = asyncHandler(
 
     const { status, cycleTime, fcmToken } = req.body;
 
-    const machineRepository = AppDataSource.getRepository(Machine);
-    const machine = await machineRepository.findOneBy({ machineId });
-
-    if (!machine) {
-      return sendErrorResponse(res, { message: "Machine not found" }, 404);
-    }
-
-    if (cycleTime && (typeof cycleTime !== "number" || cycleTime < 0)) {
-      return sendErrorResponse(
-        res,
-        { message: "Cycle time must be a positive number" },
-        400,
-      );
-    }
-
-    if (!machine.isManualEntry) {
-      return sendErrorResponse(
-        res,
-        { message: "Manual status update not allowed for this machine" },
-        403,
-      );
-    }
-
-    console.log(
-      "manual set status",
-      { status, cycleTime },
-      " for machine ",
-      machine.machineId,
-    );
-
-    // create new UpdateEvent without sensor data
-    const updateEvent = new UpdateEvent();
-    updateEvent.machine = machine;
-    updateEvent.status = status;
-    updateEvent.readings = []; // indicate manual update
-    updateEvent.machine = machine;
-    updateEvent.cycleTime = cycleTime || null;
-
-    const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
-    await updateEventRepository.save(updateEvent);
-
-    // if status is set to MachineStatus.IN_USE and cycleTime is provided, set lastAvailableTime
-    if (status === MachineStatus.IN_USE && cycleTime && cycleTime > 5) {
-      // similar logic as events.controller.ts:createMultipleEvents
-      const now = new Date();
-      machine.previousStatusActiveTime =
-        machine.lastChangeTime && machine.lastUpdated
-          ? Math.floor(
-              (machine.lastChangeTime?.getTime() -
-                machine.lastUpdated?.getTime()) /
-                1000,
-            )
-          : 0; // calculate how long the machine was in the previous status in seconds
-      machine.lastAvailableTime = now;
-      machine.lastChangeTime = now;
-      machine.currentStatus = status;
-      machine.previousStatus = status;
-      machine.lastUpdated = now;
-
-      await machineRepository.save(machine);
-      const timeout = setTimeout(
-        () => {
-          updateMachineStatusAfterTime(MachineStatus.FINISHING, machine);
-        },
-        cycleTime * 60 * 1000 - 5 * 60 * 1000,
-        // 10000,
-      ); // convert minutes to milliseconds
-      if (TIMEOUT_TRACKER[machine.machineId]) {
-        clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
-      }
-      TIMEOUT_TRACKER[machine.machineId] = timeout;
+    try {
+      await setMachineManualStatus({ machineId, status, cycleTime });
 
       return sendOkResponse(res, {
-        message: `Machine status set to ${status} for ${cycleTime} minutes`,
+        message: `Machine status set to ${status}${cycleTime ? ` for ${cycleTime} minutes` : ""}`,
       });
-    } else {
-      // invalid cycleTime
-      return sendErrorResponse(
-        res,
-        { message: "Cycle time must be provided and greater than 5" },
-        400,
-      );
+    } catch (error: any) {
+      const statusCode =
+        error.message === "Machine not found"
+          ? 404
+          : error.message ===
+              "Manual status update not allowed for this machine"
+            ? 403
+            : 400;
+      return sendErrorResponse(res, { message: error.message }, statusCode);
     }
   },
 );

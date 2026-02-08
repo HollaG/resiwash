@@ -2,6 +2,9 @@ import expressAsyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
+import { setMachineManualStatus } from "../../../services/machines.service";
+import { MachineStatus } from "../../../core/types";
+
 import {
   claimMachine as _claimMachine,
   unclaimMachine as _unclaimMachine,
@@ -21,14 +24,14 @@ interface ClaimMachineRequest {
 export const claimMachine = expressAsyncHandler(
   async (
     req: Request<{ machineId: string }, unknown, unknown, ClaimMachineRequest>,
-    res: Response
+    res: Response,
   ) => {
     try {
       const { machineId } = req.params;
       const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository("Machine").findOneBy({
+      const machine = await AppDataSource.getRepository(Machine).findOneBy({
         machineId: parseInt(machineId),
       });
 
@@ -39,11 +42,24 @@ export const claimMachine = expressAsyncHandler(
       // now, claim the machine
       _claimMachine(machineId, fcmToken, cycleTime);
 
+      // if the machine is manual mode, we also need to set the status
+      if (machine.isManualEntry) {
+        try {
+          await setMachineManualStatus({
+            machineId: machine.machineId,
+            status: MachineStatus.IN_USE,
+            cycleTime,
+          });
+        } catch (error: any) {
+          return sendErrorResponse(res, error.message, 400);
+        }
+      }
+
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
-  }
+  },
 );
 
 interface UnclaimMachineRequest {
@@ -71,7 +87,7 @@ export const unclaimMachine = expressAsyncHandler(
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
-  }
+  },
 );
 
 export const pokeClaimant = expressAsyncHandler(
@@ -113,7 +129,7 @@ export const pokeClaimant = expressAsyncHandler(
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
-  }
+  },
 );
 
 export const updateClaimCycle = expressAsyncHandler(
@@ -138,5 +154,5 @@ export const updateClaimCycle = expressAsyncHandler(
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
-  }
+  },
 );
