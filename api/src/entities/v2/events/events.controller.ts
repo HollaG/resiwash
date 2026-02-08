@@ -533,6 +533,7 @@ export const createMultipleEvents = asyncHandler(
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
           machine.lastAvailableTime = now; // the machine is now available, so update lastAvailableTime to now. in a sense, this is more of "firstAvailableTime" but we'll run with it
+          machine.currentCycleTime = null;
         } else if (machine.previousStatus === MachineStatus.AVAILABLE) {
           machine.lastAvailableTime = now; // the machine has now become not available, so NOW is the last available time
         }

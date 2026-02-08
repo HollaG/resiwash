@@ -47,6 +47,32 @@ export async function setMachineManualStatus(
     machine.machineId,
   );
 
+  // if the machine is already in the desired status, do nothing
+  //       1: If person A claimed the machine, then all is good
+  //       2: If person A claimed, then person B claimed (wrongly), this would screw over person A.
+  //       3: If person A claimed (wrongly), then person A claimed (rightly), all is good.
+  //       However, case 3 is the most unlikley to occur. So, we can safely ignore the case where something is claimed and someone else claims it.
+  if (
+    machine.currentStatus === MachineStatus.IN_USE ||
+    machine.currentStatus === MachineStatus.FINISHING
+  ) {
+    console.log(
+      `Machine ${machine.machineId} already in a used state, no update needed`,
+    );
+
+    // asynchronously send notification
+    // note: we do not care if it succeeds or fails
+    sendMachineStatusChangedNotification({
+      machine: machine,
+      oldStatus: machine.previousStatus,
+      newStatus: machine.currentStatus,
+    });
+
+    // send notification to claimant if applicable
+    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+    return;
+  }
+
   // create new UpdateEvent without sensor data
   const updateEvent = new UpdateEvent();
   updateEvent.machine = machine;
@@ -75,6 +101,7 @@ export async function setMachineManualStatus(
     machine.currentStatus = status;
     machine.previousStatus = status;
     machine.lastUpdated = now;
+    machine.currentCycleTime = cycleTime;
 
     await machineRepository.save(machine);
     const timeout = setTimeout(
@@ -129,6 +156,7 @@ const updateMachineStatusAfterTime = async (
   machine.lastUpdated = new Date();
   if (status === MachineStatus.AVAILABLE) {
     machine.lastAvailableTime = new Date(); // if machine now available, update lastAvailableTime, if its finishing, keep it the same
+    machine.currentCycleTime = null;
   }
 
   const updateEvent = new UpdateEvent();

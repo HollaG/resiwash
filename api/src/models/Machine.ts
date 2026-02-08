@@ -83,4 +83,9 @@ export class Machine {
 
   @Column({ default: true })
   isManualEntry: boolean; // Whether this machine can be manually updated e.g. by QR code
+
+  // The current cycle time, if available
+  // Note that if `isManualEntry` is true, this field will always be set.
+  @Column({ nullable: true })
+  currentCycleTime: number; // in minutes. calculate the end time by taking lastAvailableTime + currentCycleTime
 }

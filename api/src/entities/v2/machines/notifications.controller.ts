@@ -63,6 +63,9 @@ export const claimMachine = expressAsyncHandler(
       // now, claim the machine
       _claimMachine(machineId, fcmToken, cycleTime);
 
+      machine.currentCycleTime = cycleTime;
+      await AppDataSource.getRepository(Machine).save(machine);
+
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
