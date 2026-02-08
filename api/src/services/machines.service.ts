@@ -23,7 +23,10 @@ export async function setMachineManualStatus(
   const { machineId, status, cycleTime } = params;
 
   const machineRepository = AppDataSource.getRepository(Machine);
-  const machine = await machineRepository.findOneBy({ machineId });
+  const machine = await machineRepository.findOne({
+    where: { machineId },
+    relations: ["room", "room.area"],
+  });
 
   if (!machine) {
     throw new Error("Machine not found");

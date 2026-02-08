@@ -46,8 +46,10 @@ export const claimMachine = expressAsyncHandler(
       }
 
       // if the machine is manual mode, we also need to set the status
+      console.log({ machine });
       if (machine.isManualEntry) {
         try {
+          console.log("Setting initial IN_USE status for manual machine claim");
           await setMachineManualStatus({
             machineId: machine.machineId,
             status: MachineStatus.IN_USE,
