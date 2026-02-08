@@ -280,6 +280,15 @@ export const createMachine = async (req: Request, res: Response) => {
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);
 
+  // when creating a new machine, we can also create an initial UpdateEvent
+  const updateEvent = new UpdateEvent();
+  updateEvent.machine = machine;
+  updateEvent.status = MachineStatus.AVAILABLE;
+  updateEvent.readings = []; // indicate manual update
+
+  const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
+  await updateEventRepository.save(updateEvent);
+
   sendOkResponse(res, machine);
 };
 
