@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Tooltip } from '@mantine/core';
-import { convertMachineStatusToString, MachineStatus, MachineStatusOverview } from '@/types/datatypes';
+import { convertMachineStatusToString, MachineStatusOverview } from '@/types/datatypes';
 import { shortMachineLabel } from '@/utils/helpers';
 import { StatusBadge } from '@/components/machine/StatusBadge';
 import { cn } from '@/lib/utils';

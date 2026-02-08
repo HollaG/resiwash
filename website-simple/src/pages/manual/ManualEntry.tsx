@@ -1,9 +1,8 @@
 import { useLocationMachines } from "@/hooks/query/useLocationMachines";
 import { useMachineInfo } from "@/hooks/query/useMachineInfo";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BASE_URL } from "@/types/enums";
 import { MachineStatus } from "@/types/datatypes";

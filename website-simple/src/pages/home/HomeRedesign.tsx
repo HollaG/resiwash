@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSavedLocations } from '@/hooks/useSavedLocations';
 import { useLocationInfo } from '@/hooks/query/useLocationInfo';
 import { useLocationMachines } from '@/hooks/query/useLocationMachines';
