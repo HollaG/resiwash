@@ -44,17 +44,6 @@ export async function setMachineManualStatus(
     machine.machineId,
   );
 
-  // asynchronously send notification
-  // note: we do not care if it succeeds or fails
-  sendMachineStatusChangedNotification({
-    machine: machine,
-    oldStatus: machine.previousStatus,
-    newStatus: machine.currentStatus,
-  });
-
-  // send notification to claimant if applicable
-  sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
-
   // create new UpdateEvent without sensor data
   const updateEvent = new UpdateEvent();
   updateEvent.machine = machine;
@@ -96,6 +85,17 @@ export async function setMachineManualStatus(
       clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
     }
     TIMEOUT_TRACKER[machine.machineId] = timeout;
+
+    // asynchronously send notification
+    // note: we do not care if it succeeds or fails
+    sendMachineStatusChangedNotification({
+      machine: machine,
+      oldStatus: machine.previousStatus,
+      newStatus: machine.currentStatus,
+    });
+
+    // send notification to claimant if applicable
+    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
   } else if (status === MachineStatus.IN_USE) {
     // invalid cycleTime
     throw new Error("Cycle time must be provided and greater than 5");

@@ -30,6 +30,12 @@ export const claimMachine = expressAsyncHandler(
       const { machineId } = req.params;
       const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
 
+      console.log("Claim request received:", {
+        machineId,
+        fcmToken,
+        cycleTime,
+      });
+
       // first, check for valid machineId in DB
       const machine = await AppDataSource.getRepository(Machine).findOneBy({
         machineId: parseInt(machineId),
@@ -38,9 +44,6 @@ export const claimMachine = expressAsyncHandler(
       if (!machine) {
         return sendErrorResponse(res, "Machine not found", 404);
       }
-
-      // now, claim the machine
-      _claimMachine(machineId, fcmToken, cycleTime);
 
       // if the machine is manual mode, we also need to set the status
       if (machine.isManualEntry) {
@@ -54,6 +57,9 @@ export const claimMachine = expressAsyncHandler(
           return sendErrorResponse(res, error.message, 400);
         }
       }
+
+      // now, claim the machine
+      _claimMachine(machineId, fcmToken, cycleTime);
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
