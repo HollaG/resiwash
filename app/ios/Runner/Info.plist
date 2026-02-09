@@ -50,5 +50,7 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+  <key>NSCameraUsageDescription</key>
+  <string>This app needs camera access to scan QR codes</string>
 </dict>
 </plist>

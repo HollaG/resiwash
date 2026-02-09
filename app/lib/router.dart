@@ -1,4 +1,5 @@
 import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
+import 'package:resiwash/features/my-machines/presentation/screens/scan_qr.dart';
 import 'package:resiwash/features/overview/presentation/screens/home_screen.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_list_screen.dart';
 import 'package:resiwash/main.dart';
@@ -10,10 +11,12 @@ import 'package:resiwash/views/profile/profilePage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 final router = GoRouter(
   initialLocation: AppRoutes.home,
   navigatorKey: navigatorKey,
-
+  observers: [routeObserver],
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -57,11 +60,16 @@ final router = GoRouter(
               name: 'machineDetail',
               builder: (context, state) {
                 final machineId = state.pathParameters['machineId']!;
+                Map<String, dynamic>? extra =
+                    state.extra as Map<String, dynamic>?;
                 return MachineDetailScreen(
                   key: ValueKey(
                     'machine_$machineId',
                   ), // Force rebuild when machineId changes
                   machineId: machineId,
+                  initialAction:
+                      extra?['initialAction'] as InitialPageAction? ??
+                      InitialPageAction.none,
                 );
               },
             ),
@@ -73,6 +81,14 @@ final router = GoRouter(
             GoRoute(
               path: AppRoutes.myMachines,
               builder: (context, state) => MyMachinesScreen(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.scanQr,
+              builder: (context, state) => MobileScannerSimple(),
             ),
           ],
         ),
@@ -99,6 +115,7 @@ class AppRoutes {
 
   static const String myMachines = '/me';
   static const String profile = '/profile';
+  static const String scanQr = '/scan-qr';
 
   // // Helper methods for navigation
   // static String buildMachineListRoute({

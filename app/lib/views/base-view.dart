@@ -16,8 +16,26 @@ class BaseView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentLocation = GoRouter.of(
+      context,
+    ).routerDelegate.currentConfiguration.uri.path;
+    final isOnScanPage = currentLocation == '/scan-qr';
+
     return Scaffold(
       body: navigationShell,
+      floatingActionButton: isOnScanPage
+          ? null
+          : FloatingActionButton(
+              onPressed: () {
+                context.push('/scan-qr');
+              },
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: Icon(
+                Icons.qr_code_scanner,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           labelTextStyle: WidgetStateTextStyle.resolveWith((states) {
@@ -30,7 +48,7 @@ class BaseView extends StatelessWidget {
         child: NavigationBar(
           selectedIndex: navigationShell.currentIndex,
           indicatorColor: Colors.transparent,
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           onDestinationSelected: _goBranch,
           destinations: [
             _menuItem(

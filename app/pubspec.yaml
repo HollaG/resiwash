@@ -31,6 +31,8 @@ dependencies:
   flutter_local_notifications: ^19.5.0
   live_activities: ^2.4.2
   implicitly_animated_list: ^2.3.0
+  flutter_slidable: ^3.1.1
+  mobile_scanner: ^7.1.4
 
 dev_dependencies:
   flutter_test:
@@ -42,7 +44,7 @@ dev_dependencies:
   android_notification_icons:
 
 android_notification_icons:
-  image_path: 'assets/logo.png'
+  image_path: "assets/logo.png"
 
 flutter:
   uses-material-design: true

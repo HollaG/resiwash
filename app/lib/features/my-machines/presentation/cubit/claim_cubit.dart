@@ -74,6 +74,7 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// Load all claimed machines
   Future<void> loadClaimedMachines() async {
     try {
+      if (isClosed) return;
       emit(
         ClaimLoading(
           claimedMachineMetadata: _sharedPreferencesService
@@ -83,9 +84,11 @@ class ClaimCubit extends Cubit<ClaimState> {
 
       try {
         final claimedMachines = await _getClaimedMachines();
+        if (isClosed) return;
         final claimedMachineMetadata = _sharedPreferencesService
             .getClaimedMachinesMetadata();
 
+        if (isClosed) return;
         emit(
           ClaimLoaded(
             claimedMachineMetadata: claimedMachineMetadata,
@@ -94,10 +97,12 @@ class ClaimCubit extends Cubit<ClaimState> {
         );
       } catch (e) {
         appLog.e('Error loading claimed machines: $e');
+        if (isClosed) return;
         emit(const ClaimError(message: 'Failed to load claimed machines'));
       }
     } catch (e) {
       appLog.e('Error loading claimed machines: $e');
+      if (isClosed) return;
       emit(const ClaimError(message: 'Failed to load claimed machines'));
     }
   }
@@ -107,6 +112,7 @@ class ClaimCubit extends Cubit<ClaimState> {
     final currentState = state;
     if (currentState is ClaimLoaded) {
       try {
+        if (isClosed) return;
         emit(
           ClaimRefreshing(
             claimedMachineMetadata: currentState.claimedMachineMetadata,
@@ -115,9 +121,11 @@ class ClaimCubit extends Cubit<ClaimState> {
         );
 
         final claimedMachines = await _getClaimedMachines();
+        if (isClosed) return;
         final claimedMachineMetadata = _sharedPreferencesService
             .getClaimedMachinesMetadata();
 
+        if (isClosed) return;
         emit(
           ClaimLoaded(
             claimedMachineMetadata: claimedMachineMetadata,
@@ -152,6 +160,7 @@ class ClaimCubit extends Cubit<ClaimState> {
           ? currentClaimedMachineMetadata.first.machineId
           : null;
 
+      if (isClosed) return;
       emit(
         Claiming(
           claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -174,6 +183,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         (failure) {
           appLog.e('Error claiming machine $machineId: ${failure.message}');
 
+          if (isClosed) return;
           emit(
             ClaimOperationError(
               claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -194,6 +204,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
           final claimedMachines = await _getClaimedMachines();
 
+          if (isClosed) return;
           emit(
             Claimed(
               claimedMachineMetadata: updatedClaimedMetadata,
@@ -208,6 +219,7 @@ class ClaimCubit extends Cubit<ClaimState> {
               final oldClaimedMachine = currentClaimedMachines.firstWhere(
                 (m) => m.machineId == oldClaimedMachineId,
               );
+              if (isClosed) return;
               emit(
                 Unclaimed(
                   claimedMachineMetadata: updatedClaimedMetadata,
@@ -267,6 +279,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         currentClaimedMachines = currentState.claimedMachines;
       }
 
+      if (isClosed) return;
       emit(
         Claiming(
           claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -288,6 +301,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         (failure) {
           appLog.e('Error unclaiming machine $machineId: ${failure.message}');
 
+          if (isClosed) return;
           emit(
             ClaimOperationError(
               claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -308,6 +322,7 @@ class ClaimCubit extends Cubit<ClaimState> {
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachinesMetadata();
 
+          if (isClosed) return;
           emit(
             Unclaimed(
               claimedMachineMetadata: updatedClaimedMetadata,
@@ -373,6 +388,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         currentClaimedMachines = currentState.claimedMachines;
       }
 
+      if (isClosed) return;
       emit(
         Claiming(
           claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -397,6 +413,7 @@ class ClaimCubit extends Cubit<ClaimState> {
             'Error updating cycle time for machine $machineId: ${failure.message}',
           );
 
+          if (isClosed) return;
           emit(
             ClaimOperationError(
               claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -424,6 +441,7 @@ class ClaimCubit extends Cubit<ClaimState> {
               (meta) => meta.machineId == machineId,
             ),
           );
+          if (isClosed) return;
           emit(
             Claimed(
               claimedMachineMetadata: updatedClaimedMetadata,

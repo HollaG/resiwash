@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/core/injections/area/area_service_locator.dart';
@@ -57,12 +58,15 @@ enum ClaimState {
   successUnclaiming,
 }
 
-class _MachineRowState extends State<MachineRow> {
+class _MachineRowState extends State<MachineRow>
+    with SingleTickerProviderStateMixin {
   SubscriptionState subscriptionState = SubscriptionState.loading;
   ClaimState claimState = ClaimState.loading;
 
   int isClaimed =
       2; // 0 = not claimed, 1 = claimed, 2 = loading, 3 = success claiming, 4 = success unclaiming
+
+  late final SlidableController controller = SlidableController(this);
 
   @override
   void initState() {
@@ -181,6 +185,11 @@ class _MachineRowState extends State<MachineRow> {
         );
       },
     );
+  }
+
+  Future<void> closeControllerAfterDelay() async {
+    await Future.delayed(const Duration(seconds: 1));
+    controller.close();
   }
 
   @override
@@ -414,105 +423,177 @@ class _MachineRowState extends State<MachineRow> {
             );
           }
 
-          return Dismissible(
-            // subscribe
-            direction: widget.allowSwipe
-                ? DismissDirection.horizontal
-                : DismissDirection.none,
-
-            onDismissed: (direction) {},
-            // claim
-            background: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Theme.of(context).colorScheme.primaryContainer,
-              ),
-              // color: Theme.of(context).colorScheme.secondaryContainer,
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                spacing: 8,
-                children: [
-                  Text(
-                    claimText,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  claimIcon,
-                ],
-              ),
-            ),
-
-            // sub/unsub
-            secondaryBackground: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: context.accent.colorContainer,
-              ),
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                spacing: 8,
-                children: [
-                  Text(
-                    subscribeText,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-                  notificationIcon,
-                ],
-              ),
-            ),
+          return Slidable(
             key: Key(widget.machine.machineId),
+            enabled: widget.allowSwipe,
+            closeOnScroll: true,
+            controller: controller,
 
-            confirmDismiss: (direction) async {
-              // wait 1s
-              if (direction == DismissDirection.endToStart) {
-                if (subscriptionState == SubscriptionState.subscribed) {
-                  await context
-                      .read<SubscriptionCubit>()
-                      .unsubscribeFromMachine(widget.machine);
-                } else if (subscriptionState ==
-                    SubscriptionState.notSubscribed) {
-                  await context.read<SubscriptionCubit>().subscribeToMachine(
-                    widget.machine,
-                  );
-                } else {
-                  return null;
-                }
-              } else if (direction == DismissDirection.startToEnd) {
-                if (claimState == ClaimState.claimed) {
-                  await context.read<ClaimCubit>().unclaimMachine(
-                    widget.machine,
-                  );
-                } else if (claimState == ClaimState.notClaimed) {
-                  // Show dialog and get selected cycle time
-                  final cycleTime = await _dialogBuilder(context);
+            // Left swipe action (claim/unclaim)
+            startActionPane: widget.allowSwipe
+                ? ActionPane(
+                    motion: const BehindMotion(),
+                    extentRatio: 0.3,
+                    dismissible: DismissiblePane(
+                      dismissThreshold: 0.4,
+                      // never ever dismiss
+                      onDismissed: () => {},
+                      confirmDismiss: () async {
+                        if (claimState == ClaimState.loading) {
+                          controller.close();
+                          return false;
+                        }
 
-                  // Only claim if user confirmed (didn't cancel)
-                  if (cycleTime != null && mounted) {
-                    await context.read<ClaimCubit>().claimMachine(
-                      widget.machine,
-                      cycleTime: cycleTime,
-                    );
+                        if (claimState == ClaimState.claimed) {
+                          final claimCubit = context.read<ClaimCubit>();
+                          await claimCubit.unclaimMachine(widget.machine);
+                        } else if (claimState == ClaimState.notClaimed) {
+                          // Show dialog and get selected cycle time
+                          final cycleTime = await _dialogBuilder(context);
 
-                    // show a live notification
-                    // sl<LiveNotificationService>().startActivity(
-                    //   machine: widget.machine,
-                    //   metadata: null,
-                    // );
-                  }
-                } else {
-                  return null;
-                }
-              }
+                          // Only claim if user confirmed (didn't cancel)
+                          if (cycleTime != null && mounted) {
+                            final claimCubit = context.read<ClaimCubit>();
+                            await claimCubit.claimMachine(
+                              widget.machine,
+                              cycleTime: cycleTime,
+                            );
+                          }
+                        }
+                        closeControllerAfterDelay();
+                        return false;
+                      },
+                    ),
+                    children: [
+                      CustomSlidableAction(
+                        onPressed: (context) async {
+                          if (claimState == ClaimState.loading) return;
 
-              return null;
-            }, // don't dismiss
+                          if (claimState == ClaimState.claimed) {
+                            final claimCubit = context.read<ClaimCubit>();
+                            await claimCubit.unclaimMachine(widget.machine);
+                          } else if (claimState == ClaimState.notClaimed) {
+                            // Show dialog and get selected cycle time
+                            final cycleTime = await _dialogBuilder(context);
+
+                            // Only claim if user confirmed (didn't cancel)
+                            if (cycleTime != null && mounted) {
+                              final claimCubit = context.read<ClaimCubit>();
+                              await claimCubit.claimMachine(
+                                widget.machine,
+                                cycleTime: cycleTime,
+                              );
+                            }
+                          }
+                        },
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                        autoClose: true,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            claimIcon,
+                            const SizedBox(height: 4),
+                            Text(
+                              claimText,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+
+            // Right swipe action (subscribe/unsubscribe)
+            endActionPane: widget.allowSwipe
+                ? ActionPane(
+                    motion: const BehindMotion(),
+                    extentRatio: 0.25,
+                    dismissible: DismissiblePane(
+                      onDismissed: () => {},
+                      dismissThreshold: 0.4,
+                      confirmDismiss: () async {
+                        if (subscriptionState == SubscriptionState.loading) {
+                          controller.close();
+                          return false;
+                        }
+
+                        final subscriptionCubit = context
+                            .read<SubscriptionCubit>();
+
+                        if (subscriptionState == SubscriptionState.subscribed) {
+                          await subscriptionCubit.unsubscribeFromMachine(
+                            widget.machine,
+                          );
+                        } else if (subscriptionState ==
+                            SubscriptionState.notSubscribed) {
+                          await subscriptionCubit.subscribeToMachine(
+                            widget.machine,
+                          );
+                        }
+                        closeControllerAfterDelay();
+                        return false;
+                      },
+                    ),
+                    children: [
+                      CustomSlidableAction(
+                        onPressed: (context) async {
+                          if (subscriptionState == SubscriptionState.loading)
+                            return;
+
+                          final subscriptionCubit = context
+                              .read<SubscriptionCubit>();
+
+                          if (subscriptionState ==
+                              SubscriptionState.subscribed) {
+                            await subscriptionCubit.unsubscribeFromMachine(
+                              widget.machine,
+                            );
+                          } else if (subscriptionState ==
+                              SubscriptionState.notSubscribed) {
+                            await subscriptionCubit.subscribeToMachine(
+                              widget.machine,
+                            );
+                          }
+                        },
+                        backgroundColor: context.accent.colorContainer,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondary,
+                        borderRadius: BorderRadius.circular(8),
+                        autoClose: true,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            notificationIcon,
+                            const SizedBox(height: 4),
+                            Text(
+                              subscribeText,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
+
             child: Container(
               decoration: BoxDecoration(
                 // borderRadius: BorderRadius.circular(8),
