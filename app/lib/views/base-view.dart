@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
+import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
-  const BaseView({super.key, required this.navigationShell});
+  final GoRouterState shellState;
+  const BaseView({
+    super.key,
+    required this.navigationShell,
+    required this.shellState,
+  });
 
   void _goBranch(int index) {
     print('Navigating to branch index: $index');
@@ -16,25 +22,28 @@ class BaseView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentLocation = GoRouter.of(
-      context,
-    ).routerDelegate.currentConfiguration.uri.path;
-    final isOnScanPage = currentLocation == '/scan-qr';
+    // Only show FAB on home (branch 0) and my-machines (branch 1) pages
+    final path = shellState.uri.path;
+
+    // final shouldShowFAB =
+    //     path == AppRoutes.home || path == AppRoutes.myMachines;
+
+    final shouldShowFAB = path != AppRoutes.scanQr;
+
+    print("debug path is $path, show FAB: $shouldShowFAB");
 
     return Scaffold(
       body: navigationShell,
-      floatingActionButton: isOnScanPage
-          ? null
-          : FloatingActionButton(
-              onPressed: () {
-                context.push('/scan-qr');
-              },
+      floatingActionButton: shouldShowFAB
+          ? FloatingActionButton(
+              onPressed: () => context.push(AppRoutes.scanQr),
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: Icon(
                 Icons.qr_code_scanner,
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
-            ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(

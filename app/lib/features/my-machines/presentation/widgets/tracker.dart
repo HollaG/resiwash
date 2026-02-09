@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
@@ -300,121 +301,187 @@ class _TrackerState extends State<Tracker> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: context.accent.colorContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: AnimatedSize(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.fastOutSlowIn,
-        alignment: Alignment.topCenter,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // top widget
-            InkWell(
-              onTap: () {
-                // Navigate to machine details page
-                context.push(
-                  Uri(
-                    path: AppRoutes.buildMachineDetailRoute(
-                      widget.machine.machineId,
-                    ),
-                  ).toString(),
-                  extra: {'machine': widget.machine},
-                );
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(8),
+    return Slidable(
+      key: Key(widget.machine.machineId),
+      enabled: true,
+      closeOnScroll: true,
+      // Left swipe action (Unclaim)
+      startActionPane: ActionPane(
+        motion: const BehindMotion(),
+        extentRatio: 0.3,
+        dismissible: DismissiblePane(
+          dismissThreshold: 0.7,
+          onDismissed: () {},
+          confirmDismiss: () async {
+            context.read<ClaimCubit>().unclaimMachine(widget.machine);
+            return false;
+          },
+        ),
+        children: [
+          CustomSlidableAction(
+            onPressed: (context) {
+              context.read<ClaimCubit>().unclaimMachine(widget.machine);
+            },
+            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            borderRadius: BorderRadius.circular(8),
+            autoClose: true,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_off_rounded,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
                 ),
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  spacing: 12,
-                  children: [
-                    MachineStatusIndicator(
-                      status: widget.machine.currentStatus,
-                      size: BoxSize.large,
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.machine.name,
-                            style: Theme.of(context).textTheme.labelLarge,
-                          ),
-                          Text(
-                            "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName}",
-                          ),
-                        ],
+                const SizedBox(height: 4),
+                Text(
+                  'Unclaim',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      // Right swipe action (Unclaim)
+      endActionPane: ActionPane(
+        motion: const BehindMotion(),
+        extentRatio: 0.4,
+        dismissible: DismissiblePane(
+          onDismissed: () {},
+          dismissThreshold: 0.7,
+          confirmDismiss: () async {
+            context.read<ClaimCubit>().unclaimMachine(widget.machine);
+            return false;
+          },
+        ),
+        children: [
+          CustomSlidableAction(
+            onPressed: (context) {
+              context.read<ClaimCubit>().unclaimMachine(widget.machine);
+            },
+            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            borderRadius: BorderRadius.circular(8),
+            autoClose: true,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_off_rounded,
+                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Unclaim',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16.0),
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: context.accent.colorContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.fastOutSlowIn,
+          alignment: Alignment.topCenter,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // top widget
+              InkWell(
+                onTap: () {
+                  // Navigate to machine details page
+                  context.push(
+                    Uri(
+                      path: AppRoutes.buildMachineDetailRoute(
+                        widget.machine.machineId,
                       ),
-                    ),
-                    widget.machine.type == MachineType.washer
-                        ? AssetIcons.washerIcon(context)
-                        : AssetIcons.dryerIcon(context),
-                  ],
+                    ).toString(),
+                    extra: {'machine': widget.machine},
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    spacing: 12,
+                    children: [
+                      MachineStatusIndicator(
+                        status: widget.machine.currentStatus,
+                        size: BoxSize.large,
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.machine.name,
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                            Text(
+                              "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName ?? widget.machine.room?.area?.name}",
+                            ),
+                          ],
+                        ),
+                      ),
+                      widget.machine.type == MachineType.washer
+                          ? AssetIcons.washerIcon(context)
+                          : AssetIcons.dryerIcon(context),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // todo
-            SizedBox(height: 16),
-            Row(
-              spacing: 24,
-              children: [
-                Stack(
-                  children: [
-                    Center(
-                      child: SizedBox(
+              // todo
+              SizedBox(height: 16),
+              Row(
+                spacing: 24,
+                children: [
+                  Stack(
+                    children: [
+                      Center(
+                        child: SizedBox(
+                          width: 96,
+                          height: 96,
+                          child: CircularProgressIndicator(
+                            value: _calculatePercentDone(context) / 100,
+                            strokeAlign: -1,
+                            strokeWidth: 16,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              MachineStatusIndicator.getConnectorColor(
+                                context,
+                                widget.machine.currentStatus,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
                         width: 96,
                         height: 96,
-                        child: CircularProgressIndicator(
-                          value: _calculatePercentDone(context) / 100,
-                          strokeAlign: -1,
-                          strokeWidth: 16,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            MachineStatusIndicator.getConnectorColor(
-                              context,
-                              widget.machine.currentStatus,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 96,
-                      height: 96,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: MachineStatusIndicator.getIndicatorColor(
-                              context,
-                              widget.machine.currentStatus,
-                            ),
-                            width: 2,
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                      ),
-                    ),
-
-                    SizedBox(
-                      width: 96,
-                      height: 96,
-
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
                         child: Container(
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: MachineStatusIndicator.getIndicatorColor(
+                                context,
+                                widget.machine.currentStatus,
+                              ),
                               width: 2,
                             ),
                             shape: BoxShape.circle,
@@ -422,120 +489,142 @@ class _TrackerState extends State<Tracker> {
                           alignment: Alignment.center,
                         ),
                       ),
-                    ),
-                    SizedBox(
-                      width: 96.0,
-                      height: 96.0,
 
-                      child: Center(
-                        child: Container(
-                          width: 96 - 16 * 2 - 2,
-                          height: 96 - 16 * 2 - 2,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Theme.of(context).colorScheme.surface,
-                            boxShadow: [
-                              BoxShadow(
-                                // color: Colors.black.withOpacity(0.25),
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.3),
-                                blurRadius: 4,
-                                offset: Offset(0, 2),
+                      SizedBox(
+                        width: 96,
+                        height: 96,
+
+                        child: Padding(
+                          padding: const EdgeInsets.all(15),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 2,
                               ),
-                            ],
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
                           ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            "${_calculatePercentDone(context)}%",
-                            style: Theme.of(context).textTheme.headlineSmall
+                        ),
+                      ),
+                      SizedBox(
+                        width: 96.0,
+                        height: 96.0,
+
+                        child: Center(
+                          child: Container(
+                            width: 96 - 16 * 2 - 2,
+                            height: 96 - 16 * 2 - 2,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Theme.of(context).colorScheme.surface,
+                              boxShadow: [
+                                BoxShadow(
+                                  // color: Colors.black.withOpacity(0.25),
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.3),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "${_calculatePercentDone(context)}%",
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
+                    children: [
+                      // cycle indicator
+                      Row(
+                        spacing: 4,
+                        children: [
+                          Icon(
+                            Icons.timer,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
+                          Text(
+                            "${widget.claimedMetadata.cycleTime} minute cycle",
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.secondary,
+                                  color: Theme.of(context).colorScheme.tertiary,
                                 ),
                           ),
-                        ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
-                  children: [
-                    // cycle indicator
-                    Row(
-                      spacing: 4,
-                      children: [
-                        Icon(
-                          Icons.timer,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                        Text(
-                          "${widget.claimedMetadata.cycleTime} minute cycle",
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.tertiary,
-                              ),
-                        ),
-                      ],
-                    ),
 
-                    // time left
-                    _calculateTimeLeftText(context),
+                      // time left
+                      _calculateTimeLeftText(context),
 
-                    // time since started
-                    _calculateTimeSinceText(context),
-                  ],
-                ),
-              ],
-            ),
-
-            Visibility(
-              visible: widget.isEditing,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () {
-                      context.read<ClaimCubit>().unclaimMachine(widget.machine);
-                    },
-                    style: ButtonStyle(
-                      // backgroundColor: WidgetStateProperty.all<Color>(
-                      //   Theme.of(context).colorScheme.primaryContainer,
-                      // ),
-                      foregroundColor: WidgetStateProperty.all<Color>(
-                        Theme.of(context).colorScheme.error,
-                      ),
-                    ),
-                    child: const Text("Unclaim"),
-                  ),
-                  TextButton.icon(
-                    onPressed: () {
-                      int initialCycleTime =
-                          widget.claimedMetadata.cycleTime ??
-                          30; // default to 30 if null
-                      _dialogBuilder(context, initialCycleTime).then((newTime) {
-                        if (newTime != null) {
-                          // Update the cycle time in the cubit
-                          if (mounted) {
-                            context.read<ClaimCubit>().updateCycleTime(
-                              widget.machine,
-                              newTime,
-                            );
-                          }
-                        }
-                      });
-                    },
-                    label: Text("Edit cycle time"),
-                    icon: Icon(Icons.edit),
+                      // time since started
+                      _calculateTimeSinceText(context),
+                    ],
                   ),
                 ],
               ),
-            ),
-          ],
+
+              Visibility(
+                visible: widget.isEditing,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        context.read<ClaimCubit>().unclaimMachine(
+                          widget.machine,
+                        );
+                      },
+                      style: ButtonStyle(
+                        // backgroundColor: WidgetStateProperty.all<Color>(
+                        //   Theme.of(context).colorScheme.primaryContainer,
+                        // ),
+                        foregroundColor: WidgetStateProperty.all<Color>(
+                          Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      child: const Text("Unclaim"),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        int initialCycleTime =
+                            widget.claimedMetadata.cycleTime ??
+                            30; // default to 30 if null
+                        _dialogBuilder(context, initialCycleTime).then((
+                          newTime,
+                        ) {
+                          if (newTime != null) {
+                            // Update the cycle time in the cubit
+                            if (mounted) {
+                              context.read<ClaimCubit>().updateCycleTime(
+                                widget.machine,
+                                newTime,
+                              );
+                            }
+                          }
+                        });
+                      },
+                      label: Text("Edit cycle time"),
+                      icon: Icon(Icons.edit),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

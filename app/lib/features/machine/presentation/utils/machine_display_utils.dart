@@ -56,7 +56,7 @@ class MachineDisplayUtils {
   /// - "A1" (area shortName only)
   /// - "No room" (fallback)
   static String getLocationLabel(MachineEntity machine) {
-    final areaName = machine.room?.area?.shortName;
+    final areaName = machine.room?.area?.shortName ?? machine.room?.area?.name;
     final roomName = machine.room?.name;
 
     if (areaName != null && roomName != null) {

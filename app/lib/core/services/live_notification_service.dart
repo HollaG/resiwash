@@ -41,7 +41,8 @@ class LiveNotificationService {
 
     final Map<String, dynamic> activityModel = {
       "title": "Using ${machine.name}",
-      "subtext": "${machine.room?.name} @ ${machine.room?.area?.shortName}",
+      "subtext":
+          "${machine.room?.name} @ ${machine.room?.area?.shortName ?? machine.room?.area?.name}",
     };
 
     _liveActivitiesPlugin.createActivity(machine.machineId, activityModel);

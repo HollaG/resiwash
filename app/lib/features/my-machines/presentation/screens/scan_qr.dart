@@ -45,6 +45,9 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
   bool _navigating = false;
   final MobileScannerController _controller = MobileScannerController();
 
+  static String INFO_DEFAULT = 'Scan a QR code';
+  String infoText = INFO_DEFAULT;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -104,6 +107,24 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     if (rawValue == null) {
       return;
     }
+
+    if (!rawValue.startsWith('https://resi-wash.com/manual')) {
+      setState(() {
+        infoText = 'Invalid QR code scanned. Please try again.';
+      });
+
+      // Reset info text after 3 seconds
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          setState(() {
+            infoText = INFO_DEFAULT;
+          });
+        }
+      });
+
+      return;
+    }
+
     final uri = Uri.parse(rawValue);
     final roomIdParam = uri.queryParameters['roomId'];
     final machineIdParam = uri.queryParameters['machineId'];
@@ -156,6 +177,7 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
                   ),
                 ),
               ),
+              Text(infoText, style: Theme.of(context).textTheme.bodyLarge),
               // BlocConsumer<MachineDetailCubit, MachineDetailState>(
               //   listener: (context, state) {
               //     print("MachineDetailState changed: $state");

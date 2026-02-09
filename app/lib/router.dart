@@ -20,7 +20,7 @@ final router = GoRouter(
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
-        return BaseView(navigationShell: navigationShell);
+        return BaseView(navigationShell: navigationShell, shellState: state);
       },
       branches: [
         StatefulShellBranch(
