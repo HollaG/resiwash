@@ -25,7 +25,6 @@ import 'package:resiwash/theme.dart';
  * Swiping left again after subscribing will show a pop up on how long the cycle is.
  * Swiping right will cancel the subscription.
  */
-
 class MachineRow extends StatefulWidget {
   final MachineEntity machine;
   final bool showIcon;

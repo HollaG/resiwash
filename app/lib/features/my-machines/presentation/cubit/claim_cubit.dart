@@ -144,6 +144,7 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// NOTE: the storage supports claiming multiple machines. However, we restrict it to one-to-one logically.
   ///       If we ever expand in the future, we can.
   ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
+  /// [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
   Future<void> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
     try {
@@ -214,24 +215,24 @@ class ClaimCubit extends Cubit<ClaimState> {
           );
 
           // If there was an old claimed machine, emit unclaimed for it
-          if (oldClaimedMachineId != null && currentClaimedMachines != null) {
-            try {
-              final oldClaimedMachine = currentClaimedMachines.firstWhere(
-                (m) => m.machineId == oldClaimedMachineId,
-              );
-              if (isClosed) return;
-              emit(
-                Unclaimed(
-                  claimedMachineMetadata: updatedClaimedMetadata,
-                  claimedMachines: claimedMachines,
-                  operatingMachine: oldClaimedMachine,
-                ),
-              );
-            } catch (e) {
-              // Old claimed machine not found in list, skip
-              appLog.w('Old claimed machine not found: $oldClaimedMachineId');
-            }
-          }
+          // if (oldClaimedMachineId != null && currentClaimedMachines != null) {
+          //   try {
+          //     final oldClaimedMachine = currentClaimedMachines.firstWhere(
+          //       (m) => m.machineId == oldClaimedMachineId,
+          //     );
+          //     if (isClosed) return;
+          //     emit(
+          //       Unclaimed(
+          //         claimedMachineMetadata: updatedClaimedMetadata,
+          //         claimedMachines: claimedMachines,
+          //         operatingMachine: oldClaimedMachine,
+          //       ),
+          //     );
+          //   } catch (e) {
+          //     // Old claimed machine not found in list, skip
+          //     appLog.w('Old claimed machine not found: $oldClaimedMachineId');
+          //   }
+          // }
 
           // refresh the machine, then show the claim status
           // Show notification

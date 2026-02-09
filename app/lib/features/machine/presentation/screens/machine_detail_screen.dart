@@ -42,9 +42,34 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
   int isSubscribed = 0; // 0 = false, 1 = true, 2 = loading
   bool _hasHandledInitialAction = false;
 
+  late WidgetStateProperty<Icon> thumbIconClaim;
+  late WidgetStateProperty<Icon> thumbIconSubscribed;
+
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    thumbIconClaim =
+        WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
+          WidgetState.selected: Icon(
+            Icons.person_add_alt_rounded,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          WidgetState.any: Icon(Icons.person_off_rounded),
+        });
+
+    thumbIconSubscribed =
+        WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
+          WidgetState.selected: Icon(
+            Icons.notifications_active_rounded,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          WidgetState.any: Icon(Icons.notifications_off_rounded),
+        });
   }
 
   Future<int?> _dialogBuilder(BuildContext context) {
@@ -154,10 +179,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
               MachineDetailCubit(getMachineUseCase: sl<GetMachineUseCase>())
                 ..load(machineId: widget.machineId, extra: true),
         ),
-        BlocProvider(
-          create: (_) => sl<SubscriptionCubit>()..loadSubscribedMachines(),
-        ),
-        // ClaimCubit is already provided at app level in main.dart, no need to provide again
+        // SubscriptionCubit and ClaimCubit are already provided at app level in main.dart
       ],
       child: MultiBlocListener(
         listeners: [
@@ -235,151 +257,6 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // TODO: some image here
-                          Row(
-                            spacing: 8,
-                            children: [
-                              BlocConsumer<ClaimCubit, claim_state.ClaimState>(
-                                listener: (context, state) {
-                                  print("debug state emitted: $state");
-                                },
-                                builder: (context, state) {
-                                  if (state is claim_state.ClaimLoading) {
-                                    return Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () {},
-                                        child: SizedBox(
-                                          height: 16,
-                                          width: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  if (state is claim_state.ClaimLoaded) {
-                                    bool isClaimed = context
-                                        .read<ClaimCubit>()
-                                        .isMachineClaimed(widget.machineId);
-                                    if (isClaimed) {
-                                      return Expanded(
-                                        child: FilledButton(
-                                          onPressed: () {
-                                            context
-                                                .read<ClaimCubit>()
-                                                .unclaimMachine(machine);
-                                          },
-                                          child: Text("Unclaim"),
-                                        ),
-                                      );
-                                    } else {
-                                      return Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () async {
-                                            final cycleTime =
-                                                await _dialogBuilder(context);
-                                            print(
-                                              'debug cycletime: $cycleTime mounted $mounted context.mounted ${context.mounted}',
-                                            );
-                                            if (cycleTime != null &&
-                                                mounted &&
-                                                context.mounted) {
-                                              print(
-                                                'debug eh - about to claim',
-                                              );
-                                              if (!context.mounted) return;
-                                              context
-                                                  .read<ClaimCubit>()
-                                                  .claimMachine(
-                                                    machine,
-                                                    cycleTime: cycleTime,
-                                                  );
-                                            }
-                                          },
-                                          child: Text("Claim"),
-                                        ),
-                                      );
-                                    }
-                                  }
-
-                                  return Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      child: Text("Loading..."),
-                                    ),
-                                  );
-                                },
-                              ),
-                              BlocConsumer<
-                                SubscriptionCubit,
-                                sub_state.SubscriptionState
-                              >(
-                                listener: (context, state) {
-                                  // handle subscription state changes if needed
-                                },
-                                builder: (context, state) {
-                                  if (state is sub_state.SubscriptionLoading) {
-                                    return Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () {},
-                                        child: SizedBox(
-                                          height: 16,
-                                          width: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-
-                                  if (state is sub_state.SubscriptionLoaded) {
-                                    bool isSubscribed = context
-                                        .read<SubscriptionCubit>()
-                                        .isSubscribedToMachine(
-                                          widget.machineId,
-                                        );
-                                    if (isSubscribed) {
-                                      return Expanded(
-                                        child: FilledButton(
-                                          onPressed: () {
-                                            context
-                                                .read<SubscriptionCubit>()
-                                                .unsubscribeFromMachine(
-                                                  machine,
-                                                );
-                                          },
-                                          child: Text("Unsubscribe"),
-                                        ),
-                                      );
-                                    } else {
-                                      return Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () async {
-                                            if (mounted && context.mounted) {
-                                              context
-                                                  .read<SubscriptionCubit>()
-                                                  .subscribeToMachine(machine);
-                                            }
-                                          },
-                                          child: Text("Subscribe"),
-                                        ),
-                                      );
-                                    }
-                                  }
-
-                                  return Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      child: Text("Loading..."),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                          // rounded pill box that displays machine status
                           Row(
                             spacing: 8,
                             children: [
@@ -468,6 +345,163 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                             ),
                           ),
 
+                          Divider(),
+                          // rounded pill box that displays machine status
+                          Column(
+                            children: [
+                              // Claim switch
+                              BlocConsumer<ClaimCubit, claim_state.ClaimState>(
+                                listener: (context, state) {},
+                                builder: (context, state) {
+                                  bool isClaimed = context
+                                      .read<ClaimCubit>()
+                                      .isMachineClaimed(widget.machineId);
+                                  return SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    subtitle: RichText(
+                                      text: TextSpan(
+                                        text: "Set an ",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                        children: [
+                                          TextSpan(
+                                            text: "always-visible ",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text:
+                                                "notification for machines you are currently using.",
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    title: Text(
+                                      "In use by you",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.secondary,
+                                          ),
+                                    ),
+                                    secondary: (state is claim_state.Claiming)
+                                        ? SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.0,
+                                            ),
+                                          )
+                                        : null,
+                                    value: isClaimed,
+                                    thumbIcon: thumbIconClaim,
+                                    onChanged: (value) {
+                                      if (value) {
+                                        // claim
+                                        _dialogBuilder(context).then((
+                                          cycleTime,
+                                        ) {
+                                          if (cycleTime != null &&
+                                              mounted &&
+                                              context.mounted) {
+                                            context
+                                                .read<ClaimCubit>()
+                                                .claimMachine(
+                                                  machine,
+                                                  cycleTime: cycleTime,
+                                                );
+                                          }
+                                        });
+                                      } else {
+                                        // unclaim
+                                        context
+                                            .read<ClaimCubit>()
+                                            .unclaimMachine(machine);
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                              // Subscription switch
+                              BlocConsumer<
+                                SubscriptionCubit,
+                                sub_state.SubscriptionState
+                              >(
+                                listener: (context, state) {},
+                                builder: (context, state) {
+                                  bool isSubscribed = context
+                                      .read<SubscriptionCubit>()
+                                      .isSubscribedToMachine(widget.machineId);
+                                  return SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    subtitle: RichText(
+                                      text: TextSpan(
+                                        text:
+                                            "Receive a notification whenever a machine's status changes",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      "Subscribe",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.secondary,
+                                          ),
+                                    ),
+                                    secondary: (state is sub_state.Subscribing)
+                                        ? SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.0,
+                                            ),
+                                          )
+                                        : null,
+                                    thumbIcon:
+                                        (state
+                                                is sub_state.SubscriptionLoading ||
+                                            state
+                                                is sub_state.SubscriptionRefreshing)
+                                        ? null
+                                        : thumbIconSubscribed,
+                                    value: isSubscribed,
+                                    onChanged:
+                                        (state
+                                                is sub_state.SubscriptionLoading ||
+                                            state
+                                                is sub_state.SubscriptionRefreshing)
+                                        ? null
+                                        : (value) {
+                                            if (value) {
+                                              // subscribe
+                                              context
+                                                  .read<SubscriptionCubit>()
+                                                  .subscribeToMachine(machine);
+                                            } else {
+                                              // unsubscribe
+                                              context
+                                                  .read<SubscriptionCubit>()
+                                                  .unsubscribeFromMachine(
+                                                    machine,
+                                                  );
+                                            }
+                                          },
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                           Divider(),
                           Column(
                             mainAxisAlignment: MainAxisAlignment.start,

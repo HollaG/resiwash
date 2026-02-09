@@ -174,20 +174,25 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
       // Wait a bit, then reload machines
       Future.delayed(const Duration(milliseconds: 500), () async {
+        if (isClosed) return;
         try {
           final subscribedMachines = await _getSubscribedMachines();
           final subscribedMachineIds = _sharedPreferencesService
               .getSubscribedMachines();
 
-          emit(
-            SubscriptionLoaded(
-              subscribedMachineIds: subscribedMachineIds,
-              subscribedMachines: subscribedMachines,
-            ),
-          );
+          if (!isClosed) {
+            emit(
+              SubscriptionLoaded(
+                subscribedMachineIds: subscribedMachineIds,
+                subscribedMachines: subscribedMachines,
+              ),
+            );
+          }
         } catch (e) {
           appLog.e('Error loading machines after subscription: $e');
-          emit(const SubscriptionError(message: 'Failed to load machines'));
+          if (!isClosed) {
+            emit(const SubscriptionError(message: 'Failed to load machines'));
+          }
         }
       });
     } catch (e) {
@@ -256,14 +261,16 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
       // Wait a bit, then update machines list
       Future.delayed(const Duration(seconds: 1), () {
-        emit(
-          SubscriptionLoaded(
-            subscribedMachineIds: updatedMachineIds,
-            subscribedMachines: currentMachines
-                ?.where((m) => m.machineId != machineId)
-                .toList(),
-          ),
-        );
+        if (!isClosed) {
+          emit(
+            SubscriptionLoaded(
+              subscribedMachineIds: updatedMachineIds,
+              subscribedMachines: currentMachines
+                  ?.where((m) => m.machineId != machineId)
+                  .toList(),
+            ),
+          );
+        }
       });
     } catch (e) {
       appLog.e('Error unsubscribing from machine $machineId: $e');

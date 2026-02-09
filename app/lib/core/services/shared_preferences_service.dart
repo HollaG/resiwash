@@ -76,7 +76,7 @@ class SharedPreferencesService {
       // NOTE: we only allow one claimed machine at a time logically
       // [feature1]
       // existingMachines.add(claimedMachine);
-      existingMachinesMetadata.clear();
+      // existingMachinesMetadata.clear(); // [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
       existingMachinesMetadata.add(claimedMachine);
       // Encode all claimed machines to JSON strings
       final encodedMachines = existingMachinesMetadata
