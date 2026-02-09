@@ -88,6 +88,12 @@ class _MachineRowState extends State<MachineRow>
     });
   }
 
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   Future<int?> _dialogBuilder(BuildContext context) {
     int selectedCycleTime = 30;
 

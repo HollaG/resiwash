@@ -46,6 +46,12 @@ class _MachineRowSlidableExplanationState
     });
   }
 
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
   Future<void> closeControllerAfterDelay() async {
     await Future.delayed(const Duration(milliseconds: 1000));
     controller.close();
