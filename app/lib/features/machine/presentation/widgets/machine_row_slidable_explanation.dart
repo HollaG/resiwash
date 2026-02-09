@@ -209,15 +209,15 @@ class _MachineRowSlidableExplanationState
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: MachineStatusIndicator.getTextColor(
                 context,
-                MachineStatus.available,
+                MachineStatus.unknown,
               ),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             softWrap: false,
           ),
-          trailing: AssetIcons.dryerIcon(context),
-          leading: MachineStatusIndicator(status: MachineStatus.available),
+          // trailing: AssetIcons.dryerIcon(context),
+          leading: MachineStatusIndicator(status: MachineStatus.unknown),
         ),
       ),
     );
