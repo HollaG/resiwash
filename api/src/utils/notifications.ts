@@ -16,10 +16,6 @@ const ClaimMap: {
   [machineId: string]: IClaimMapEntry[];
 } = {};
 
-const UserMap: {
-  [fcmToken: string]: string[]; // machineId
-} = {};
-
 const LastPokeTimeMap: {
   [machineId: string]: Date;
 } = {};
@@ -61,10 +57,8 @@ export const unclaimMachine = (machineId: string, fcmToken: string) => {
   ClaimMap[machineId] = ClaimMap[machineId].filter(
     (claim) => claim.fcmToken !== fcmToken
   );
-  UserMap[fcmToken] = UserMap[fcmToken].filter((id) => id !== machineId);
 
   console.log("Current ClaimMap:", ClaimMap);
-  console.log("Current UserMap:", UserMap);
 };
 
 /**
@@ -88,9 +82,6 @@ export const claimMachine = (
   if (!ClaimMap[machineId]) {
     ClaimMap[machineId] = [];
   }
-  if (!UserMap[fcmToken]) {
-    UserMap[fcmToken] = [];
-  }
 
   if (ClaimMap[machineId].some((claim) => claim.fcmToken === fcmToken)) {
     // already claimed by this user
@@ -106,10 +97,7 @@ export const claimMachine = (
 
   ClaimMap[machineId].push({ fcmToken, cycleTime, claimedAt });
 
-  UserMap[fcmToken].push(machineId);
-
   console.log("Current ClaimMap:", ClaimMap);
-  console.log("Current UserMap:", UserMap);
 
   // Set a timeout to remove the claim after the expiration time
   // setTimeout(() => {
@@ -162,7 +150,7 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
       oldStatus: null,
       newStatus: null,
       machine,
-    }).catch((e) => {}); // do nothing
+    }).catch((e) => { }); // do nothing
   }
 };
 
