@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
+import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -81,12 +82,19 @@ class _MachineRowState extends State<MachineRow>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Check subscription and claim status from the respective cubits
       bool isClaimed = _claimCubit.isMachineClaimed(widget.machine.machineId);
-      bool isSubscribed = _subscriptionCubit.isSubscribedToMachine(
+      bool isSubscribedIndividually = _subscriptionCubit.isSubscribedToMachine(
         widget.machine.machineId,
       );
 
+      bool isSubscribedInGroup = _subscriptionCubit.isSubscribedToGroup(
+        SubscriptionUtils.getTopicNameForGroup(
+          widget.machine.roomId,
+          widget.machine.type,
+        ),
+      );
+
       setState(() {
-        subscriptionState = isSubscribed
+        subscriptionState = isSubscribedIndividually || isSubscribedInGroup
             ? SubscriptionState.subscribed
             : SubscriptionState.notSubscribed;
         claimState = isClaimed ? ClaimState.claimed : ClaimState.notClaimed;
@@ -275,63 +283,84 @@ class _MachineRowState extends State<MachineRow>
         // Listen to SubscriptionCubit for subscription state changes
         BlocListener<SubscriptionCubit, sub_state.SubscriptionState>(
           listener: (context, state) {
-            if (state is sub_state.Subscribing &&
-                state.operatingMachine.machineId == widget.machine.machineId) {
-              // change internal state to loading
-              setState(() {
-                subscriptionState = SubscriptionState.loading;
-              });
-            }
-
-            if ((state is sub_state.Subscribed &&
-                    state.operatingMachine.machineId ==
-                        widget.machine.machineId) ||
-                (state is sub_state.Unsubscribed &&
-                    state.operatingMachine.machineId ==
-                        widget.machine.machineId)) {
-              // change internal state to success
-              setState(() {
-                subscriptionState = state is sub_state.Subscribed
-                    ? SubscriptionState.successSubscribing
-                    : SubscriptionState.successUnsubscribing;
-              });
-
-              // change back to normal 1s later
-              Future.delayed(const Duration(seconds: 1), () {
-                if (mounted) {
-                  setState(() {
-                    bool isSubscribed = _subscriptionCubit
-                        .isSubscribedToMachine(widget.machine.machineId);
-                    subscriptionState = isSubscribed
-                        ? SubscriptionState.subscribed
-                        : SubscriptionState.notSubscribed;
-                  });
-                }
-              });
-            }
-
-            if (state is sub_state.SubscriptionOperationError &&
-                state.operatingMachine.machineId == widget.machine.machineId) {
-              // reset to previous state on error
-              bool isSubscribed = _subscriptionCubit.isSubscribedToMachine(
-                widget.machine.machineId,
+            print("debug state is $state in subscription machien row");
+            if (state is sub_state.SubscribedToGroup ||
+                state is sub_state.UnsubscribedFromGroup) {
+              // re-check the subscription status from cubit
+              bool isSubscribedIndividually = _subscriptionCubit
+                  .isSubscribedToMachine(widget.machine.machineId);
+              bool isSubscribedInGroup = _subscriptionCubit.isSubscribedToGroup(
+                SubscriptionUtils.getTopicNameForGroup(
+                  widget.machine.roomId,
+                  widget.machine.type,
+                ),
               );
-
               setState(() {
-                subscriptionState = isSubscribed
+                subscriptionState =
+                    isSubscribedIndividually || isSubscribedInGroup
                     ? SubscriptionState.subscribed
                     : SubscriptionState.notSubscribed;
               });
-
-              print('Error subscribing to machine: ${state.message}');
-              if (!TickerMode.of(context)) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
             }
+
+            // ---- commented: we not doing per-machine subscription for now ----
+            // if (state is sub_state.Subscribing &&
+            //     state.operatingMachine.machineId == widget.machine.machineId) {
+            //   // change internal state to loading
+            //   setState(() {
+            //     subscriptionState = SubscriptionState.loading;
+            //   });
+            // }
+
+            // if ((state is sub_state.Subscribed &&
+            //         state.operatingMachine.machineId ==
+            //             widget.machine.machineId) ||
+            //     (state is sub_state.Unsubscribed &&
+            //         state.operatingMachine.machineId ==
+            //             widget.machine.machineId)) {
+            //   // change internal state to success
+            //   setState(() {
+            //     subscriptionState = state is sub_state.Subscribed
+            //         ? SubscriptionState.successSubscribing
+            //         : SubscriptionState.successUnsubscribing;
+            //   });
+
+            //   // change back to normal 1s later
+            //   Future.delayed(const Duration(seconds: 1), () {
+            //     if (mounted) {
+            //       setState(() {
+            //         bool isSubscribed = _subscriptionCubit
+            //             .isSubscribedToMachine(widget.machine.machineId);
+            //         subscriptionState = isSubscribed
+            //             ? SubscriptionState.subscribed
+            //             : SubscriptionState.notSubscribed;
+            //       });
+            //     }
+            //   });
+            // }
+
+            // if (state is sub_state.SubscriptionOperationError &&
+            //     state.operatingMachine.machineId == widget.machine.machineId) {
+            //   // reset to previous state on error
+            //   bool isSubscribed = _subscriptionCubit.isSubscribedToMachine(
+            //     widget.machine.machineId,
+            //   );
+
+            //   setState(() {
+            //     subscriptionState = isSubscribed
+            //         ? SubscriptionState.subscribed
+            //         : SubscriptionState.notSubscribed;
+            //   });
+
+            //   print('Error subscribing to machine: ${state.message}');
+            //   if (!TickerMode.of(context)) return;
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(
+            //       content: Text(state.message),
+            //       duration: const Duration(seconds: 2),
+            //     ),
+            //   );
+            // }
           },
         ),
       ],
@@ -339,50 +368,51 @@ class _MachineRowState extends State<MachineRow>
         builder: (context) {
           final location = MachineDisplayUtils.getLocationLabel(widget.machine);
           final time = MachineDisplayUtils.getStatusLabel(widget.machine);
-          String subscribeText = "";
+          // ---- commented: we not doing per-machine subscription for now ----
+          // String subscribeText = "";
 
-          switch (subscriptionState) {
-            case SubscriptionState.notSubscribed:
-              subscribeText = "Subscribe";
-              break;
-            case SubscriptionState.subscribed:
-              subscribeText = "Unsubscribe";
-              break;
-            case SubscriptionState.loading:
-              subscribeText = "Loading...";
-              break;
-            case SubscriptionState.successSubscribing:
-              subscribeText = "Subscribed!";
-              break;
-            case SubscriptionState.successUnsubscribing:
-              subscribeText = "Unsubscribed!";
-              break;
-          }
+          // switch (subscriptionState) {
+          //   case SubscriptionState.notSubscribed:
+          //     subscribeText = "Subscribe";
+          //     break;
+          //   case SubscriptionState.subscribed:
+          //     subscribeText = "Unsubscribe";
+          //     break;
+          //   case SubscriptionState.loading:
+          //     subscribeText = "Loading...";
+          //     break;
+          //   case SubscriptionState.successSubscribing:
+          //     subscribeText = "Subscribed!";
+          //     break;
+          //   case SubscriptionState.successUnsubscribing:
+          //     subscribeText = "Unsubscribed!";
+          //     break;
+          // }
 
-          Widget notificationIcon = Icon(
-            Icons.notification_add,
-            color: Theme.of(context).colorScheme.secondary,
-          );
+          // Widget notificationIcon = Icon(
+          //   Icons.notification_add,
+          //   color: Theme.of(context).colorScheme.secondary,
+          // );
 
-          if (subscriptionState == SubscriptionState.loading) {
-            notificationIcon = SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.secondary,
-              ),
-            );
-          }
+          // if (subscriptionState == SubscriptionState.loading) {
+          //   notificationIcon = SizedBox(
+          //     width: 16,
+          //     height: 16,
+          //     child: CircularProgressIndicator(
+          //       strokeWidth: 2,
+          //       color: Theme.of(context).colorScheme.secondary,
+          //     ),
+          //   );
+          // }
 
-          if (subscriptionState == SubscriptionState.successSubscribing ||
-              subscriptionState == SubscriptionState.successUnsubscribing) {
-            // success subscribing
-            notificationIcon = Icon(
-              Icons.check,
-              color: Theme.of(context).colorScheme.secondary,
-            );
-          }
+          // if (subscriptionState == SubscriptionState.successSubscribing ||
+          //     subscriptionState == SubscriptionState.successUnsubscribing) {
+          //   // success subscribing
+          //   notificationIcon = Icon(
+          //     Icons.check,
+          //     color: Theme.of(context).colorScheme.secondary,
+          //   );
+          // }
 
           String claimText = '';
           switch (claimState) {
@@ -526,84 +556,83 @@ class _MachineRowState extends State<MachineRow>
                 : null,
 
             // Right swipe action (subscribe/unsubscribe)
-            endActionPane: widget.allowSwipe
-                ? ActionPane(
-                    motion: const BehindMotion(),
-                    extentRatio: 0.25,
-                    dismissible: DismissiblePane(
-                      onDismissed: () => {},
-                      dismissThreshold: 0.4,
-                      confirmDismiss: () async {
-                        if (subscriptionState == SubscriptionState.loading) {
-                          controller.close();
-                          return false;
-                        }
+            // endActionPane: widget.allowSwipe
+            //     ? ActionPane(
+            //         motion: const BehindMotion(),
+            //         extentRatio: 0.25,
+            //         dismissible: DismissiblePane(
+            //           onDismissed: () => {},
+            //           dismissThreshold: 0.4,
+            //           confirmDismiss: () async {
+            //             if (subscriptionState == SubscriptionState.loading) {
+            //               controller.close();
+            //               return false;
+            //             }
 
-                        final subscriptionCubit = context
-                            .read<SubscriptionCubit>();
+            //             final subscriptionCubit = context
+            //                 .read<SubscriptionCubit>();
 
-                        if (subscriptionState == SubscriptionState.subscribed) {
-                          await subscriptionCubit.unsubscribeFromMachine(
-                            widget.machine,
-                          );
-                        } else if (subscriptionState ==
-                            SubscriptionState.notSubscribed) {
-                          await subscriptionCubit.subscribeToMachine(
-                            widget.machine,
-                          );
-                        }
-                        closeControllerAfterDelay();
-                        return false;
-                      },
-                    ),
-                    children: [
-                      CustomSlidableAction(
-                        onPressed: (context) async {
-                          if (subscriptionState == SubscriptionState.loading)
-                            return;
+            //             if (subscriptionState == SubscriptionState.subscribed) {
+            //               await subscriptionCubit.unsubscribeFromMachine(
+            //                 widget.machine,
+            //               );
+            //             } else if (subscriptionState ==
+            //                 SubscriptionState.notSubscribed) {
+            //               await subscriptionCubit.subscribeToMachine(
+            //                 widget.machine,
+            //               );
+            //             }
+            //             closeControllerAfterDelay();
+            //             return false;
+            //           },
+            //         ),
+            //         children: [
+            //           CustomSlidableAction(
+            //             onPressed: (context) async {
+            //               if (subscriptionState == SubscriptionState.loading)
+            //                 return;
 
-                          final subscriptionCubit = context
-                              .read<SubscriptionCubit>();
+            //               final subscriptionCubit = context
+            //                   .read<SubscriptionCubit>();
 
-                          if (subscriptionState ==
-                              SubscriptionState.subscribed) {
-                            await subscriptionCubit.unsubscribeFromMachine(
-                              widget.machine,
-                            );
-                          } else if (subscriptionState ==
-                              SubscriptionState.notSubscribed) {
-                            await subscriptionCubit.subscribeToMachine(
-                              widget.machine,
-                            );
-                          }
-                        },
-                        backgroundColor: context.accent.colorContainer,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.secondary,
-                        borderRadius: BorderRadius.circular(8),
-                        autoClose: true,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            notificationIcon,
-                            const SizedBox(height: 4),
-                            Text(
-                              subscribeText,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                  ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                : null,
-
+            //               if (subscriptionState ==
+            //                   SubscriptionState.subscribed) {
+            //                 await subscriptionCubit.unsubscribeFromMachine(
+            //                   widget.machine,
+            //                 );
+            //               } else if (subscriptionState ==
+            //                   SubscriptionState.notSubscribed) {
+            //                 await subscriptionCubit.subscribeToMachine(
+            //                   widget.machine,
+            //                 );
+            //               }
+            //             },
+            //             backgroundColor: context.accent.colorContainer,
+            //             foregroundColor: Theme.of(
+            //               context,
+            //             ).colorScheme.secondary,
+            //             borderRadius: BorderRadius.circular(8),
+            //             autoClose: true,
+            //             child: Column(
+            //               mainAxisAlignment: MainAxisAlignment.center,
+            //               children: [
+            //                 notificationIcon,
+            //                 const SizedBox(height: 4),
+            //                 Text(
+            //                   subscribeText,
+            //                   style: Theme.of(context).textTheme.labelSmall
+            //                       ?.copyWith(
+            //                         color: Theme.of(
+            //                           context,
+            //                         ).colorScheme.secondary,
+            //                       ),
+            //                 ),
+            //               ],
+            //             ),
+            //           ),
+            //         ],
+            //       )
+            //     : null,
             child: Container(
               decoration: BoxDecoration(
                 // borderRadius: BorderRadius.circular(8),

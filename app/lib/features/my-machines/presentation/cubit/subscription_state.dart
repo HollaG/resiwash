@@ -121,7 +121,7 @@ class SubscriptionError extends SubscriptionState {
       );
 }
 
-/// Currently subscribing to a group
+/// Currently subscribing to a group or unsubscribing
 class SubscribingToGroup extends SubscriptionLoaded {
   final String operatingGroupKey;
 

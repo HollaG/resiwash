@@ -6,8 +6,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/subscription_st
 class MachineGroupSubscription extends StatefulWidget {
   final List<String> subscriptionKeys;
 
-  const MachineGroupSubscription({Key? key, required this.subscriptionKeys})
-    : super(key: key);
+  const MachineGroupSubscription({super.key, required this.subscriptionKeys});
 
   @override
   State<MachineGroupSubscription> createState() =>
@@ -16,11 +15,17 @@ class MachineGroupSubscription extends StatefulWidget {
 
 class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
   bool _isSubscribed = false;
+  bool _isLoading = false;
   late WidgetStateProperty<Icon> thumbIconSubscribed;
 
   @override
   void initState() {
     super.initState();
+
+    // read the initial subscription state
+    _isSubscribed = context.read<SubscriptionCubit>().isSubscribedToGroups(
+      widget.subscriptionKeys,
+    );
   }
 
   @override
@@ -38,6 +43,9 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
   }
 
   void onSwitchChanged(bool value) async {
+    setState(() {
+      _isLoading = true;
+    });
     if (value) {
       await context.read<SubscriptionCubit>().subscribeToGroups(
         widget.subscriptionKeys,
@@ -48,20 +56,23 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
       );
     }
 
-    // setState(() {
-    //   _isSubscribed = value;
-    // });
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SubscriptionCubit, SubscriptionState>(
       listener: (context, state) {
+        // Remember that Subscribing and Unsubscribing extend SubscriptionLoaded (antipattern, but eh)
         if (state is SubscriptionLoaded) {
           setState(() {
-            _isSubscribed = context.read<SubscriptionCubit>().isSubscribedToGroups(
-              widget.subscriptionKeys,
-            );
+            _isSubscribed = context
+                .read<SubscriptionCubit>()
+                .isSubscribedToGroups(widget.subscriptionKeys);
           });
         }
       },
@@ -69,7 +80,9 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
         return Switch(
           value: _isSubscribed,
           thumbIcon: thumbIconSubscribed,
-          onChanged: onSwitchChanged,
+          onChanged: _isLoading ? null : onSwitchChanged,
+
+          // inactiveThumbImage:
         );
       },
     );

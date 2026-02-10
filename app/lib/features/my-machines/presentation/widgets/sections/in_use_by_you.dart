@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/demo/machine_row_slidable_explanation.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
@@ -228,6 +229,10 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
         }
       },
       builder: (context, state) {
+        if (state is claim_state.ClaimLoaded)
+          print(
+            "debug claimed machines: ${state.claimedMachines} ${state.claimedMachineMetadata}",
+          );
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
@@ -267,30 +272,30 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                AnimatedOpacity(
-                  opacity: canEditClaimed ? 1 : 0,
-                  duration: Duration(milliseconds: 100),
-                  child: AnimatedSwitcher(
-                    duration: Duration(milliseconds: 100),
-                    child: isEditingClaimed
-                        ? FilledButton.icon(
-                            style: ButtonStyle(),
-                            key: ValueKey('finish_button'),
-                            onPressed: _onFinishPressed,
-                            icon: Icon(Icons.check),
-                            label: Text("Finish"),
-                          )
-                        : OutlinedButton.icon(
-                            key: ValueKey('edit_button'),
-                            onPressed: () {
-                              _onEditPressed(context);
-                            },
-                            label: Text("Edit"),
-                            icon: Icon(Icons.edit),
-                          ),
-                  ),
-                ),
+                // const SizedBox(width: 8),
+                // AnimatedOpacity(
+                //   opacity: canEditClaimed ? 1 : 0,
+                //   duration: Duration(milliseconds: 100),
+                //   child: AnimatedSwitcher(
+                //     duration: Duration(milliseconds: 100),
+                //     child: isEditingClaimed
+                //         ? FilledButton.icon(
+                //             style: ButtonStyle(),
+                //             key: ValueKey('finish_button'),
+                //             onPressed: _onFinishPressed,
+                //             icon: Icon(Icons.check),
+                //             label: Text("Finish"),
+                //           )
+                //         : OutlinedButton.icon(
+                //             key: ValueKey('edit_button'),
+                //             onPressed: () {
+                //               _onEditPressed(context);
+                //             },
+                //             label: Text("Edit"),
+                //             icon: Icon(Icons.edit),
+                //           ),
+                //   ),
+                // ),
                 // if (!isEditingClaimed)
                 //   AnimatedOpacity(
                 //     opacity: canEditClaimed ? 1.0 : 0,
@@ -329,25 +334,41 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                 state.claimedMachineMetadata.isNotEmpty)
               Column(
                 spacing: 8,
-                children: state.claimedMachineMetadata.isNotEmpty
-                    ? state.claimedMachineMetadata
-                          .map(
-                            (claimedMeta) => Tracker(
-                              isEditing: isEditingClaimed,
-                              claimedMetadata: claimedMeta,
-                              machine: (state.claimedMachines!).firstWhere(
-                                (machine) =>
-                                    machine.machineId == claimedMeta.machineId,
-                              ),
-                            ),
-                          )
-                          .toList()
-                    : [
-                        Text(
-                          "You have not marked any machines as in use.",
-                          style: Theme.of(context).textTheme.bodyMedium,
+                children: state.claimedMachineMetadata
+                    .map(
+                      (claimedMeta) => Tracker(
+                        isEditing: isEditingClaimed,
+                        claimedMetadata: claimedMeta,
+                        machine: (state.claimedMachines!).firstWhere(
+                          (machine) =>
+                              machine.machineId == claimedMeta.machineId,
                         ),
-                      ],
+                      ),
+                    )
+                    .toList(),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+
+                child: Column(
+                  spacing: 8,
+                  children: [
+                    Text(
+                      textAlign: TextAlign.center,
+                      "You have not marked any machines as in use. ",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      textAlign: TextAlign.center,
+                      "Swipe right on a machine, or scan a QR code to mark a machine as in use by you.",
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    MachineRowSlidableExplanation(
+                      initialPeekState: PeekState.left,
+                    ),
+                  ],
+                ),
               ),
           ],
         );

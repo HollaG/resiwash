@@ -428,78 +428,78 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                 },
                               ),
                               // Subscription switch
-                              BlocConsumer<
-                                SubscriptionCubit,
-                                sub_state.SubscriptionState
-                              >(
-                                listener: (context, state) {},
-                                builder: (context, state) {
-                                  bool isSubscribed = context
-                                      .read<SubscriptionCubit>()
-                                      .isSubscribedToMachine(widget.machineId);
-                                  return SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    subtitle: RichText(
-                                      text: TextSpan(
-                                        text:
-                                            "Receive a notification whenever a machine's status changes",
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      "Subscribe",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.secondary,
-                                          ),
-                                    ),
-                                    secondary: (state is sub_state.Subscribing)
-                                        ? SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.0,
-                                            ),
-                                          )
-                                        : null,
-                                    thumbIcon:
-                                        (state
-                                                is sub_state.SubscriptionLoading ||
-                                            state
-                                                is sub_state.SubscriptionRefreshing)
-                                        ? null
-                                        : thumbIconSubscribed,
-                                    value: isSubscribed,
-                                    onChanged:
-                                        (state
-                                                is sub_state.SubscriptionLoading ||
-                                            state
-                                                is sub_state.SubscriptionRefreshing)
-                                        ? null
-                                        : (value) {
-                                            if (value) {
-                                              // subscribe
-                                              context
-                                                  .read<SubscriptionCubit>()
-                                                  .subscribeToMachine(machine);
-                                            } else {
-                                              // unsubscribe
-                                              context
-                                                  .read<SubscriptionCubit>()
-                                                  .unsubscribeFromMachine(
-                                                    machine,
-                                                  );
-                                            }
-                                          },
-                                  );
-                                },
-                              ),
+                              // BlocConsumer<
+                              //   SubscriptionCubit,
+                              //   sub_state.SubscriptionState
+                              // >(
+                              //   listener: (context, state) {},
+                              //   builder: (context, state) {
+                              //     bool isSubscribed = context
+                              //         .read<SubscriptionCubit>()
+                              //         .isSubscribedToMachine(widget.machineId);
+                              //     return SwitchListTile(
+                              //       contentPadding: EdgeInsets.zero,
+                              //       subtitle: RichText(
+                              //         text: TextSpan(
+                              //           text:
+                              //               "Receive a notification whenever a machine's status changes",
+                              //           style: Theme.of(
+                              //             context,
+                              //           ).textTheme.bodySmall,
+                              //         ),
+                              //       ),
+                              //       title: Text(
+                              //         "Subscribe",
+                              //         style: Theme.of(context)
+                              //             .textTheme
+                              //             .labelLarge
+                              //             ?.copyWith(
+                              //               color: Theme.of(
+                              //                 context,
+                              //               ).colorScheme.secondary,
+                              //             ),
+                              //       ),
+                              //       secondary: (state is sub_state.Subscribing)
+                              //           ? SizedBox(
+                              //               width: 24,
+                              //               height: 24,
+                              //               child: CircularProgressIndicator(
+                              //                 strokeWidth: 2.0,
+                              //               ),
+                              //             )
+                              //           : null,
+                              //       thumbIcon:
+                              //           (state
+                              //                   is sub_state.SubscriptionLoading ||
+                              //               state
+                              //                   is sub_state.SubscriptionRefreshing)
+                              //           ? null
+                              //           : thumbIconSubscribed,
+                              //       value: isSubscribed,
+                              //       onChanged:
+                              //           (state
+                              //                   is sub_state.SubscriptionLoading ||
+                              //               state
+                              //                   is sub_state.SubscriptionRefreshing)
+                              //           ? null
+                              //           : (value) {
+                              //               if (value) {
+                              //                 // subscribe
+                              //                 context
+                              //                     .read<SubscriptionCubit>()
+                              //                     .subscribeToMachine(machine);
+                              //               } else {
+                              //                 // unsubscribe
+                              //                 context
+                              //                     .read<SubscriptionCubit>()
+                              //                     .unsubscribeFromMachine(
+                              //                       machine,
+                              //                     );
+                              //               }
+                              //             },
+                              //     );
+                              //   },
+                              // ),
                             ],
                           ),
                           Divider(),

@@ -120,15 +120,33 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   }
 
   /// Load all subscribed machines
-  Future<void> loadSubscribedEntities() async {
+  Future<void> loadSubscribedEntities({bool isFresh = false}) async {
     try {
-      emit(
-        SubscriptionLoading(
-          subscribedMachineIds: _sharedPreferencesService
-              .getSubscribedMachines(),
-          subscribedGroupKeys: _sharedPreferencesService.getSubscribedGroups(),
-        ),
-      );
+      if (isFresh) {
+        emit(
+          SubscriptionLoading(
+            subscribedMachineIds: _sharedPreferencesService
+                .getSubscribedMachines(),
+            subscribedGroupKeys: _sharedPreferencesService
+                .getSubscribedGroups(),
+          ),
+        );
+      } else {
+        emit(
+          SubscriptionRefreshing(
+            subscribedMachineIds: _sharedPreferencesService
+                .getSubscribedMachines(),
+            subscribedGroupKeys: _sharedPreferencesService
+                .getSubscribedGroups(),
+            subscribedMachines: (state is SubscriptionLoaded)
+                ? (state as SubscriptionLoaded).subscribedMachines
+                : null,
+            subscribedGroups: (state is SubscriptionLoaded)
+                ? (state as SubscriptionLoaded).subscribedGroups
+                : null,
+          ),
+        );
+      }
 
       try {
         final subscribedMachines = await _getSubscribedMachines();
@@ -294,8 +312,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           operatingMachine: machine,
         ),
       );
-
-      // Reload current state after error
+    } finally {
       loadSubscribedEntities();
     }
   }
@@ -384,8 +401,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           operatingMachine: machine,
         ),
       );
-
-      // Reload current state after error
+    } finally {
       loadSubscribedEntities();
     }
   }
@@ -483,8 +499,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           operatingGroupKey: groupKey,
         ),
       );
-
-      // Reload current state after error
+    } finally {
       loadSubscribedEntities();
     }
   }
@@ -538,7 +553,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
-          subscribedGroups: updatedGroups,
+          subscribedGroups: updatedGroups, 
           operatingGroupKey: groupKey,
         ),
       );
@@ -568,8 +583,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           operatingGroupKey: groupKey,
         ),
       );
-
-      // Reload current state after error
+    } finally {
       loadSubscribedEntities();
     }
   }
@@ -605,6 +619,16 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       currentGroups = currentState.subscribedGroups;
     }
 
+    emit(
+      SubscribingToGroup(
+        subscribedMachineIds: currentMachineIds,
+        subscribedMachines: currentMachines,
+        subscribedGroupKeys: currentGroupKeys,
+        subscribedGroups: currentGroups,
+        operatingGroupKey: groupKeys.join(', '),
+      ),
+    );
+
     // Filter out already subscribed groups
     final groupsToSubscribe = groupKeys
         .where((key) => !currentGroupKeys.contains(key))
@@ -626,11 +650,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       final updatedGroups = await _getSubscribedGroups();
 
       emit(
-        SubscriptionLoaded(
+        SubscribedToGroup(
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
           subscribedGroups: updatedGroups,
+          operatingGroupKey: groupKeys.join(', '),
         ),
       );
     } catch (e) {
@@ -650,8 +675,6 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           operatingGroupKey: groupKeys.join(', '),
         ),
       );
-
-      // Reload current state after error
     } finally {
       loadSubscribedEntities();
     }
@@ -676,6 +699,16 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       currentGroups = currentState.subscribedGroups;
     }
 
+    emit(
+      SubscribingToGroup(
+        subscribedMachineIds: currentMachineIds,
+        subscribedMachines: currentMachines,
+        subscribedGroupKeys: currentGroupKeys,
+        subscribedGroups: currentGroups,
+        operatingGroupKey: groupKeys.join(', '),
+      ),
+    );
+
     try {
       // Filter out groups not subscribed to
       final groupsToUnsubscribe = groupKeys
@@ -698,11 +731,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       final updatedGroups = await _getSubscribedGroups();
 
       emit(
-        SubscriptionLoaded(
+        UnsubscribedFromGroup(
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
           subscribedGroups: updatedGroups,
+          operatingGroupKey: groupKeys.join(', '),
         ),
       );
     } catch (e) {

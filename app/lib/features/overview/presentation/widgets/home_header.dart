@@ -79,31 +79,6 @@ class HomeHeader extends StatelessWidget {
                       children: [
                         Expanded(
                           child: HomeMainCard(
-                            leading: AssetIcons.washerIcon(context),
-                            title: "Washers",
-                            count: "$washerCount/$totalWashers",
-
-                            actionText: "View",
-                            onAction: () {
-                              // Navigate to the washer list page
-                              context.push(
-                                Uri(
-                                  path: AppRoutes.machineList,
-                                  queryParameters: {
-                                    'types[]': [MachineType.washer.name],
-                                  },
-                                ).toString(),
-                                extra: {
-                                  'title': "Washers",
-                                  'count': totalWashers.toString(),
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: HomeMainCard(
                             leading: AssetIcons.dryerIcon(context),
                             title: "Dryers",
                             count: "$dryerCount/$totalDryers",
@@ -121,6 +96,31 @@ class HomeHeader extends StatelessWidget {
                                 extra: {
                                   'title': "Dryers",
                                   'count': totalDryers.toString(),
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Expanded(
+                          child: HomeMainCard(
+                            leading: AssetIcons.washerIcon(context),
+                            title: "Washers",
+                            count: "$washerCount/$totalWashers",
+
+                            actionText: "View",
+                            onAction: () {
+                              // Navigate to the washer list page
+                              context.push(
+                                Uri(
+                                  path: AppRoutes.machineList,
+                                  queryParameters: {
+                                    'types[]': [MachineType.washer.name],
+                                  },
+                                ).toString(),
+                                extra: {
+                                  'title': "Washers",
+                                  'count': totalWashers.toString(),
                                 },
                               );
                             },

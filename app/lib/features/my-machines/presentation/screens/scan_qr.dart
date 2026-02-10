@@ -45,7 +45,8 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
   bool _navigating = false;
   final MobileScannerController _controller = MobileScannerController();
 
-  static String INFO_DEFAULT = 'Scan a QR code';
+  static String INFO_DEFAULT =
+      'Scan a ResiWash QR code to mark a machine as in use by you.';
   String infoText = INFO_DEFAULT;
 
   @override
@@ -177,7 +178,16 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
                   ),
                 ),
               ),
-              Text(infoText, style: Theme.of(context).textTheme.bodyLarge),
+              Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: Text(
+                    infoText,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ),
+              ),
               // BlocConsumer<MachineDetailCubit, MachineDetailState>(
               //   listener: (context, state) {
               //     print("MachineDetailState changed: $state");

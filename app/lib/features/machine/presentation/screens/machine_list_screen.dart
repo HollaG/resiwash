@@ -17,7 +17,7 @@ import 'package:resiwash/features/machine/presentation/cubit/machine_list_state.
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_list_app_bar.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
-import 'package:resiwash/features/machine/presentation/widgets/machine_row_slidable_explanation.dart';
+
 import 'package:resiwash/features/my-machines/presentation/widgets/machine_group_subscription.dart';
 import 'package:resiwash/features/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
@@ -120,31 +120,7 @@ class _MachineListScreenState extends State<MachineListScreen>
                   child: ListView(
                     children: [
                       SizedBox(height: 16),
-                      if (washers.isNotEmpty) ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: StatusRowSummary(
-                                label: "Washers",
-                                machines: washers,
-                              ),
-                            ),
-                            if (widget.roomIds != null &&
-                                widget.roomIds!.isNotEmpty)
-                              MachineGroupSubscription(
-                                subscriptionKeys: widget.roomIds!
-                                    .map(
-                                      (e) =>
-                                          SubscriptionUtils.getTopicNameForGroup(
-                                            e,
-                                            MachineType.washer,
-                                          ),
-                                    )
-                                    .toList(),
-                              ),
-                          ],
-                        ),
-                      ],
+
                       if (dryers.isNotEmpty) ...[
                         Row(
                           children: [
@@ -170,6 +146,31 @@ class _MachineListScreenState extends State<MachineListScreen>
                           ],
                         ),
                       ],
+                      if (washers.isNotEmpty) ...[
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatusRowSummary(
+                                label: "Washers",
+                                machines: washers,
+                              ),
+                            ),
+                            if (widget.roomIds != null &&
+                                widget.roomIds!.isNotEmpty)
+                              MachineGroupSubscription(
+                                subscriptionKeys: widget.roomIds!
+                                    .map(
+                                      (e) =>
+                                          SubscriptionUtils.getTopicNameForGroup(
+                                            e,
+                                            MachineType.washer,
+                                          ),
+                                    )
+                                    .toList(),
+                              ),
+                          ],
+                        ),
+                      ],
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Divider(),
@@ -177,18 +178,6 @@ class _MachineListScreenState extends State<MachineListScreen>
                       ...state.machines.map((machine) {
                         return MachineRow(machine: machine);
                       }),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Divider(),
-                      ),
-
-                      MachineRowSlidableExplanation(
-                        initialPeekState: PeekState.left,
-                      ),
-                      MachineRowSlidableExplanation(
-                        initialPeekState: PeekState.right,
-                      ),
-                      MachineRowSlidableExplanation(),
                     ],
                   ),
                 ),

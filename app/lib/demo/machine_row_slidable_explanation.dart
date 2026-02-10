@@ -119,57 +119,57 @@ class _MachineRowSlidableExplanationState
       ),
 
       // Right swipe action (Subscribe)
-      endActionPane: ActionPane(
-        motion: const BehindMotion(),
-        extentRatio: 0.4,
-        dismissible: DismissiblePane(
-          onDismissed: () {},
-          dismissThreshold: 0.4,
-          confirmDismiss: () async {
-            // Demo action
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Demo: Subscribe action triggered'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-            closeControllerAfterDelay();
-            return false;
-          },
-        ),
-        children: [
-          CustomSlidableAction(
-            onPressed: (context) async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Demo: Subscribe action triggered'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            backgroundColor: context.accent.colorContainer,
-            foregroundColor: Theme.of(context).colorScheme.secondary,
-            borderRadius: BorderRadius.circular(8),
-            autoClose: true,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.notification_add,
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Subscribe',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      // endActionPane: ActionPane(
+      //   motion: const BehindMotion(),
+      //   extentRatio: 0.4,
+      //   dismissible: DismissiblePane(
+      //     onDismissed: () {},
+      //     dismissThreshold: 0.4,
+      //     confirmDismiss: () async {
+      //       // Demo action
+      //       ScaffoldMessenger.of(context).showSnackBar(
+      //         const SnackBar(
+      //           content: Text('Demo: Subscribe action triggered'),
+      //           duration: Duration(seconds: 2),
+      //         ),
+      //       );
+      //       closeControllerAfterDelay();
+      //       return false;
+      //     },
+      //   ),
+      //   children: [
+      //     CustomSlidableAction(
+      //       onPressed: (context) async {
+      //         ScaffoldMessenger.of(context).showSnackBar(
+      //           const SnackBar(
+      //             content: Text('Demo: Subscribe action triggered'),
+      //             duration: Duration(seconds: 2),
+      //           ),
+      //         );
+      //       },
+      //       backgroundColor: context.accent.colorContainer,
+      //       foregroundColor: Theme.of(context).colorScheme.secondary,
+      //       borderRadius: BorderRadius.circular(8),
+      //       autoClose: true,
+      //       child: Column(
+      //         mainAxisAlignment: MainAxisAlignment.center,
+      //         children: [
+      //           Icon(
+      //             Icons.notification_add,
+      //             color: Theme.of(context).colorScheme.secondary,
+      //           ),
+      //           const SizedBox(height: 4),
+      //           Text(
+      //             'Subscribe',
+      //             style: Theme.of(context).textTheme.labelSmall?.copyWith(
+      //               color: Theme.of(context).colorScheme.secondary,
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //     ),
+      //   ],
+      // ),
 
       // Demo machine row content
       child: Container(
@@ -222,7 +222,7 @@ class _MachineRowSlidableExplanationState
             overflow: TextOverflow.ellipsis,
             softWrap: false,
           ),
-          // trailing: AssetIcons.dryerIcon(context),
+          trailing: AssetIcons.dryerIcon(context),
           leading: MachineStatusIndicator(status: MachineStatus.unknown),
         ),
       ),

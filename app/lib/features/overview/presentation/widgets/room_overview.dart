@@ -56,18 +56,18 @@ class RoomOverview extends StatelessWidget {
                   Column(
                     children: [
                       StatusRowSummary(
-                        label: "Washers",
-                        machines: machines
-                            .filter(
-                              (machine) => machine.type == MachineType.washer,
-                            )
-                            .toList(),
-                      ),
-                      StatusRowSummary(
                         label: "Dryers",
                         machines: machines
                             .filter(
                               (machine) => machine.type == MachineType.dryer,
+                            )
+                            .toList(),
+                      ),
+                      StatusRowSummary(
+                        label: "Washers",
+                        machines: machines
+                            .filter(
+                              (machine) => machine.type == MachineType.washer,
                             )
                             .toList(),
                       ),

@@ -35,10 +35,10 @@ class StatusRowSummary extends StatelessWidget {
         children: [
           Text(label, style: Theme.of(context).textTheme.labelMedium),
           // Spacer(),
-          Flexible(child: Container()),
-          SizedBox(
+          // Flexible(child: Container()),
+          Expanded(
             // hardcode the size of the status indicator box
-            width: width.toDouble(),
+            // width: width.toDouble(),
             child: Wrap(
               alignment: WrapAlignment.end,
               spacing: 2,

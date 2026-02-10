@@ -68,6 +68,7 @@ class SharedPreferencesService {
   void unsubscribeFromGroups(Set<String> groupKeys) {
     final existingKeys = _prefs.getStringList(subscribedGroupsKey) ?? [];
     final updatedKeys = existingKeys.toSet().difference(groupKeys).toList();
+    print("debug updatedKeys after unsubscribe: $updatedKeys");
     _prefs.setStringList(subscribedGroupsKey, updatedKeys);
   }
 
