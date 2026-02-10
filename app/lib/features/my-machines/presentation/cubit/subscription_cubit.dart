@@ -61,29 +61,93 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     );
   }
 
+  /// Load subscribed groups from local storage and fetch their data
+  Future<Map<String, List<MachineEntity>>> _getSubscribedGroups() async {
+    final subscribedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+
+    if (subscribedGroupKeys.isEmpty) {
+      return {};
+    }
+
+    appLog.d(
+      'Loading ${subscribedGroupKeys.length} subscribed groups from repository',
+    );
+
+    // groupKey format: group_roomId_type (e.g., "group_3_washer")
+    // Using groupKey directly as map key for simplicity
+    Map<String, List<MachineEntity>> groupMachines = {};
+
+    for (final groupKey in subscribedGroupKeys) {
+      final parts = groupKey.split('_');
+      if (parts.length != 3) {
+        appLog.w('Invalid group key format: $groupKey');
+        continue;
+      }
+
+      final roomId = parts[1];
+      final typeString = parts[2];
+      final type = MachineType.values.firstWhere(
+        (e) => e.name == typeString,
+        orElse: () {
+          appLog.w('Unknown machine type in group key: $groupKey');
+          return MachineType.unknown;
+        },
+      );
+
+      appLog.d('Fetching machines for group: roomId=$roomId, type=$type');
+
+      // Fetch machines from repository
+      final result = await _listMachinesUseCase(
+        ListMachinesParams(roomIds: [roomId], types: [type.name], extra: true),
+      );
+
+      result.fold(
+        (failure) {
+          appLog.e(
+            'Error loading machines for group $groupKey: ${failure.message}',
+          );
+        },
+        (machines) {
+          appLog.i(
+            'Successfully loaded ${machines.length} machines for group $groupKey',
+          );
+          groupMachines[groupKey] = machines;
+        },
+      );
+    }
+
+    return groupMachines;
+  }
+
   /// Load all subscribed machines
-  Future<void> loadSubscribedMachines() async {
+  Future<void> loadSubscribedEntities() async {
     try {
       emit(
         SubscriptionLoading(
           subscribedMachineIds: _sharedPreferencesService
               .getSubscribedMachines(),
+          subscribedGroupKeys: _sharedPreferencesService.getSubscribedGroups(),
         ),
       );
 
       try {
         final subscribedMachines = await _getSubscribedMachines();
+        final subscribedGroups = await _getSubscribedGroups();
         final subscribedMachineIds = _sharedPreferencesService
             .getSubscribedMachines();
+        final subscribedGroupKeys = _sharedPreferencesService
+            .getSubscribedGroups();
 
         emit(
           SubscriptionLoaded(
             subscribedMachineIds: subscribedMachineIds,
             subscribedMachines: subscribedMachines,
+            subscribedGroupKeys: subscribedGroupKeys,
+            subscribedGroups: subscribedGroups,
           ),
         );
       } catch (e) {
-        appLog.e('Error loading subscribed machines: $e');
+        appLog.e('Error loading subscribed entities: $e');
         emit(
           const SubscriptionError(
             message: 'Failed to load subscribed machines',
@@ -107,17 +171,24 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           SubscriptionRefreshing(
             subscribedMachineIds: currentState.subscribedMachineIds,
             subscribedMachines: currentState.subscribedMachines,
+            subscribedGroupKeys: currentState.subscribedGroupKeys,
+            subscribedGroups: currentState.subscribedGroups,
           ),
         );
 
         final subscribedMachines = await _getSubscribedMachines();
+        final subscribedGroups = await _getSubscribedGroups();
         final subscribedMachineIds = _sharedPreferencesService
             .getSubscribedMachines();
+        final subscribedGroupKeys = _sharedPreferencesService
+            .getSubscribedGroups();
 
         emit(
           SubscriptionLoaded(
             subscribedMachineIds: subscribedMachineIds,
             subscribedMachines: subscribedMachines,
+            subscribedGroupKeys: subscribedGroupKeys,
+            subscribedGroups: subscribedGroups,
           ),
         );
       } catch (e) {
@@ -137,10 +208,14 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
     List<String> currentMachineIds = [];
     List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
 
     if (currentState is SubscriptionLoaded) {
       currentMachineIds = currentState.subscribedMachineIds;
       currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
     }
 
     try {
@@ -148,6 +223,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         Subscribing(
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
@@ -163,6 +240,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       // Reload from shared preferences to get updated list
       final updatedMachineIds = _sharedPreferencesService
           .getSubscribedMachines();
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
 
       appLog.i('Successfully subscribed to machine: $machineId');
 
@@ -170,6 +248,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         Subscribed(
           subscribedMachineIds: updatedMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
@@ -179,14 +259,19 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         if (isClosed) return;
         try {
           final subscribedMachines = await _getSubscribedMachines();
+          final subscribedGroups = await _getSubscribedGroups();
           final subscribedMachineIds = _sharedPreferencesService
               .getSubscribedMachines();
+          final subscribedGroupKeys = _sharedPreferencesService
+              .getSubscribedGroups();
 
           if (!isClosed) {
             emit(
               SubscriptionLoaded(
                 subscribedMachineIds: subscribedMachineIds,
                 subscribedMachines: subscribedMachines,
+                subscribedGroupKeys: subscribedGroupKeys,
+                subscribedGroups: subscribedGroups,
               ),
             );
           }
@@ -204,12 +289,14 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           message: 'Failed to subscribe to machine',
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
 
       // Reload current state after error
-      loadSubscribedMachines();
+      loadSubscribedEntities();
     }
   }
 
@@ -223,10 +310,14 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
 
     List<String> currentMachineIds = [];
     List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
 
     if (currentState is SubscriptionLoaded) {
       currentMachineIds = currentState.subscribedMachineIds;
       currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
     }
 
     try {
@@ -240,6 +331,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         Subscribing(
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
@@ -250,6 +343,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       // Reload from shared preferences to get updated list
       final updatedMachineIds = _sharedPreferencesService
           .getSubscribedMachines();
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
 
       appLog.i('Successfully unsubscribed from machine: $machineId');
 
@@ -257,6 +351,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         Unsubscribed(
           subscribedMachineIds: updatedMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
@@ -270,6 +366,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
               subscribedMachines: currentMachines
                   ?.where((m) => m.machineId != machineId)
                   .toList(),
+              subscribedGroupKeys: updatedGroupKeys,
+              subscribedGroups: currentGroups,
             ),
           );
         }
@@ -281,12 +379,14 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           message: 'Failed to unsubscribe from machine',
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
           operatingMachine: machine,
         ),
       );
 
       // Reload current state after error
-      loadSubscribedMachines();
+      loadSubscribedEntities();
     }
   }
 
@@ -309,9 +409,31 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   /// - Saves to local storage via SharedPreferencesService
   /// NOTE: does NOT hit the backend.
   Future<void> subscribeToGroup(String groupKey) async {
-    final currentGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+    final currentState = state;
+
+    List<String> currentMachineIds = [];
+    List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
+
+    if (currentState is SubscriptionLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
+    }
 
     try {
+      emit(
+        SubscribingToGroup(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
       if (currentGroupKeys.contains(groupKey)) {
         appLog.w('Already subscribed to group: $groupKey');
         return;
@@ -320,10 +442,50 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       // Subscribe to notification topic
       await _notificationService.subscribeToGroup(groupKey);
 
+      // Reload from shared preferences to get updated list
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+      final updatedGroups = await _getSubscribedGroups();
+
       appLog.i('Successfully subscribed to group: $groupKey');
+
+      emit(
+        SubscribedToGroup(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: updatedGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
+      // Wait a bit, then emit loaded state
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!isClosed) {
+          emit(
+            SubscriptionLoaded(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              subscribedGroupKeys: updatedGroupKeys,
+              subscribedGroups: updatedGroups,
+            ),
+          );
+        }
+      });
     } catch (e) {
       appLog.e('Error subscribing to group $groupKey: $e');
-      rethrow;
+      emit(
+        SubscriptionGroupOperationError(
+          message: 'Failed to subscribe to group',
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
+      // Reload current state after error
+      loadSubscribedEntities();
     }
   }
 
@@ -332,7 +494,19 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   /// - Removes from local storage via SharedPreferencesService
   /// NOTE: does NOT hit the backend.
   Future<void> unsubscribeFromGroup(String groupKey) async {
-    final currentGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+    final currentState = state;
+
+    List<String> currentMachineIds = [];
+    List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
+
+    if (currentState is SubscriptionLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
+    }
 
     try {
       if (!currentGroupKeys.contains(groupKey)) {
@@ -340,19 +514,212 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         return;
       }
 
+      emit(
+        SubscribingToGroup(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
       // Unsubscribe from notification topic
       await _notificationService.unsubscribeFromGroup(groupKey);
 
+      // Reload from shared preferences to get updated list
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+      final updatedGroups = await _getSubscribedGroups();
+
       appLog.i('Successfully unsubscribed from group: $groupKey');
+
+      emit(
+        UnsubscribedFromGroup(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: updatedGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
+      // Wait a bit, then emit loaded state
+      Future.delayed(const Duration(seconds: 1), () {
+        if (!isClosed) {
+          emit(
+            SubscriptionLoaded(
+              subscribedMachineIds: currentMachineIds,
+              subscribedMachines: currentMachines,
+              subscribedGroupKeys: updatedGroupKeys,
+              subscribedGroups: updatedGroups,
+            ),
+          );
+        }
+      });
     } catch (e) {
       appLog.e('Error unsubscribing from group $groupKey: $e');
-      rethrow;
+      emit(
+        SubscriptionGroupOperationError(
+          message: 'Failed to unsubscribe from group',
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKey,
+        ),
+      );
+
+      // Reload current state after error
+      loadSubscribedEntities();
     }
   }
 
   /// Check if subscribed to a specific group
   bool isSubscribedToGroup(String groupKey) {
     return _sharedPreferencesService.isSubscribedToGroup(groupKey);
+  }
+
+  /// Check if subscribed to all groups in a list
+  bool isSubscribedToGroups(List<String> groupKeys) {
+    return groupKeys.every(
+      (key) => _sharedPreferencesService.isSubscribedToGroup(key),
+    );
+  }
+
+  /// Subscribe to multiple groups
+  /// - Subscribes to FCM topics via NotificationService
+  /// - Saves to local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
+  Future<void> subscribeToGroups(List<String> groupKeys) async {
+    final currentState = state;
+
+    List<String> currentMachineIds = [];
+    List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
+
+    if (currentState is SubscriptionLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
+    }
+
+    // Filter out already subscribed groups
+    final groupsToSubscribe = groupKeys
+        .where((key) => !currentGroupKeys.contains(key))
+        .toList();
+    try {
+      if (groupsToSubscribe.isEmpty) {
+        appLog.w('Already subscribed to all groups: $groupKeys');
+        return;
+      }
+
+      // Subscribe to each group
+      for (final groupKey in groupsToSubscribe) {
+        await _notificationService.subscribeToGroup(groupKey);
+        appLog.i('Successfully subscribed to group: $groupKey');
+      }
+
+      // Reload from shared preferences to get updated list
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+      final updatedGroups = await _getSubscribedGroups();
+
+      emit(
+        SubscriptionLoaded(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: updatedGroups,
+        ),
+      );
+    } catch (e) {
+      appLog.e('Error subscribing to groups $groupKeys: $e');
+
+      // remove from pref
+      for (final groupKey in groupsToSubscribe) {
+        _sharedPreferencesService.unsubscribeFromGroups({groupKey});
+      }
+      emit(
+        SubscriptionGroupOperationError(
+          message: 'Failed to subscribe to groups',
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKeys.join(', '),
+        ),
+      );
+
+      // Reload current state after error
+    } finally {
+      loadSubscribedEntities();
+    }
+  }
+
+  /// Unsubscribe from multiple groups
+  /// - Unsubscribes from FCM topics via NotificationService
+  /// - Removes from local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
+  Future<void> unsubscribeFromGroups(List<String> groupKeys) async {
+    final currentState = state;
+
+    List<String> currentMachineIds = [];
+    List<MachineEntity>? currentMachines;
+    List<String> currentGroupKeys = [];
+    Map<String, List<MachineEntity>>? currentGroups;
+
+    if (currentState is SubscriptionLoaded) {
+      currentMachineIds = currentState.subscribedMachineIds;
+      currentMachines = currentState.subscribedMachines;
+      currentGroupKeys = currentState.subscribedGroupKeys;
+      currentGroups = currentState.subscribedGroups;
+    }
+
+    try {
+      // Filter out groups not subscribed to
+      final groupsToUnsubscribe = groupKeys
+          .where((key) => currentGroupKeys.contains(key))
+          .toList();
+
+      if (groupsToUnsubscribe.isEmpty) {
+        appLog.w('Not subscribed to any of the groups: $groupKeys');
+        return;
+      }
+
+      // Unsubscribe from each group
+      for (final groupKey in groupsToUnsubscribe) {
+        await _notificationService.unsubscribeFromGroup(groupKey);
+        appLog.i('Successfully unsubscribed from group: $groupKey');
+      }
+
+      // Reload from shared preferences to get updated list
+      final updatedGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+      final updatedGroups = await _getSubscribedGroups();
+
+      emit(
+        SubscriptionLoaded(
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: updatedGroupKeys,
+          subscribedGroups: updatedGroups,
+        ),
+      );
+    } catch (e) {
+      appLog.e('Error unsubscribing from groups $groupKeys: $e');
+      emit(
+        SubscriptionGroupOperationError(
+          message: 'Failed to unsubscribe from groups',
+          subscribedMachineIds: currentMachineIds,
+          subscribedMachines: currentMachines,
+          subscribedGroupKeys: currentGroupKeys,
+          subscribedGroups: currentGroups,
+          operatingGroupKey: groupKeys.join(', '),
+        ),
+      );
+    } finally {
+      loadSubscribedEntities();
+    }
   }
 
   /// Get all subscribed group keys

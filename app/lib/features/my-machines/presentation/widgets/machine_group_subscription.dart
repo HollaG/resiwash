@@ -37,23 +37,39 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
         });
   }
 
+  void onSwitchChanged(bool value) async {
+    if (value) {
+      await context.read<SubscriptionCubit>().subscribeToGroups(
+        widget.subscriptionKeys,
+      );
+    } else {
+      await context.read<SubscriptionCubit>().unsubscribeFromGroups(
+        widget.subscriptionKeys,
+      );
+    }
+
+    // setState(() {
+    //   _isSubscribed = value;
+    // });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<SubscriptionCubit, SubscriptionState>(
-      listener: (context, state) => {},
-      builder: (context, state) {
+      listener: (context, state) {
         if (state is SubscriptionLoaded) {
-          // _isSubscribed = widget.subscriptionKeys
-          // .every((key) => state.subscriptions.contains(key));
+          setState(() {
+            _isSubscribed = context.read<SubscriptionCubit>().isSubscribedToGroups(
+              widget.subscriptionKeys,
+            );
+          });
         }
+      },
+      builder: (context, state) {
         return Switch(
           value: _isSubscribed,
           thumbIcon: thumbIconSubscribed,
-          onChanged: (value) {
-            setState(() {
-              _isSubscribed = value;
-            });
-          },
+          onChanged: onSwitchChanged,
         );
       },
     );

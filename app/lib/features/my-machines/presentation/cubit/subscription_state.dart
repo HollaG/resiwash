@@ -4,16 +4,25 @@ import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 abstract class SubscriptionState {
   final List<String> subscribedMachineIds;
   final List<MachineEntity>? subscribedMachines;
+  final List<String> subscribedGroupKeys;
+  final Map<String, List<MachineEntity>>? subscribedGroups;
 
   const SubscriptionState({
     required this.subscribedMachineIds,
     this.subscribedMachines,
+    required this.subscribedGroupKeys,
+    this.subscribedGroups,
   });
 }
 
 /// Initial state
 class SubscriptionInitial extends SubscriptionState {
-  const SubscriptionInitial() : super(subscribedMachineIds: const []);
+  const SubscriptionInitial()
+    : super(
+        subscribedMachineIds: const [],
+        subscribedGroupKeys: const [],
+        subscribedGroups: const {},
+      );
 }
 
 /// Loading subscribed machines
@@ -21,6 +30,8 @@ class SubscriptionLoading extends SubscriptionState {
   const SubscriptionLoading({
     required super.subscribedMachineIds,
     super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
   });
 }
 
@@ -29,6 +40,8 @@ class SubscriptionLoaded extends SubscriptionState {
   const SubscriptionLoaded({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
   });
 }
 
@@ -37,6 +50,8 @@ class SubscriptionRefreshing extends SubscriptionLoaded {
   const SubscriptionRefreshing({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
   });
 }
 
@@ -47,6 +62,8 @@ class Subscribing extends SubscriptionLoaded {
   const Subscribing({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
     required this.operatingMachine,
   });
 }
@@ -58,6 +75,8 @@ class Subscribed extends SubscriptionLoaded {
   const Subscribed({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
     required this.operatingMachine,
   });
 }
@@ -69,6 +88,8 @@ class Unsubscribed extends SubscriptionLoaded {
   const Unsubscribed({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
     required this.operatingMachine,
   });
 }
@@ -81,6 +102,8 @@ class SubscriptionOperationError extends SubscriptionLoaded {
   const SubscriptionOperationError({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
     required this.message,
     required this.operatingMachine,
   });
@@ -91,5 +114,63 @@ class SubscriptionError extends SubscriptionState {
   final String message;
 
   const SubscriptionError({required this.message})
-    : super(subscribedMachineIds: const []);
+    : super(
+        subscribedMachineIds: const [],
+        subscribedGroupKeys: const [],
+        subscribedGroups: const {},
+      );
+}
+
+/// Currently subscribing to a group
+class SubscribingToGroup extends SubscriptionLoaded {
+  final String operatingGroupKey;
+
+  const SubscribingToGroup({
+    required super.subscribedMachineIds,
+    required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
+    required this.operatingGroupKey,
+  });
+}
+
+/// Successfully subscribed to a group
+class SubscribedToGroup extends SubscriptionLoaded {
+  final String operatingGroupKey;
+
+  const SubscribedToGroup({
+    required super.subscribedMachineIds,
+    required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
+    required this.operatingGroupKey,
+  });
+}
+
+/// Successfully unsubscribed from a group
+class UnsubscribedFromGroup extends SubscriptionLoaded {
+  final String operatingGroupKey;
+
+  const UnsubscribedFromGroup({
+    required super.subscribedMachineIds,
+    required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
+    required this.operatingGroupKey,
+  });
+}
+
+/// Error subscribing/unsubscribing from group
+class SubscriptionGroupOperationError extends SubscriptionLoaded {
+  final String message;
+  final String operatingGroupKey;
+
+  const SubscriptionGroupOperationError({
+    required super.subscribedMachineIds,
+    required super.subscribedMachines,
+    required super.subscribedGroupKeys,
+    super.subscribedGroups,
+    required this.message,
+    required this.operatingGroupKey,
+  });
 }

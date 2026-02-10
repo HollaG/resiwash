@@ -129,7 +129,8 @@ class _MachineListScreenState extends State<MachineListScreen>
                                 machines: washers,
                               ),
                             ),
-                            if (widget.roomIds != null)
+                            if (widget.roomIds != null &&
+                                widget.roomIds!.isNotEmpty)
                               MachineGroupSubscription(
                                 subscriptionKeys: widget.roomIds!
                                     .map(
@@ -153,7 +154,8 @@ class _MachineListScreenState extends State<MachineListScreen>
                                 machines: dryers,
                               ),
                             ),
-                            if (widget.roomIds != null)
+                            if (widget.roomIds != null &&
+                                widget.roomIds!.isNotEmpty)
                               MachineGroupSubscription(
                                 subscriptionKeys: widget.roomIds!
                                     .map(

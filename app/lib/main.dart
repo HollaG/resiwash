@@ -261,7 +261,7 @@ class MyApp extends StatelessWidget {
       providers: [
         // Subscription cubit for managing machine notifications
         BlocProvider(
-          create: (_) => sl<SubscriptionCubit>()..loadSubscribedMachines(),
+          create: (_) => sl<SubscriptionCubit>()..loadSubscribedEntities(),
         ),
         // Claim cubit for managing claimed machines
         BlocProvider(create: (_) => sl<ClaimCubit>()..loadClaimedMachines()),
