@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/status_row_summary.dart';
 import 'package:resiwash/features/area/domain/usecases/get_area_use_case.dart';
 import 'package:resiwash/features/area/presentation/cubit/area_detail_cubit.dart';
@@ -17,6 +18,7 @@ import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_list_app_bar.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row_slidable_explanation.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/machine_group_subscription.dart';
 import 'package:resiwash/features/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 
@@ -119,10 +121,52 @@ class _MachineListScreenState extends State<MachineListScreen>
                     children: [
                       SizedBox(height: 16),
                       if (washers.isNotEmpty) ...[
-                        StatusRowSummary(label: "Washers", machines: washers),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatusRowSummary(
+                                label: "Washers",
+                                machines: washers,
+                              ),
+                            ),
+                            if (widget.roomIds != null)
+                              MachineGroupSubscription(
+                                subscriptionKeys: widget.roomIds!
+                                    .map(
+                                      (e) =>
+                                          SubscriptionUtils.getTopicNameForGroup(
+                                            e,
+                                            MachineType.washer,
+                                          ),
+                                    )
+                                    .toList(),
+                              ),
+                          ],
+                        ),
                       ],
                       if (dryers.isNotEmpty) ...[
-                        StatusRowSummary(label: "Dryers", machines: dryers),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatusRowSummary(
+                                label: "Dryers",
+                                machines: dryers,
+                              ),
+                            ),
+                            if (widget.roomIds != null)
+                              MachineGroupSubscription(
+                                subscriptionKeys: widget.roomIds!
+                                    .map(
+                                      (e) =>
+                                          SubscriptionUtils.getTopicNameForGroup(
+                                            e,
+                                            MachineType.dryer,
+                                          ),
+                                    )
+                                    .toList(),
+                              ),
+                          ],
+                        ),
                       ],
                       Padding(
                         padding: const EdgeInsets.all(8.0),

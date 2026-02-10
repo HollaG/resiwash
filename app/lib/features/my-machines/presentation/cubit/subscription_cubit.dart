@@ -3,6 +3,8 @@ import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/subscription_utils.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
@@ -300,5 +302,66 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       return currentState.subscribedMachineIds.length;
     }
     return 0;
+  }
+
+  /// Subscribe to a group (e.g., all washers in a room)
+  /// - Subscribes to FCM topic via NotificationService
+  /// - Saves to local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
+  Future<void> subscribeToGroup(String groupKey) async {
+    final currentGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+
+    try {
+      if (currentGroupKeys.contains(groupKey)) {
+        appLog.w('Already subscribed to group: $groupKey');
+        return;
+      }
+
+      // Subscribe to notification topic
+      await _notificationService.subscribeToGroup(groupKey);
+
+      appLog.i('Successfully subscribed to group: $groupKey');
+    } catch (e) {
+      appLog.e('Error subscribing to group $groupKey: $e');
+      rethrow;
+    }
+  }
+
+  /// Unsubscribe from a group
+  /// - Unsubscribes from FCM topic via NotificationService
+  /// - Removes from local storage via SharedPreferencesService
+  /// NOTE: does NOT hit the backend.
+  Future<void> unsubscribeFromGroup(String groupKey) async {
+    final currentGroupKeys = _sharedPreferencesService.getSubscribedGroups();
+
+    try {
+      if (!currentGroupKeys.contains(groupKey)) {
+        appLog.w('Not subscribed to group: $groupKey');
+        return;
+      }
+
+      // Unsubscribe from notification topic
+      await _notificationService.unsubscribeFromGroup(groupKey);
+
+      appLog.i('Successfully unsubscribed from group: $groupKey');
+    } catch (e) {
+      appLog.e('Error unsubscribing from group $groupKey: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if subscribed to a specific group
+  bool isSubscribedToGroup(String groupKey) {
+    return _sharedPreferencesService.isSubscribedToGroup(groupKey);
+  }
+
+  /// Get all subscribed group keys
+  List<String> getSubscribedGroups() {
+    return _sharedPreferencesService.getSubscribedGroups();
+  }
+
+  /// Get count of subscribed groups
+  int getSubscribedGroupsCount() {
+    return _sharedPreferencesService.getSubscribedGroups().length;
   }
 }

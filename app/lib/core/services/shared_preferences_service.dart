@@ -7,6 +7,7 @@ class SharedPreferencesService {
   static const String locationKey = 'locations';
 
   static const String subscribedMachinesKey = 'notif_subscribedMachines';
+  static const String subscribedGroupsKey = 'notif_subscribedGroups';
   static const String claimedMachinesKey = 'claimedMachines';
 
   final SharedPreferences _prefs;
@@ -56,6 +57,27 @@ class SharedPreferencesService {
   // helper to unsubscribe from a single machineId
   void unsubscribeFromMachine(String machineId) {
     unsubscribeFromMachines({machineId});
+  }
+
+  void subscribeToGroups(Set<String> groupKeys) {
+    final existingKeys = _prefs.getStringList(subscribedGroupsKey) ?? [];
+    final updatedKeys = existingKeys.toSet().union(groupKeys).toList();
+    _prefs.setStringList(subscribedGroupsKey, updatedKeys);
+  }
+
+  void unsubscribeFromGroups(Set<String> groupKeys) {
+    final existingKeys = _prefs.getStringList(subscribedGroupsKey) ?? [];
+    final updatedKeys = existingKeys.toSet().difference(groupKeys).toList();
+    _prefs.setStringList(subscribedGroupsKey, updatedKeys);
+  }
+
+  bool isSubscribedToGroup(String groupKey) {
+    final existingKeys = _prefs.getStringList(subscribedGroupsKey) ?? [];
+    return existingKeys.contains(groupKey);
+  }
+
+  List<String> getSubscribedGroups() {
+    return _prefs.getStringList(subscribedGroupsKey) ?? [];
   }
 
   // Claim a machine with optional cycle time

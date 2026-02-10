@@ -67,17 +67,23 @@ class _MachineRowState extends State<MachineRow>
 
   late final SlidableController controller = SlidableController(this);
 
+  // Cache cubit references to avoid unsafe context lookups
+  late final ClaimCubit _claimCubit;
+  late final SubscriptionCubit _subscriptionCubit;
+
   @override
   void initState() {
     super.initState();
+    // Cache cubit references early
+    _claimCubit = context.read<ClaimCubit>();
+    _subscriptionCubit = context.read<SubscriptionCubit>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Check subscription and claim status from the respective cubits
-      bool isClaimed = context.read<ClaimCubit>().isMachineClaimed(
+      bool isClaimed = _claimCubit.isMachineClaimed(widget.machine.machineId);
+      bool isSubscribed = _subscriptionCubit.isSubscribedToMachine(
         widget.machine.machineId,
       );
-      bool isSubscribed = context
-          .read<SubscriptionCubit>()
-          .isSubscribedToMachine(widget.machine.machineId);
 
       setState(() {
         subscriptionState = isSubscribed
@@ -229,9 +235,9 @@ class _MachineRowState extends State<MachineRow>
               Future.delayed(const Duration(seconds: 1), () {
                 if (mounted) {
                   setState(() {
-                    bool isClaimed = context
-                        .read<ClaimCubit>()
-                        .isMachineClaimed(widget.machine.machineId);
+                    bool isClaimed = _claimCubit.isMachineClaimed(
+                      widget.machine.machineId,
+                    );
                     claimState = isClaimed
                         ? ClaimState.claimed
                         : ClaimState.notClaimed;
@@ -243,7 +249,7 @@ class _MachineRowState extends State<MachineRow>
             if (state is claim_state.ClaimOperationError &&
                 state.operatingMachine.machineId == widget.machine.machineId) {
               // reset to previous state on error
-              bool isClaimed = context.read<ClaimCubit>().isMachineClaimed(
+              bool isClaimed = _claimCubit.isMachineClaimed(
                 widget.machine.machineId,
               );
 
@@ -294,8 +300,7 @@ class _MachineRowState extends State<MachineRow>
               Future.delayed(const Duration(seconds: 1), () {
                 if (mounted) {
                   setState(() {
-                    bool isSubscribed = context
-                        .read<SubscriptionCubit>()
+                    bool isSubscribed = _subscriptionCubit
                         .isSubscribedToMachine(widget.machine.machineId);
                     subscriptionState = isSubscribed
                         ? SubscriptionState.subscribed
@@ -308,9 +313,9 @@ class _MachineRowState extends State<MachineRow>
             if (state is sub_state.SubscriptionOperationError &&
                 state.operatingMachine.machineId == widget.machine.machineId) {
               // reset to previous state on error
-              bool isSubscribed = context
-                  .read<SubscriptionCubit>()
-                  .isSubscribedToMachine(widget.machine.machineId);
+              bool isSubscribed = _subscriptionCubit.isSubscribedToMachine(
+                widget.machine.machineId,
+              );
 
               setState(() {
                 subscriptionState = isSubscribed

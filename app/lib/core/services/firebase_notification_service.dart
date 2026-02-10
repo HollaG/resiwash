@@ -4,6 +4,7 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
 enum CustomFirebaseMessageChannel { claimed, subscribed, poke }
 
@@ -179,6 +180,34 @@ class FirebaseNotificationService {
       return topic;
     } catch (e) {
       appLog.e("Error unsubscribing from machine $machineId: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> subscribeToGroup(String topic) async {
+    try {
+      await _subscribeToTopic(topic);
+      sl<SharedPreferencesService>().subscribeToGroups({topic});
+
+      appLog.i("Subscribed to group $topic");
+
+      return topic;
+    } catch (e) {
+      appLog.e("Error subscribing to group $topic: $e");
+      rethrow;
+    }
+  }
+
+  Future<String> unsubscribeFromGroup(String topic) async {
+    try {
+      await _unsubscribeFromTopic(topic);
+      sl<SharedPreferencesService>().unsubscribeFromGroups({topic});
+
+      appLog.i("Unsubscribed from group $topic");
+
+      return topic;
+    } catch (e) {
+      appLog.e("Error unsubscribing from group $topic: $e");
       rethrow;
     }
   }
