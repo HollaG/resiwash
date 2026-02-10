@@ -71,7 +71,7 @@ export const claimMachine = expressAsyncHandler(
       }
 
       // now, claim the machine
-      _claimMachine(machineId, fcmToken, cycleTime);
+      await _claimMachine(machineId, fcmToken, cycleTime);
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
@@ -99,7 +99,7 @@ export const unclaimMachine = expressAsyncHandler(
       }
 
       // now, unclaim the machine
-      _unclaimMachine(machineId, fcmToken);
+      await _unclaimMachine(machineId, fcmToken);
 
       sendOkResponse(res, { message: "Machine unclaimed successfully" });
     } catch (error) {
@@ -123,12 +123,12 @@ export const pokeClaimant = expressAsyncHandler(
         return sendErrorResponse(res, "Machine not found", 404);
       }
 
-      if (!canPoke(machineId)) {
+      if (!(await canPoke(machineId))) {
         return sendErrorResponse(res, "Poke cooldown active", 400);
       }
 
       // now, poke the claimant
-      const claimants = getClaimants(machineId);
+      const claimants = await getClaimants(machineId);
 
       if (claimants.length === 0) {
         return sendErrorResponse(res, "No claimants to poke", 400);
@@ -165,10 +165,10 @@ export const updateClaimCycle = expressAsyncHandler(
         return sendErrorResponse(res, "Machine not found", 404);
       }
 
-      // now, claim the machine
-      _claimMachine(machineId, fcmToken, cycleTime);
+      // now, update the claim cycle time
+      await _claimMachine(machineId, fcmToken, cycleTime);
 
-      sendOkResponse(res, { message: "Machine claimed successfully" });
+      sendOkResponse(res, { message: "Claim cycle updated successfully" });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }

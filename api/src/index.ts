@@ -17,6 +17,7 @@ dotenv.config();
 import { AppDataSource } from "./data-source";
 import { VerifyToken } from "./middleware/auth";
 import { sendErrorResponse } from "./core/responses";
+import { initializeJobs } from "./jobs";
 
 const logger = pino({
   transport: {
@@ -28,6 +29,11 @@ const logger = pino({
 // TypeORM
 AppDataSource.initialize()
   .then(async () => {
+    console.log("Database initialized successfully");
+
+    // Initialize scheduled jobs after database connection is established
+    initializeJobs();
+
     // console.log("Inserting a new user into the database...");
     // const user = new User();
     // user.firstName = "Timber";

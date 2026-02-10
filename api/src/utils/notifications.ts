@@ -1,4 +1,7 @@
 import { Machine } from "../models/Machine";
+import { Claim } from "../models/Claim";
+import { LastPoke } from "../models/LastPoke";
+import { AppDataSource } from "../data-source";
 import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
 
 // Important things to decide
@@ -11,16 +14,6 @@ interface IClaimMapEntry {
   cycleTime: number;
   claimedAt: Date; // for expiration
 }
-
-const ClaimMap: {
-  [machineId: string]: IClaimMapEntry[];
-} = {};
-
-const LastPokeTimeMap: {
-  [machineId: string]: Date;
-} = {};
-
-const ClaimedUsers = new Set<string>();
 
 class ClaimError extends Error {
   constructor(message: string) {
@@ -49,102 +42,127 @@ class NotClaimedError extends ClaimError {
 //   }
 // }
 
-export const unclaimMachine = (machineId: string, fcmToken: string) => {
-  if (!ClaimMap[machineId]) {
-    return;
+export const unclaimMachine = async (machineId: string, fcmToken: string) => {
+  const claimRepository = AppDataSource.getRepository(Claim);
+
+  const claim = await claimRepository.findOne({
+    where: {
+      machineId: Number(machineId),
+      fcmToken: fcmToken,
+    },
+  });
+
+  if (claim) {
+    await claimRepository.remove(claim);
+    console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   }
-
-  ClaimMap[machineId] = ClaimMap[machineId].filter(
-    (claim) => claim.fcmToken !== fcmToken
-  );
-
-  console.log("Current ClaimMap:", ClaimMap);
 };
 
 /**
  * Claim a machine for a user
  *
- * Note: only one user can claim a machine at a time
- * Note: only one machine can be claimed by a user at a time
+ * Note: Multiple users can claim a machine at the same time
  *
  * @param machineId
  * @param fcmToken
  * @param cycleTime
  */
-export const claimMachine = (
+export const claimMachine = async (
   machineId: string,
   fcmToken: string,
   cycleTime: number
 ) => {
-  const claimedAt = new Date();
-  // const expirationTime = new Date(claimedAt.getTime() + cycleTime * 60000);
+  const claimRepository = AppDataSource.getRepository(Claim);
 
-  if (!ClaimMap[machineId]) {
-    ClaimMap[machineId] = [];
-  }
+  // Check if this user has already claimed this machine
+  const existingClaim = await claimRepository.findOne({
+    where: {
+      machineId: Number(machineId),
+      fcmToken: fcmToken,
+    },
+  });
 
-  if (ClaimMap[machineId].some((claim) => claim.fcmToken === fcmToken)) {
+  if (existingClaim) {
     // already claimed by this user
+    console.log(`Machine ${machineId} already claimed by ${fcmToken}`);
     return; // no error
   }
 
   // if the user has already claimed another machine, unclaim it
-  // const previousMachineId = UserMap[fcmToken];
-  // if (previousMachineId) {
+  // const previousClaim = await claimRepository.findOne({
+  //   where: {
+  //     fcmToken: fcmToken,
+  //   },
+  // });
+  // if (previousClaim) {
   //   // unclaim previous machine
-  //   unclaimMachine(previousMachineId, fcmToken);
+  //   await unclaimMachine(previousClaim.machineId.toString(), fcmToken);
   // }
 
-  ClaimMap[machineId].push({ fcmToken, cycleTime, claimedAt });
+  const claim = new Claim();
+  claim.machineId = Number(machineId);
+  claim.fcmToken = fcmToken;
+  claim.cycleTime = cycleTime;
 
-  console.log("Current ClaimMap:", ClaimMap);
+  await claimRepository.save(claim);
 
-  // Set a timeout to remove the claim after the expiration time
-  // setTimeout(() => {
-  //   ClaimMap[machineId] = ClaimMap[machineId].filter(claim => claim.fcmToken !== fcmToken);
-  // }, expirationTime.getTime() - claimedAt.getTime());
+  console.log(`Claimed machine ${machineId} for ${fcmToken} with cycle time ${cycleTime}`);
 };
 
-export const updateCycleTime = (
+export const updateCycleTime = async (
   machineId: string,
   fcmToken: string,
   cycleTime: number
 ) => {
-  if (!ClaimMap[machineId]) {
+  const claimRepository = AppDataSource.getRepository(Claim);
+
+  const claim = await claimRepository.findOne({
+    where: {
+      machineId: Number(machineId),
+      fcmToken: fcmToken,
+    },
+  });
+
+  if (!claim) {
     throw new NotClaimedError();
   }
-  for (const claim of ClaimMap[machineId]) {
-    if (claim.fcmToken === fcmToken) {
-      claim.cycleTime = cycleTime;
-      console.log(
-        "Updated cycle time for",
-        fcmToken,
-        "on machine",
-        machineId,
-        "to",
-        cycleTime
-      );
-      return true;
-    }
-  }
-  throw new NotClaimedError();
+
+  claim.cycleTime = cycleTime;
+  await claimRepository.save(claim);
+
+  console.log(
+    "Updated cycle time for",
+    fcmToken,
+    "on machine",
+    machineId,
+    "to",
+    cycleTime
+  );
+  return true;
 };
 
-export const getClaimants = (machineId: string): IClaimMapEntry[] => {
-  if (!ClaimMap[machineId]) {
-    return [];
-  }
+export const getClaimants = async (machineId: string): Promise<IClaimMapEntry[]> => {
+  const claimRepository = AppDataSource.getRepository(Claim);
 
-  return ClaimMap[machineId];
+  const claims = await claimRepository.find({
+    where: {
+      machineId: Number(machineId),
+    },
+  });
+
+  return claims.map(claim => ({
+    fcmToken: claim.fcmToken,
+    cycleTime: claim.cycleTime,
+    claimedAt: claim.claimedAt,
+  }));
 };
 
 export const sendNotificationToClaimants = async (machine: Machine) => {
-  const claimants = getClaimants(machine.machineId.toString());
-  console.log("current ClaimMap:", ClaimMap);
+  const claimants = await getClaimants(machine.machineId.toString());
+  console.log(`Sending notifications to ${claimants.length} claimants for machine ${machine.machineId}`);
+
   for (const claimant of claimants) {
     // send notification to claimant.fcmToken
-    // check the last poke time
-
     sendClaimedMachineStatusChangedNotification({
       fcmToken: claimant.fcmToken,
       oldStatus: null,
@@ -154,21 +172,40 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
   }
 };
 
-export const canPoke = (machineId: string): boolean => {
-  const lastPokeTime = LastPokeTimeMap[machineId];
-  if (!lastPokeTime) {
-    LastPokeTimeMap[machineId] = new Date();
-    console.log("[poke] can poke machine:", machineId);
-    return true; // never poke before
-  }
+export const canPoke = async (machineId: string): Promise<boolean> => {
+  const lastPokeRepository = AppDataSource.getRepository(LastPoke);
+
+  const lastPokeRecord = await lastPokeRepository.findOne({
+    where: {
+      machineId: Number(machineId),
+    },
+  });
+
   const now = new Date();
-  const diffMs = now.getTime() - lastPokeTime.getTime();
-  const diffMinutes = diffMs / 60000;
-  if (diffMinutes >= 5) {
-    LastPokeTimeMap[machineId] = now;
+
+  if (!lastPokeRecord) {
+    // Never poked before, create a new record
+    const newLastPoke = new LastPoke();
+    newLastPoke.machineId = Number(machineId);
+    newLastPoke.lastPokeTime = now;
+    await lastPokeRepository.save(newLastPoke);
+
     console.log("[poke] can poke machine:", machineId);
     return true;
   }
+
+  const diffMs = now.getTime() - lastPokeRecord.lastPokeTime.getTime();
+  const diffMinutes = diffMs / 60000;
+
+  if (diffMinutes >= 5) {
+    // Update the last poke time
+    lastPokeRecord.lastPokeTime = now;
+    await lastPokeRepository.save(lastPokeRecord);
+
+    console.log("[poke] can poke machine:", machineId);
+    return true;
+  }
+
   console.log("[poke] cannot poke machine yet:", machineId);
   return false;
 };

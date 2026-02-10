@@ -8,6 +8,8 @@ import { Sensor } from "./models/Sensor"
 import { UpdateEvent } from "./models/UpdateEvent"
 import { RawEvent } from "./models/RawEvent"
 import { SensorToMachine } from "./models/SensorToMachine"
+import { Claim } from "./models/Claim"
+import { LastPoke } from "./models/LastPoke"
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -18,7 +20,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_NAME,
     synchronize: true,
     logging: false,
-    entities: [Area, Machine, Room, Sensor, UpdateEvent, User, RawEvent, SensorToMachine],
+    entities: [Area, Machine, Room, Sensor, UpdateEvent, User, RawEvent, SensorToMachine, Claim, LastPoke],
     migrations: [],
     subscribers: [],
 })
