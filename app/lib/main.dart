@@ -50,7 +50,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     sl<LocalNotificationService>().showPoke(message);
   } else if (channel == CustomFirebaseMessageChannel.claimed) {
     sl<LocalNotificationService>().showClaimedIncomingNotification(message);
-  } else if (channel == CustomFirebaseMessageChannel.subscribed) {
+  } else if (channel == CustomFirebaseMessageChannel.subscribed ||
+      channel == CustomFirebaseMessageChannel.subscribedGroup) {
     sl<LocalNotificationService>().showSubscribed(message);
   }
 
@@ -94,6 +95,7 @@ void notificationTapBackground(NotificationResponse response) async {
 
         // Navigate to appropriate screen based on channel
         switch (channel) {
+          case CustomFirebaseMessageChannel.subscribedGroup:
           case CustomFirebaseMessageChannel.subscribed:
             // Navigate to machine details page
             final context = navigatorKey.currentContext;

@@ -6,7 +6,7 @@ import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
-enum CustomFirebaseMessageChannel { claimed, subscribed, poke }
+enum CustomFirebaseMessageChannel { claimed, subscribed, poke, subscribedGroup }
 
 CustomFirebaseMessageChannel getChannelFromString(String channelString) {
   return CustomFirebaseMessageChannel.values.firstWhere(
