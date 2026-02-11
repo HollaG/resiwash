@@ -19,6 +19,7 @@ import 'package:go_router/go_router.dart';
 import 'util.dart';
 import 'theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'firebase_options.dart';
 
 /// ------------------------------------------------------------
 /// GLOBAL PLUGIN INSTANCE  (IMPORTANT!)
@@ -37,7 +38,7 @@ final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   appLog.i('[BG Handler] Received FCM: $message');
 
   await sl<LocalNotificationService>().ensureInitializedForBackground();
@@ -196,7 +197,7 @@ void notificationTapBackground(NotificationResponse response) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await setupServiceLocator();
 
   // ------------------------------------------------------------
