@@ -67,50 +67,56 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
           // }
         },
         builder: (context, state) {
-          return Scaffold(
-            // appBar: AppBarComponent(actions: [], title: "ResiWash"),
-            body: RefreshIndicator(
-              onRefresh: () {
-                // return Future.delayed(Duration(seconds: 1), () {});
-                // wait for 1s first
+          return Column(
+            children: [
+              HomeHeader(username: "Marcus"),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () {
+                    // return Future.delayed(Duration(seconds: 1), () {});
+                    // wait for 1s first
 
-                // Create a completer to wait for the loading to complete
-                final completer = Completer<void>();
+                    // Create a completer to wait for the loading to complete
+                    final completer = Completer<void>();
 
-                // Listen for state changes
-                late StreamSubscription subscription;
-                subscription = context.read<OverviewCubit>().stream.listen((
-                  state,
-                ) {
-                  if (state is OverviewLoaded || state is OverviewError) {
-                    subscription.cancel();
-                    completer.complete();
-                  }
-                });
-                final loadedLocations = sl<SharedPreferencesService>()
-                    .getSavedLocations();
+                    // Listen for state changes
+                    late StreamSubscription subscription;
+                    subscription = context.read<OverviewCubit>().stream.listen((
+                      state,
+                    ) {
+                      if (state is OverviewLoaded || state is OverviewError) {
+                        subscription.cancel();
+                        completer.complete();
+                      }
+                    });
+                    final loadedLocations = sl<SharedPreferencesService>()
+                        .getSavedLocations();
 
-                appLog.d("Loaded locations: $loadedLocations");
-                // Trigger the refresh
-                context.read<OverviewCubit>().load(
-                  roomIds: loadedLocations.getAllRoomIds(),
-                );
+                    appLog.d("Loaded locations: $loadedLocations");
+                    // Trigger the refresh
+                    context.read<OverviewCubit>().load(
+                      roomIds: loadedLocations.getAllRoomIds(),
+                    );
 
-                // Wait for completion
-                return completer.future;
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    HomeHeader(username: "Marcus"),
-                    RoomOverviewWrapper(roomIds: []),
-                  ],
+                    // Wait for completion
+                    return completer.future;
+                  },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: RoomOverviewWrapper(roomIds: []),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
+            ],
           );
         },
       ),
