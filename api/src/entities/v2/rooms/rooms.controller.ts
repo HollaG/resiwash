@@ -48,12 +48,17 @@ export const getRooms = asyncHandler(
 
 export const getRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomId = parseInt(req.params.roomId, 10);
+
+  const { extra } = req.query;
   if (isNaN(roomId)) {
     return sendErrorResponse(res, { message: "Invalid room ID" }, 400);
   }
 
   const roomRepository = AppDataSource.getRepository(Room);
-  const room = await roomRepository.findOneBy({ roomId });
+  const room = await roomRepository.findOne({
+    where: { roomId },
+    relations: extra === "true" ? ["area", "machines"] : undefined
+  });
 
   if (!room) {
     return sendErrorResponse(res, { message: "Room not found" }, 404);
