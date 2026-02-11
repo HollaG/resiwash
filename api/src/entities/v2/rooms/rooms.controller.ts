@@ -4,6 +4,7 @@ import asyncHandler from "express-async-handler";
 import { Room } from "../../../models/Room";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
+import { GetQueryBoolean } from "../../../core/types";
 
 interface GetRoomsRequest {
   areaIds?: string[];
@@ -49,7 +50,7 @@ export const getRooms = asyncHandler(
 export const getRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomId = parseInt(req.params.roomId, 10);
 
-  const { extra } = req.query;
+  const { extra = GetQueryBoolean.FALSE } = req.query;
   if (isNaN(roomId)) {
     return sendErrorResponse(res, { message: "Invalid room ID" }, 400);
   }
@@ -57,7 +58,7 @@ export const getRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomRepository = AppDataSource.getRepository(Room);
   const room = await roomRepository.findOne({
     where: { roomId },
-    relations: extra === "true" ? ["area", "machines"] : undefined
+    relations: extra === GetQueryBoolean.TRUE ? ["area", "machines"] : undefined
   });
 
   if (!room) {
