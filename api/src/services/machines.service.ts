@@ -2,7 +2,7 @@ import { AppDataSource } from "../data-source";
 import { Machine } from "../models/Machine";
 import { UpdateEvent } from "../models/UpdateEvent";
 import { MachineStatus } from "../core/types";
-import { sendMachineStatusChangedNotification } from "../utils/firebase-messaging";
+import { sendMachineGroupStatusChangedNotification } from "../utils/firebase-messaging";
 import { sendNotificationToClaimants } from "../utils/notifications";
 
 const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
@@ -64,10 +64,8 @@ export async function setMachineManualStatus(
 
     // asynchronously send notification
     // note: we do not care if it succeeds or fails
-    sendMachineStatusChangedNotification({
+    sendMachineGroupStatusChangedNotification({
       machine: machine,
-      oldStatus: machine.previousStatus,
-      newStatus: machine.currentStatus,
     });
 
     // send notification to claimant if applicable
@@ -120,10 +118,9 @@ export async function setMachineManualStatus(
 
     // asynchronously send notification
     // note: we do not care if it succeeds or fails
-    sendMachineStatusChangedNotification({
+    sendMachineGroupStatusChangedNotification({
       machine: machine,
-      oldStatus: machine.previousStatus,
-      newStatus: machine.currentStatus,
+
     });
 
     // send notification to claimant if applicable
@@ -234,10 +231,8 @@ const updateMachineStatusAfterTime = async (
 
   // asynchronously send notification
   // note: we do not care if it succeeds or fails
-  sendMachineStatusChangedNotification({
+  sendMachineGroupStatusChangedNotification({
     machine: machine,
-    oldStatus: machine.previousStatus,
-    newStatus: machine.currentStatus,
   });
 
   // send notification to claimant if applicable

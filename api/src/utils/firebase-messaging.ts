@@ -10,6 +10,10 @@ const getTopicNameForMachine = (machine: Machine): string => {
   return `machine_${machine.machineId}`;
 };
 
+const getTopicNameForBulkSubscription = (machine: Machine): string => {
+  return `group_${machine.roomId}_${machine.type.toLowerCase()}`;
+}
+
 type CustomDataPayload = {
   [key: string]: string;
   channel: "claimed" | "subscribed" | "poke";
@@ -37,7 +41,7 @@ export const sendMachineStatusChangedNotification = async ({
       title: `${machine.name} now ${getReadableMachineStatus(
         machine.currentStatus
       )}`,
-      body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+      body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
     },
     android: {
       notification: {
@@ -87,7 +91,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
     //   title: `${machine.name} now ${getReadableMachineStatus(
     //     machine.currentStatus
     //   )}`,
-    //   body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+    //   body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
     // },
     // android: {
     //   notification: {
@@ -114,7 +118,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
       machineId: machine.machineId.toString(),
       machineName: machine.name,
       machineRoomName: machine.room.name,
-      machineAreaShortName: machine.room.area.shortName,
+      machineAreaShortName: machine.room.area.shortName || machine.room.area.name,
       machineCurrentStatus: machine.currentStatus,
       machinePreviousStatus: machine.previousStatus,
 
@@ -133,6 +137,56 @@ export const sendClaimedMachineStatusChangedNotification = async ({
     throw e;
   }
 };
+
+
+/**
+ *
+ * @param machine Machine object with `room` and `area` joined !!important
+ */
+export const sendMachineGroupStatusChangedNotification = async ({
+  machine,
+}: {
+  machine: Machine;
+}) => {
+  let cycleTimeInfo = "";
+  if (machine.currentCycleTime) {
+    cycleTimeInfo = ` Expected to finish by ${new Date(
+      machine.lastAvailableTime!.getTime() +
+      machine.currentCycleTime * 60000
+    ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${machine.currentCycleTime}m cycle). `;
+  }
+  const message: CustomMessage = {
+    topic: getTopicNameForBulkSubscription(machine),
+    notification: {
+      title: `${machine.name} now ${getReadableMachineStatus(
+        machine.currentStatus
+      )}`,
+      body: cycleTimeInfo + `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
+    },
+    android: {
+      notification: {
+        channelId: "subscribed",
+      },
+    },
+    data: {
+      machineId: machine.machineId.toString(),
+      channel: "subscribed",
+      // metadata for interaction
+    },
+  };
+
+  console.log("[🔥🏠] Sending message to topic:", message.topic);
+  try {
+    const response = await getMessaging().send(message);
+    console.log("[🔥🏠] Successfully sent message:", response);
+
+    return response;
+  } catch (e) {
+    console.error("[🔥🏠] Error sending message:", e);
+    throw e;
+  }
+};
+
 
 /**
  *
@@ -156,7 +210,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
 //       title: `${machine.name} now ${getReadableMachineStatus(
 //         machine.currentStatus
 //       )}`,
-//       body: `${machine.room.name} @ ${machine.room.area.shortName}`,
+//       body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
 //     },
 //     android: {
 //       notification: {
@@ -167,7 +221,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
 //       machineId: machine.machineId.toString(),
 //       machineName: machine.name,
 //       machineRoomName: machine.room.name,
-//       machineAreaShortName: machine.room.area.shortName,
+//       machineAreaShortName: machine.room.area.shortName || machine.room.area.name,
 //       machineCurrentStatus: machine.currentStatus,
 //       machinePreviousStatus: machine.previousStatus,
 
@@ -195,7 +249,7 @@ export const sendPokeNotification = async (
     token: fcmToken,
     // notification: {
     //   title: `Reminder: ${machine.name}`,
-    //   body: `Please clear your clothes from ${machine.room.name} @ ${machine.room.area.shortName}`,
+    //   body: `Please clear your clothes from ${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
     // },
     // android: {
     //   notification: {
@@ -213,7 +267,7 @@ export const sendPokeNotification = async (
       machineId: machine.machineId.toString(),
       channel: "poke",
       title: `Reminder: ${machine.name}`,
-      body: `Please clear your clothes from ${machine.name} (${machine.room.name} @ ${machine.room.area.shortName})`,
+      body: `Please clear your clothes from ${machine.name} (${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name})`,
     },
   };
   console.log("[🔥🏠] Sending Poke message to token:", fcmToken);

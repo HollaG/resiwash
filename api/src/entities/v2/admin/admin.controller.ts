@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import asyncHandler from "express-async-handler";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
-import { sendMachineStatusChangedNotification } from "../../../utils/firebase-messaging";
+import { sendMachineGroupStatusChangedNotification } from "../../../utils/firebase-messaging";
 import { Machine } from "../../../models/Machine";
 import { AppDataSource } from "../../../data-source";
 
@@ -34,10 +34,9 @@ export const sendDebugNotification = asyncHandler(async (req: Request<{}, {}, De
   }
 
   console.log({ machine })
-  const result = await sendMachineStatusChangedNotification({
+  const result = await sendMachineGroupStatusChangedNotification({
     machine,
-    oldStatus: oldStatus as any,
-    newStatus: newStatus as any,
+
   });
 
 

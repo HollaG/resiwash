@@ -18,7 +18,7 @@ import {
 import { AbstractMachine } from "../../../classes/Machine";
 import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
-import { sendMachineStatusChangedNotification } from "../../../utils/firebase-messaging";
+import { sendMachineGroupStatusChangedNotification } from "../../../utils/firebase-messaging";
 import {
   getClaimants,
   sendNotificationToClaimants,
@@ -525,10 +525,10 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-              (machine.lastChangeTime.getTime() -
-                machine.lastUpdated!.getTime()) /
-                1000,
-            )
+            (machine.lastChangeTime.getTime() -
+              machine.lastUpdated!.getTime()) /
+            1000,
+          )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
@@ -540,14 +540,12 @@ export const createMultipleEvents = asyncHandler(
 
         // asynchronously send notification
         // note: we do not care if it succeeds or fails
-        sendMachineStatusChangedNotification({
+        sendMachineGroupStatusChangedNotification({
           machine: machine,
-          oldStatus: machine.previousStatus,
-          newStatus: machine.currentStatus,
         });
 
         // send notification to claimant if applicable
-        sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+        sendNotificationToClaimants(machine).catch((e) => { }); // do nothing
       }
     });
     await machineRepository.save(machinesToUpdate);
