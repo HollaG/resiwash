@@ -123,47 +123,47 @@ class SubscriptionError extends SubscriptionState {
 
 /// Currently subscribing to a group or unsubscribing
 class SubscribingToGroup extends SubscriptionLoaded {
-  final String operatingGroupKey;
+  final List<String> operatingGroupKeys;
 
   const SubscribingToGroup({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
     required super.subscribedGroupKeys,
     super.subscribedGroups,
-    required this.operatingGroupKey,
+    required this.operatingGroupKeys,
   });
 }
 
 /// Successfully subscribed to a group
 class SubscribedToGroup extends SubscriptionLoaded {
-  final String operatingGroupKey;
+  final List<String> operatingGroupKeys;
 
   const SubscribedToGroup({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
     required super.subscribedGroupKeys,
     super.subscribedGroups,
-    required this.operatingGroupKey,
+    required this.operatingGroupKeys,
   });
 }
 
 /// Successfully unsubscribed from a group
 class UnsubscribedFromGroup extends SubscriptionLoaded {
-  final String operatingGroupKey;
+  final List<String> operatingGroupKeys;
 
   const UnsubscribedFromGroup({
     required super.subscribedMachineIds,
     required super.subscribedMachines,
     required super.subscribedGroupKeys,
     super.subscribedGroups,
-    required this.operatingGroupKey,
+    required this.operatingGroupKeys,
   });
 }
 
 /// Error subscribing/unsubscribing from group
 class SubscriptionGroupOperationError extends SubscriptionLoaded {
   final String message;
-  final String operatingGroupKey;
+  final List<String> operatingGroupKeys;
 
   const SubscriptionGroupOperationError({
     required super.subscribedMachineIds,
@@ -171,6 +171,6 @@ class SubscriptionGroupOperationError extends SubscriptionLoaded {
     required super.subscribedGroupKeys,
     super.subscribedGroups,
     required this.message,
-    required this.operatingGroupKey,
+    required this.operatingGroupKeys,
   });
 }

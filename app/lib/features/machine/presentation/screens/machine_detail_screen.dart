@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 
 import 'package:resiwash/core/widgets/detail_row.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
@@ -247,326 +249,362 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                         .then((_) => completer.complete());
                     return completer.future;
                   },
-                  child: SingleChildScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    child: Container(
-                      padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
-                      width: double.infinity,
-                      child: Column(
-                        spacing: 16,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // TODO: some image here
-                          Row(
-                            spacing: 8,
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        MachineStatusIndicator.getBackgroundColor(
-                                          context,
-                                          machine.currentStatus,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.fromLTRB(24, 16, 24, 16),
+                            width: double.infinity,
+                            child: Column(
+                              spacing: 16,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // TODO: some image here
+                                Row(
+                                  spacing: 8,
+                                  children: [
+                                    Expanded(
+                                      child: Container(
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 16,
                                         ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              MachineStatusIndicator.getBackgroundColor(
+                                                context,
+                                                machine.currentStatus,
+                                              ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
 
-                                    children: [
-                                      MachineStatusIndicator(
-                                        status: machine.currentStatus,
-                                        size: BoxSize.large,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text(
-                                        MachineDisplayUtils.getStatusLabel(
-                                          machine,
-                                        ),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge
-                                            ?.copyWith(
-                                              color:
-                                                  MachineStatusIndicator.getOnContainerColor(
-                                                    context,
-                                                    machine.currentStatus,
+                                          children: [
+                                            MachineStatusIndicator(
+                                              status: machine.currentStatus,
+                                              size: BoxSize.large,
+                                            ),
+                                            SizedBox(width: 12),
+                                            Text(
+                                              MachineDisplayUtils.getStatusLabel(
+                                                machine,
+                                              ),
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge
+                                                  ?.copyWith(
+                                                    color:
+                                                        MachineStatusIndicator.getOnContainerColor(
+                                                          context,
+                                                          machine.currentStatus,
+                                                        ),
                                                   ),
                                             ),
+                                            // box to take up the rest of the space
+                                            // Spacer(),
+                                          ],
+                                        ),
                                       ),
-                                      // box to take up the rest of the space
-                                      // Spacer(),
-                                    ],
+                                    ),
+                                    // SubscriptionIndicator(
+                                    //   machineId: machine.machineId,
+                                    // ),
+                                  ],
+                                ),
+
+                                Row(
+                                  spacing: 8,
+                                  children: [
+                                    Text(
+                                      machine.name,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.headlineLarge,
+                                    ),
+                                    machine.type == MachineType.washer
+                                        ? AssetIcons.washerIcon(context)
+                                        : AssetIcons.dryerIcon(context),
+                                  ],
+                                ),
+                                DetailRow(
+                                  label: "Type",
+                                  content: MachineDisplayUtils.getType(machine),
+                                ),
+                                DetailRow(
+                                  label: "Label",
+                                  content: MachineDisplayUtils.getLabel(
+                                    machine,
                                   ),
                                 ),
-                              ),
-                              // SubscriptionIndicator(
-                              //   machineId: machine.machineId,
-                              // ),
-                            ],
-                          ),
-
-                          Row(
-                            spacing: 8,
-                            children: [
-                              Text(
-                                machine.name,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineLarge,
-                              ),
-                              machine.type == MachineType.washer
-                                  ? AssetIcons.washerIcon(context)
-                                  : AssetIcons.dryerIcon(context),
-                            ],
-                          ),
-                          DetailRow(
-                            label: "Type",
-                            content: MachineDisplayUtils.getType(machine),
-                          ),
-                          DetailRow(
-                            label: "Label",
-                            content: MachineDisplayUtils.getLabel(machine),
-                          ),
-                          DetailRow(
-                            label: "Location",
-                            content: MachineDisplayUtils.getLocationLabel(
-                              machine,
-                            ),
-                          ),
-                          DetailRow(
-                            label: "Last updated",
-                            content: MachineDisplayUtils.getLastUpdatedLabel(
-                              machine,
-                            ),
-                          ),
-
-                          Divider(),
-                          // rounded pill box that displays machine status
-                          Column(
-                            children: [
-                              // Claim switch
-                              BlocConsumer<ClaimCubit, claim_state.ClaimState>(
-                                listener: (context, state) {},
-                                builder: (context, state) {
-                                  bool isClaimed = context
-                                      .read<ClaimCubit>()
-                                      .isMachineClaimed(widget.machineId);
-                                  return SwitchListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    subtitle: RichText(
-                                      text: TextSpan(
-                                        text: "Set an ",
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodySmall,
-                                        children: [
-                                          TextSpan(
-                                            text: "always-visible ",
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text:
-                                                "notification for machines you are currently using.",
-                                          ),
-                                        ],
+                                DetailRow(
+                                  label: "Location",
+                                  content: MachineDisplayUtils.getLocationLabel(
+                                    machine,
+                                  ),
+                                ),
+                                DetailRow(
+                                  label: "Last updated",
+                                  content:
+                                      MachineDisplayUtils.getLastUpdatedLabel(
+                                        machine,
                                       ),
-                                    ),
-                                    title: Text(
-                                      "In use by you",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.secondary,
-                                          ),
-                                    ),
-                                    secondary: (state is claim_state.Claiming)
-                                        ? SizedBox(
-                                            width: 24,
-                                            height: 24,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2.0,
-                                            ),
-                                          )
-                                        : null,
-                                    value: isClaimed,
-                                    thumbIcon: thumbIconClaim,
-                                    onChanged: (value) {
-                                      if (value) {
-                                        // claim
-                                        _dialogBuilder(context).then((
-                                          cycleTime,
-                                        ) {
-                                          if (cycleTime != null &&
-                                              mounted &&
-                                              context.mounted) {
-                                            context
-                                                .read<ClaimCubit>()
-                                                .claimMachine(
-                                                  machine,
-                                                  cycleTime: cycleTime,
-                                                );
-                                          }
-                                        });
-                                      } else {
-                                        // unclaim
-                                        context
+                                ),
+
+                                Divider(),
+                                // rounded pill box that displays machine status
+
+                                // should abstract this, but it will only ever be used here
+                                Column(
+                                  children: [
+                                    // Claim switch
+                                    BlocConsumer<
+                                      ClaimCubit,
+                                      claim_state.ClaimState
+                                    >(
+                                      listener: (context, state) {},
+                                      builder: (context, state) {
+                                        bool isClaimed = context
                                             .read<ClaimCubit>()
-                                            .unclaimMachine(machine);
-                                      }
-                                    },
-                                  );
-                                },
-                              ),
-                              // Subscription switch
-                              // BlocConsumer<
-                              //   SubscriptionCubit,
-                              //   sub_state.SubscriptionState
-                              // >(
-                              //   listener: (context, state) {},
-                              //   builder: (context, state) {
-                              //     bool isSubscribed = context
-                              //         .read<SubscriptionCubit>()
-                              //         .isSubscribedToMachine(widget.machineId);
-                              //     return SwitchListTile(
-                              //       contentPadding: EdgeInsets.zero,
-                              //       subtitle: RichText(
-                              //         text: TextSpan(
-                              //           text:
-                              //               "Receive a notification whenever a machine's status changes",
-                              //           style: Theme.of(
-                              //             context,
-                              //           ).textTheme.bodySmall,
-                              //         ),
-                              //       ),
-                              //       title: Text(
-                              //         "Subscribe",
-                              //         style: Theme.of(context)
-                              //             .textTheme
-                              //             .labelLarge
-                              //             ?.copyWith(
-                              //               color: Theme.of(
-                              //                 context,
-                              //               ).colorScheme.secondary,
-                              //             ),
-                              //       ),
-                              //       secondary: (state is sub_state.Subscribing)
-                              //           ? SizedBox(
-                              //               width: 24,
-                              //               height: 24,
-                              //               child: CircularProgressIndicator(
-                              //                 strokeWidth: 2.0,
-                              //               ),
-                              //             )
-                              //           : null,
-                              //       thumbIcon:
-                              //           (state
-                              //                   is sub_state.SubscriptionLoading ||
-                              //               state
-                              //                   is sub_state.SubscriptionRefreshing)
-                              //           ? null
-                              //           : thumbIconSubscribed,
-                              //       value: isSubscribed,
-                              //       onChanged:
-                              //           (state
-                              //                   is sub_state.SubscriptionLoading ||
-                              //               state
-                              //                   is sub_state.SubscriptionRefreshing)
-                              //           ? null
-                              //           : (value) {
-                              //               if (value) {
-                              //                 // subscribe
-                              //                 context
-                              //                     .read<SubscriptionCubit>()
-                              //                     .subscribeToMachine(machine);
-                              //               } else {
-                              //                 // unsubscribe
-                              //                 context
-                              //                     .read<SubscriptionCubit>()
-                              //                     .unsubscribeFromMachine(
-                              //                       machine,
-                              //                     );
-                              //               }
-                              //             },
-                              //     );
-                              //   },
-                              // ),
-                            ],
-                          ),
-                          Divider(),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Usage history",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.tertiary,
+                                            .isMachineClaimed(widget.machineId);
+                                        return SwitchListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          subtitle: RichText(
+                                            text: TextSpan(
+                                              text: "Set an ",
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.bodySmall,
+                                              children: [
+                                                TextSpan(
+                                                  text: "always-visible ",
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text:
+                                                      "notification for machines you are currently using.",
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          title: Text(
+                                            "In use by you",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge
+                                                ?.copyWith(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.secondary,
+                                                ),
+                                          ),
+                                          secondary:
+                                              (state is claim_state.Claiming)
+                                              ? SizedBox(
+                                                  width: 24,
+                                                  height: 24,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2.0,
+                                                      ),
+                                                )
+                                              : null,
+                                          value: isClaimed,
+                                          thumbIcon: thumbIconClaim,
+                                          onChanged: (value) {
+                                            try {
+                                              if (value) {
+                                                // claim
+
+                                                _dialogBuilder(context).then((
+                                                  cycleTime,
+                                                ) {
+                                                  if (cycleTime != null &&
+                                                      mounted &&
+                                                      context.mounted) {
+                                                    context
+                                                        .read<ClaimCubit>()
+                                                        .claimMachine(
+                                                          machine,
+                                                          cycleTime: cycleTime,
+                                                        );
+                                                  }
+                                                });
+                                              } else {
+                                                // unclaim
+                                                context
+                                                    .read<ClaimCubit>()
+                                                    .unclaimMachine(machine);
+                                              }
+                                            } catch (e) {
+                                              appLog.e(
+                                                "[MachineDetailScreen] Error claiming machine: $e",
+                                              );
+                                              SnackbarHelper.showError(
+                                                message:
+                                                    "Failed to claim machine. Please try again - are notifications enabled?",
+                                              );
+                                            }
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    // Subscription switch
+                                    // BlocConsumer<
+                                    //   SubscriptionCubit,
+                                    //   sub_state.SubscriptionState
+                                    // >(
+                                    //   listener: (context, state) {},
+                                    //   builder: (context, state) {
+                                    //     bool isSubscribed = context
+                                    //         .read<SubscriptionCubit>()
+                                    //         .isSubscribedToMachine(widget.machineId);
+                                    //     return SwitchListTile(
+                                    //       contentPadding: EdgeInsets.zero,
+                                    //       subtitle: RichText(
+                                    //         text: TextSpan(
+                                    //           text:
+                                    //               "Receive a notification whenever a machine's status changes",
+                                    //           style: Theme.of(
+                                    //             context,
+                                    //           ).textTheme.bodySmall,
+                                    //         ),
+                                    //       ),
+                                    //       title: Text(
+                                    //         "Subscribe",
+                                    //         style: Theme.of(context)
+                                    //             .textTheme
+                                    //             .labelLarge
+                                    //             ?.copyWith(
+                                    //               color: Theme.of(
+                                    //                 context,
+                                    //               ).colorScheme.secondary,
+                                    //             ),
+                                    //       ),
+                                    //       secondary: (state is sub_state.Subscribing)
+                                    //           ? SizedBox(
+                                    //               width: 24,
+                                    //               height: 24,
+                                    //               child: CircularProgressIndicator(
+                                    //                 strokeWidth: 2.0,
+                                    //               ),
+                                    //             )
+                                    //           : null,
+                                    //       thumbIcon:
+                                    //           (state
+                                    //                   is sub_state.SubscriptionLoading ||
+                                    //               state
+                                    //                   is sub_state.SubscriptionRefreshing)
+                                    //           ? null
+                                    //           : thumbIconSubscribed,
+                                    //       value: isSubscribed,
+                                    //       onChanged:
+                                    //           (state
+                                    //                   is sub_state.SubscriptionLoading ||
+                                    //               state
+                                    //                   is sub_state.SubscriptionRefreshing)
+                                    //           ? null
+                                    //           : (value) {
+                                    //               if (value) {
+                                    //                 // subscribe
+                                    //                 context
+                                    //                     .read<SubscriptionCubit>()
+                                    //                     .subscribeToMachine(machine);
+                                    //               } else {
+                                    //                 // unsubscribe
+                                    //                 context
+                                    //                     .read<SubscriptionCubit>()
+                                    //                     .unsubscribeFromMachine(
+                                    //                       machine,
+                                    //                     );
+                                    //               }
+                                    //             },
+                                    //     );
+                                    //   },
+                                    // ),
+                                  ],
+                                ),
+                                Divider(),
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Usage history",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.tertiary,
+                                              ),
                                         ),
-                                  ),
-                                ],
-                              ),
-                              MachineTimeline(machine: machine),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Active issues (0)",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.tertiary,
+                                      ],
+                                    ),
+                                    MachineTimeline(machine: machine),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Active issues (0)",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.tertiary,
+                                              ),
                                         ),
-                                  ),
-                                ],
-                              ),
-                              Column(children: [Text("Feature coming soon!")]),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Issue history",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.tertiary,
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [Text("Feature coming soon!")],
+                                    ),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Issue history",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineSmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.tertiary,
+                                              ),
                                         ),
-                                  ),
-                                ],
-                              ),
-                              Column(children: [Text("Feature coming soon!")]),
-                            ],
+                                      ],
+                                    ),
+                                    Column(
+                                      children: [Text("Feature coming soon!")],
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
                 );
               }

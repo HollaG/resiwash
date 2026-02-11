@@ -147,29 +147,28 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
   Future<void> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
+    final currentState = state;
+    List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+    List<MachineEntity>? currentClaimedMachines;
+
+    if (currentState is ClaimLoaded) {
+      currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+      currentClaimedMachines = currentState.claimedMachines;
+    }
+
+    final oldClaimedMachineId = currentClaimedMachineMetadata.isNotEmpty
+        ? currentClaimedMachineMetadata.first.machineId
+        : null;
+
+    if (isClosed) return;
+    emit(
+      Claiming(
+        claimedMachineMetadata: currentClaimedMachineMetadata,
+        claimedMachines: currentClaimedMachines,
+        operatingMachine: machine,
+      ),
+    );
     try {
-      final currentState = state;
-      List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
-      List<MachineEntity>? currentClaimedMachines;
-
-      if (currentState is ClaimLoaded) {
-        currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
-        currentClaimedMachines = currentState.claimedMachines;
-      }
-
-      final oldClaimedMachineId = currentClaimedMachineMetadata.isNotEmpty
-          ? currentClaimedMachineMetadata.first.machineId
-          : null;
-
-      if (isClosed) return;
-      emit(
-        Claiming(
-          claimedMachineMetadata: currentClaimedMachineMetadata,
-          claimedMachines: currentClaimedMachines,
-          operatingMachine: machine,
-        ),
-      );
-
       // Get FCM token
       final fcmToken = await _notificationService.getFcmToken();
 
@@ -263,6 +262,15 @@ class ClaimCubit extends Cubit<ClaimState> {
       );
     } catch (e) {
       appLog.e('Error claiming machine $machineId: $e');
+
+      emit(
+        ClaimOperationError(
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          claimedMachines: currentClaimedMachines,
+          operatingMachine: machine,
+          message: e.toString(),
+        ),
+      );
     }
   }
 
@@ -270,25 +278,24 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// NOTE: hits the backend
   Future<void> unclaimMachine(MachineEntity machine) async {
     final machineId = machine.machineId;
+    final currentState = state;
+    List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+    List<MachineEntity>? currentClaimedMachines;
+
+    if (currentState is ClaimLoaded) {
+      currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+      currentClaimedMachines = currentState.claimedMachines;
+    }
+
+    if (isClosed) return;
+    emit(
+      Claiming(
+        claimedMachineMetadata: currentClaimedMachineMetadata,
+        claimedMachines: currentClaimedMachines,
+        operatingMachine: machine,
+      ),
+    );
     try {
-      final currentState = state;
-      List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
-      List<MachineEntity>? currentClaimedMachines;
-
-      if (currentState is ClaimLoaded) {
-        currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
-        currentClaimedMachines = currentState.claimedMachines;
-      }
-
-      if (isClosed) return;
-      emit(
-        Claiming(
-          claimedMachineMetadata: currentClaimedMachineMetadata,
-          claimedMachines: currentClaimedMachines,
-          operatingMachine: machine,
-        ),
-      );
-
       // Get FCM token
       final fcmToken = await _notificationService.getFcmToken();
 
@@ -339,34 +346,53 @@ class ClaimCubit extends Cubit<ClaimState> {
       );
     } catch (e) {
       appLog.e('Error unclaiming machine $machineId: $e');
+      emit(
+        ClaimOperationError(
+          claimedMachineMetadata: currentClaimedMachineMetadata,
+          claimedMachines: currentClaimedMachines,
+          operatingMachine: machine,
+          message: e.toString(),
+        ),
+      );
     }
   }
 
   /// Unclaim a machine by ID (when you only have the ID)
   Future<void> unclaimMachineById(String machineId) async {
+    final currentState = state;
+    List<MachineEntity>? currentClaimedMachines;
+
+    List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
+    MachineEntity? machine;
+
+    if (currentState is ClaimLoaded) {
+      currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
+      currentClaimedMachines = currentState.claimedMachines;
+    }
+
+    if (currentClaimedMachines == null) {
+      appLog.e('No claimed machines loaded');
+      return;
+    }
     try {
-      final currentState = state;
-      List<MachineEntity>? currentClaimedMachines;
-
-      if (currentState is ClaimLoaded) {
-        currentClaimedMachines = currentState.claimedMachines;
-      }
-
-      if (currentClaimedMachines == null) {
-        appLog.e('No claimed machines loaded');
-        return;
-      }
-
-      try {
-        final machine = currentClaimedMachines.firstWhere(
-          (m) => m.machineId == machineId,
-        );
-        await unclaimMachine(machine);
-      } catch (e) {
-        appLog.e('Machine not found in claimed machines: $machineId');
-      }
+      machine = currentClaimedMachines.firstWhere(
+        (m) => m.machineId == machineId,
+      );
+      await unclaimMachine(machine);
     } catch (e) {
       appLog.e('Error unclaiming machine $machineId: $e');
+      if (machine == null) {
+        emit(ClaimError(message: 'Machine not found'));
+      } else {
+        emit(
+          ClaimOperationError(
+            claimedMachineMetadata: currentClaimedMachineMetadata,
+            claimedMachines: currentClaimedMachines,
+            operatingMachine: machine,
+            message: e.toString(),
+          ),
+        );
+      }
     }
   }
 

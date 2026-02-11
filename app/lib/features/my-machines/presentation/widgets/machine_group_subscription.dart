@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_state.dart';
 
@@ -46,6 +48,9 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
     setState(() {
       _isLoading = true;
     });
+
+    print("debug switch pressed to $value ${widget.subscriptionKeys}");
+
     if (value) {
       await context.read<SubscriptionCubit>().subscribeToGroups(
         widget.subscriptionKeys,
@@ -67,6 +72,7 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
   Widget build(BuildContext context) {
     return BlocConsumer<SubscriptionCubit, SubscriptionState>(
       listener: (context, state) {
+        print("debug state changed to $state in machinegroupsubscription");
         // Remember that Subscribing and Unsubscribing extend SubscriptionLoaded (antipattern, but eh)
         if (state is SubscriptionLoaded) {
           setState(() {
@@ -74,6 +80,23 @@ class _MachineGroupSubscriptionState extends State<MachineGroupSubscription> {
                 .read<SubscriptionCubit>()
                 .isSubscribedToGroups(widget.subscriptionKeys);
           });
+        }
+
+        // Handle subscription errors
+        if (state is SubscriptionGroupOperationError) {
+          // Only show error if it's relevant to this widget's subscription keys
+          // TODO: check if we must do exact match
+          final hasOverlap = state.operatingGroupKeys.any(
+            (key) => widget.subscriptionKeys.contains(key),
+          );
+
+          if (hasOverlap) {
+            appLog.e('Subscription error: ${state.message}');
+            SnackbarHelper.showError(
+              message:
+                  'Notifications are not available. Please ensure you have allowed notifications.',
+            );
+          }
         }
       },
       builder: (context, state) {

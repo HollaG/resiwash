@@ -4,6 +4,7 @@ import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 
 enum CustomFirebaseMessageChannel { claimed, subscribed, poke, subscribedGroup }
@@ -153,17 +154,16 @@ class FirebaseNotificationService {
   Future<String> getFcmToken() async {
     if (Platform.isIOS) {
       String? apnsToken = await _firebaseMessaging.getAPNSToken();
+
       if (apnsToken == null) {
-        // Wait for APNS token
-        for (int i = 0; i < 10; i++) {
-          await Future.delayed(const Duration(seconds: 1));
-          apnsToken = await _firebaseMessaging.getAPNSToken();
-          if (apnsToken != null) break;
-        }
-      }
-      if (apnsToken == null) {
-        appLog.e("APNS token not available after polling.");
-        return ""; // Return empty string to avoid crash on getToken
+        appLog.e("APNS token not available!");
+
+        // TODO: we will probably display this in a notifications settings page to be developed
+        SnackbarHelper.showWarning(
+          message:
+              "Notifications are disabled - enable them to get progress update notifications.",
+        );
+        return "";
       }
     }
     try {

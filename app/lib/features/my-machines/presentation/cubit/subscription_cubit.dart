@@ -446,7 +446,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKey,
+          operatingGroupKeys: [groupKey],
         ),
       );
 
@@ -470,7 +470,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
           subscribedGroups: updatedGroups,
-          operatingGroupKey: groupKey,
+          operatingGroupKeys: [groupKey],
         ),
       );
 
@@ -496,7 +496,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKey,
+          operatingGroupKeys: [groupKey],
         ),
       );
     } finally {
@@ -535,7 +535,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKey,
+          operatingGroupKeys: [groupKey],
         ),
       );
 
@@ -553,8 +553,8 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachineIds: currentMachineIds,
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
-          subscribedGroups: updatedGroups, 
-          operatingGroupKey: groupKey,
+          subscribedGroups: updatedGroups,
+          operatingGroupKeys: [groupKey],
         ),
       );
 
@@ -580,7 +580,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKey,
+          operatingGroupKeys: [groupKey],
         ),
       );
     } finally {
@@ -625,7 +625,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         subscribedMachines: currentMachines,
         subscribedGroupKeys: currentGroupKeys,
         subscribedGroups: currentGroups,
-        operatingGroupKey: groupKeys.join(', '),
+        operatingGroupKeys: groupKeys,
       ),
     );
 
@@ -633,6 +633,9 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     final groupsToSubscribe = groupKeys
         .where((key) => !currentGroupKeys.contains(key))
         .toList();
+
+    // keep track of which group keys were successful
+    final List<String> currentlySubscribedGroupKeys = [];
     try {
       if (groupsToSubscribe.isEmpty) {
         appLog.w('Already subscribed to all groups: $groupKeys');
@@ -643,6 +646,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       for (final groupKey in groupsToSubscribe) {
         await _notificationService.subscribeToGroup(groupKey);
         appLog.i('Successfully subscribed to group: $groupKey');
+        currentlySubscribedGroupKeys.add(groupKey);
       }
 
       // Reload from shared preferences to get updated list
@@ -655,16 +659,17 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
           subscribedGroups: updatedGroups,
-          operatingGroupKey: groupKeys.join(', '),
+          operatingGroupKeys: groupKeys,
         ),
       );
     } catch (e) {
       appLog.e('Error subscribing to groups $groupKeys: $e');
 
       // remove from pref
-      for (final groupKey in groupsToSubscribe) {
-        _sharedPreferencesService.unsubscribeFromGroups({groupKey});
-      }
+      // for (final groupKey in currentlySubscribedGroupKeys) {
+      //   _sharedPreferencesService.unsubscribeFromGroups({groupKey});
+      // }
+
       emit(
         SubscriptionGroupOperationError(
           message: 'Failed to subscribe to groups',
@@ -672,7 +677,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKeys.join(', '),
+          operatingGroupKeys: groupKeys,
         ),
       );
     } finally {
@@ -705,7 +710,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
         subscribedMachines: currentMachines,
         subscribedGroupKeys: currentGroupKeys,
         subscribedGroups: currentGroups,
-        operatingGroupKey: groupKeys.join(', '),
+        operatingGroupKeys: groupKeys,
       ),
     );
 
@@ -736,7 +741,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: updatedGroupKeys,
           subscribedGroups: updatedGroups,
-          operatingGroupKey: groupKeys.join(', '),
+          operatingGroupKeys: groupKeys,
         ),
       );
     } catch (e) {
@@ -748,7 +753,7 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
           subscribedMachines: currentMachines,
           subscribedGroupKeys: currentGroupKeys,
           subscribedGroups: currentGroups,
-          operatingGroupKey: groupKeys.join(', '),
+          operatingGroupKeys: groupKeys,
         ),
       );
     } finally {
