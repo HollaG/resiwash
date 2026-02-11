@@ -1,10 +1,10 @@
+import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
-import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
 enum CustomFirebaseMessageChannel { claimed, subscribed, poke, subscribedGroup }
 
@@ -151,7 +151,27 @@ class FirebaseNotificationService {
 
   // TODO: check how to guarantee non-null token
   Future<String> getFcmToken() async {
-    return await _firebaseMessaging.getToken() ?? "";
+    if (Platform.isIOS) {
+      String? apnsToken = await _firebaseMessaging.getAPNSToken();
+      if (apnsToken == null) {
+        // Wait for APNS token
+        for (int i = 0; i < 10; i++) {
+          await Future.delayed(const Duration(seconds: 1));
+          apnsToken = await _firebaseMessaging.getAPNSToken();
+          if (apnsToken != null) break;
+        }
+      }
+      if (apnsToken == null) {
+        appLog.e("APNS token not available after polling.");
+        return ""; // Return empty string to avoid crash on getToken
+      }
+    }
+    try {
+      return await _firebaseMessaging.getToken() ?? "";
+    } catch (e) {
+      appLog.e("Error getting FCM token: $e");
+      return "";
+    }
   }
 
   Future<String> subscribeToMachine(String machineId) async {
