@@ -61,6 +61,10 @@ export function MachineDetailSheet({ machine, isOpen, onClose }: MachineDetailSh
     );
   }, [machineDetails?.events, displayMachine?.events]);
 
+  const timeTo = machine?.currentCycleTime && machine.lastAvailableTime ? formatDistanceToNow(new Date(new Date(machine.lastAvailableTime).getTime() + machine.currentCycleTime * 60000), {
+    addSuffix: false,
+  }) : null;
+
   if (!displayMachine) return null;
 
   return (
@@ -90,7 +94,7 @@ export function MachineDetailSheet({ machine, isOpen, onClose }: MachineDetailSh
                 {statusText}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-dark-text-secondary dark:text-light-text-secondary">
                 Last Changed
@@ -99,6 +103,15 @@ export function MachineDetailSheet({ machine, isOpen, onClose }: MachineDetailSh
                 {lastChanged}
               </span>
             </div>
+
+            {machine?.currentCycleTime && machine.lastAvailableTime && < div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-dark-text-secondary dark:text-light-text-secondary">
+                Finishes in
+              </span>
+              <span className="font-mono text-sm text-dark-text-primary dark:text-light-text-primary">
+                {timeTo}
+              </span>
+            </div>}
 
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-dark-text-secondary dark:text-light-text-secondary">
@@ -125,6 +138,6 @@ export function MachineDetailSheet({ machine, isOpen, onClose }: MachineDetailSh
           </div>
         </div>
       </SheetContent>
-    </Sheet>
+    </Sheet >
   );
 }

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:live_activities/live_activities.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
@@ -9,10 +12,30 @@ class LiveNotificationService {
   LiveNotificationService();
 
   Future<void> initialize() async {
+    // Live Activities only supported on iOS and Android
+    if (kIsWeb) {
+      appLog.d(
+        "[LiveNotificationService] Skipping initialization on web platform",
+      );
+      return;
+    }
+
+    if (!Platform.isIOS && !Platform.isAndroid) {
+      appLog.d(
+        "[LiveNotificationService] Skipping initialization on unsupported platform",
+      );
+      return;
+    }
+
     await _liveActivitiesPlugin.init(appGroupId: "group.com.resiwash.app");
   }
 
   Future<bool> checkActivityEnabled() async {
+    // Live Activities only supported on iOS and Android
+    if (kIsWeb || (!Platform.isIOS && !Platform.isAndroid)) {
+      return false;
+    }
+
     bool isActivitiesSupported = await _liveActivitiesPlugin
         .areActivitiesSupported();
     bool isActivitiesEnabled = await _liveActivitiesPlugin

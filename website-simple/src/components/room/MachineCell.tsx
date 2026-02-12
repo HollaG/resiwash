@@ -33,6 +33,14 @@ export function MachineCell({ machine, onClick, className, isStale = false }: Ma
     .replace(' hours', 'h')
     .replace(' hour', 'h');
 
+  const timeTo = machine.currentCycleTime && machine.lastAvailableTime ? formatDistanceToNow(new Date(new Date(machine.lastAvailableTime).getTime() + machine.currentCycleTime * 60000), {
+    addSuffix: false,
+  }).replace('about ', '')
+    .replace('less than a minute', '<1m')
+    .replace(' minutes', 'm')
+    .replace(' minute', 'm')
+    .replace(' hours', 'h')
+    .replace(' hour', 'h') : null;
   const statusDisplay = convertMachineStatusToString(machine.currentStatus);
   const staleTooltip = isStale
     ? `⚠️ Data may not be accurate - sensor appears offline`
@@ -68,13 +76,18 @@ export function MachineCell({ machine, onClick, className, isStale = false }: Ma
           <span className="min-w-0 truncate font-mono text-base font-semibold text-dark-text-primary dark:text-light-text-primary">
             {shortMachineLabel(machine.label, machine.type, machine.name)}
           </span>
-          <StatusBadge status={machine.currentStatus} size="md" />
+
+        </div>
+
+        <div className="flex w-full min-w-0 items-center justify-between gap-2">
+          <StatusBadge status={machine.currentStatus} size="md" className='flex shrink-0' />
+          <span className="font-mono text-xs text-dark-text-secondary dark:text-light-text-secondary">
+            {timeTo ? `${timeTo} left` : `${timeAgo} ago`}
+          </span>
         </div>
 
         {/* Bottom row: Time since status change */}
-        <span className="font-mono text-xs text-dark-text-secondary dark:text-light-text-secondary">
-          {timeAgo}
-        </span>
+
       </motion.button>
     </Tooltip>
   );

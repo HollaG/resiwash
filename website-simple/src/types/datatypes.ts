@@ -47,6 +47,7 @@ export type Machine = {
   previousStatusActiveTime?: number;
   lastAvailableTime?: Date;
   isManualEntry: boolean;
+  currentCycleTime?: number;
 };
 
 export type Room = {

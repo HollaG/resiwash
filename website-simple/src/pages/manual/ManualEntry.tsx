@@ -8,27 +8,27 @@ import { BASE_URL } from "@/types/enums";
 import { MachineStatus } from "@/types/datatypes";
 import { MachineCell } from "@/components/room/MachineCell";
 import { MachineDetailSheet } from "@/components/machine/MachineDetailSheet";
+import { useRoomInfo } from "@/hooks/query/useRoomInfo";
 // URL: /manual?roomId=xxx&machineId=xxx&status=IN_USE
 export const ManualEntry = () => {
 
   const queryParams = new URLSearchParams(window.location.search);
   const machineId = Number.isNaN(Number(queryParams.get('machineId'))) ? null : Number(queryParams.get('machineId'));
-  const roomId = Number.isNaN(Number(queryParams.get('roomId'))) ? null : Number(queryParams.get('roomId'));
   const status = queryParams.get('status');
 
-
-  const [isOpen, setIsOpen] = useState(false);
-  const { data: locationMachines } = useLocationMachines({ roomId: roomId || 0, load: !!roomId });
-
-
   const [selectedMachineId, setSelectedValue] = useState<string | undefined>(machineId?.toString() || undefined);
-  const [cycleTime, setCycleTime] = useState<string>("30");
-
   const { data: selectedMachineData } = useMachineInfo({
     machineId: Number(selectedMachineId) || 0,
-    roomId: roomId || 0,
-    load: !!machineId,
+    load: machineId !== null,
+
   });
+
+  const [isOpen, setIsOpen] = useState(false);
+  const { data: locationMachines } = useLocationMachines({ roomId: selectedMachineData?.roomId || 0, load: selectedMachineData?.roomId !== undefined });
+  const { data: roomInfo } = useRoomInfo({ roomId: selectedMachineData?.roomId || 0, load: selectedMachineData?.roomId !== undefined, extra: true });
+
+  const [cycleTime, setCycleTime] = useState<string>("30");
+
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,12 +53,12 @@ export const ManualEntry = () => {
   }
   return <div className="min-h-screen bg-app">
     <div className="container mx-auto max-w-lg px-4 py-6 space-y-6">
-      <h2 className="text-2xl font-bold text-center"> Use a machine</h2>
+      <h2 className="text-2xl font-bold text-center"> Use a machine from {roomInfo?.shortName ?? roomInfo?.name}</h2>
       <div className="flex gap-4">
 
         <Select.Root value={selectedMachineId} onValueChange={setSelectedValue}>
           <Select.Trigger className="w-full flex items-center justify-between px-4 py-3 bg-surface border border-app rounded-lg text-primary font-mono hover:border-secondary transition-colors" aria-label="Fruit">
-            <Select.Value placeholder="Select a fruit..." />
+            <Select.Value placeholder="Select a machine..." />
             <Select.Icon className="ml-2">▽</Select.Icon>
           </Select.Trigger>
           <Select.Portal>
@@ -89,7 +89,7 @@ export const ManualEntry = () => {
       <ToggleGroup.Root
         type="single"
         value={cycleTime}
-        onValueChange={(value) => { value && setCycleTime(value) }}
+        onValueChange={(value) => { if (value) setCycleTime(value) }}
         className="flex gap-2"
       >
         <ToggleGroup.Item
