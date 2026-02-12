@@ -417,19 +417,19 @@ class _MachineRowState extends State<MachineRow>
           String claimText = '';
           switch (claimState) {
             case ClaimState.notClaimed:
-              claimText = "Claim";
+              claimText = "Use this machine";
               break;
             case ClaimState.claimed:
-              claimText = "Unclaim";
+              claimText = "Release";
               break;
             case ClaimState.loading:
               claimText = "Loading...";
               break;
             case ClaimState.successClaiming:
-              claimText = "Claimed!";
+              claimText = "Now using!";
               break;
             case ClaimState.successUnclaiming:
-              claimText = "Unclaimed!";
+              claimText = "Released!";
               break;
           }
 
@@ -536,11 +536,13 @@ class _MachineRowState extends State<MachineRow>
                         autoClose: true,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             claimIcon,
                             const SizedBox(height: 4),
                             Text(
                               claimText,
+                              textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     color: Theme.of(
