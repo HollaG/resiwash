@@ -335,7 +335,7 @@ class _TrackerState extends State<Tracker> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Unclaim',
+                  'Release',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSecondaryContainer,
                   ),

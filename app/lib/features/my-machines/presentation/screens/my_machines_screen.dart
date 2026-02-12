@@ -4,6 +4,7 @@ import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/sections/completed.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/issues_reported.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/subscriptions.dart';
@@ -30,6 +31,16 @@ class MyMachinesScreen extends StatelessWidget {
 
                     children: [
                       SizedBox(height: 0),
+
+                      // section 0:
+                      // "completed"
+                      AnimatedSize(
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.fastOutSlowIn,
+                        alignment: Alignment.topCenter,
+                        child: CompletedSection(),
+                      ),
+
                       // section 1:
                       // "In use by you"
                       // list of in use by you
