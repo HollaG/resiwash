@@ -1,10 +1,15 @@
-import { getReadableMachineStatus, MachineStatus } from "../core/types";
+import {
+  getReadableMachineStatus,
+  MachineStatus,
+  MachineType,
+} from "../core/types";
 import {
   getMessaging,
   Message,
   MulticastMessage,
 } from "firebase-admin/messaging";
 import { Machine } from "../models/Machine";
+import { AppDataSource } from "../data-source";
 
 const getTopicNameForMachine = (machine: Machine): string => {
   return `machine_${machine.machineId}`;
@@ -12,7 +17,7 @@ const getTopicNameForMachine = (machine: Machine): string => {
 
 const getTopicNameForBulkSubscription = (machine: Machine): string => {
   return `group_${machine.roomId}_${machine.type.toLowerCase()}`;
-}
+};
 
 type CustomDataPayload = {
   [key: string]: string;
@@ -39,7 +44,7 @@ export const sendMachineStatusChangedNotification = async ({
     topic: getTopicNameForMachine(machine),
     notification: {
       title: `${machine.name} now ${getReadableMachineStatus(
-        machine.currentStatus
+        machine.currentStatus,
       )}`,
       body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
     },
@@ -75,15 +80,74 @@ export const sendMachineStatusChangedNotification = async ({
  */
 export const sendClaimedMachineStatusChangedNotification = async ({
   machine,
-  oldStatus,
-  newStatus,
   fcmToken,
 }: {
   machine: Machine;
-  oldStatus: MachineStatus;
-  newStatus: MachineStatus;
+  oldStatus?: MachineStatus;
+  newStatus?: MachineStatus;
   fcmToken: string;
 }) => {
+  let title = "";
+  let body = "";
+  let secondsTillCompletion = null;
+
+  // state maps
+  // IN_USE
+  // FINISHING
+  // AVAILABLE
+  if (machine.currentStatus === MachineStatus.IN_USE) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} running...`;
+    const expectedEndTime =
+      machine.lastAvailableTime!.getTime() +
+      (machine.currentCycleTime ? machine.currentCycleTime * 60000 : 0);
+    body = `Expected to finish by [[ expectedEndTime ]].`;
+    secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
+  } else if (machine.currentStatus === MachineStatus.FINISHING) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} finishing in approx. 5 - 10 minutes...`;
+    body = `Please be ready to collect your clothes soon!`;
+
+    if (machine.type === MachineType.WASHER) {
+      // search for nearby available dryers in the same room and add to notification body
+      // this is to encourage users to switch to dryer right after washing cycle ends, reducing the chance of them forgetting about the machine
+      const nearbyAvailableDryers = await AppDataSource.getRepository(
+        Machine,
+      ).find({
+        where: {
+          roomId: machine.roomId,
+          type: MachineType.DRYER,
+          currentStatus: MachineStatus.AVAILABLE || MachineStatus.FINISHING, // also include finishing dryers since they might be finishing before the washer and become available right after
+        },
+      });
+      if (nearbyAvailableDryers.length > 0) {
+        body += ` Dryers available / finishing: ${nearbyAvailableDryers.map((dryer) => dryer.name).join(", ")}.`;
+      } else {
+        body += ` Unfortunately, there is no available dryer at the moment.`;
+      }
+    }
+  } else if (machine.currentStatus === MachineStatus.AVAILABLE) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} has finished!`;
+    body = `Please collect your clothes as soon as possible.`;
+
+    if (machine.type === MachineType.WASHER) {
+      // search for nearby available dryers in the same room and add to notification body
+      // this is to encourage users to switch to dryer right after washing cycle ends, reducing the chance of them forgetting about the machine
+      const nearbyAvailableDryers = await AppDataSource.getRepository(
+        Machine,
+      ).find({
+        where: {
+          roomId: machine.roomId,
+          type: MachineType.DRYER,
+          currentStatus: MachineStatus.AVAILABLE || MachineStatus.FINISHING, // also include finishing dryers since they might be finishing before the washer and become available right after
+        },
+      });
+      if (nearbyAvailableDryers.length > 0) {
+        body += ` Dryers available / finishing: ${nearbyAvailableDryers.map((dryer) => dryer.name).join(", ")}.`;
+      } else {
+        body += ` Unfortunately, there is no available dryer at the moment.`;
+      }
+    }
+  }
+
   const message: CustomMessage = {
     token: fcmToken,
 
@@ -118,11 +182,18 @@ export const sendClaimedMachineStatusChangedNotification = async ({
       machineId: machine.machineId.toString(),
       machineName: machine.name,
       machineRoomName: machine.room.name,
-      machineAreaShortName: machine.room.area.shortName || machine.room.area.name,
+      machineAreaShortName:
+        machine.room.area.shortName || machine.room.area.name,
       machineCurrentStatus: machine.currentStatus,
       machinePreviousStatus: machine.previousStatus,
 
       channel: "claimed",
+
+      title,
+      body,
+      secondsTillCompletion: secondsTillCompletion
+        ? secondsTillCompletion.toString()
+        : "",
     },
   };
 
@@ -138,7 +209,6 @@ export const sendClaimedMachineStatusChangedNotification = async ({
   }
 };
 
-
 /**
  *
  * @param machine Machine object with `room` and `area` joined !!important
@@ -151,17 +221,21 @@ export const sendMachineGroupStatusChangedNotification = async ({
   let cycleTimeInfo = "";
   if (machine.currentCycleTime) {
     cycleTimeInfo = ` Expected to finish by ${new Date(
-      machine.lastAvailableTime!.getTime() +
-      machine.currentCycleTime * 60000
-    ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} (${machine.currentCycleTime}m cycle). `;
+      machine.lastAvailableTime!.getTime() + machine.currentCycleTime * 60000,
+    ).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })} (${machine.currentCycleTime}m cycle). `;
   }
   const message: CustomMessage = {
     topic: getTopicNameForBulkSubscription(machine),
     notification: {
       title: `${machine.name} now ${getReadableMachineStatus(
-        machine.currentStatus
+        machine.currentStatus,
       )}`,
-      body: cycleTimeInfo + `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
+      body:
+        cycleTimeInfo +
+        `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
     },
     android: {
       notification: {
@@ -186,7 +260,6 @@ export const sendMachineGroupStatusChangedNotification = async ({
     throw e;
   }
 };
-
 
 /**
  *
@@ -243,7 +316,7 @@ export const sendMachineGroupStatusChangedNotification = async ({
 
 export const sendPokeNotification = async (
   machine: Machine,
-  fcmToken: string
+  fcmToken: string,
 ) => {
   const message: CustomMessage = {
     token: fcmToken,

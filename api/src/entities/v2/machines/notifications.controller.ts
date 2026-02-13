@@ -11,7 +11,10 @@ import {
   canPoke,
   getClaimants,
 } from "../../../utils/notifications";
-import { sendPokeNotification } from "../../../utils/firebase-messaging";
+import {
+  sendClaimedMachineStatusChangedNotification,
+  sendPokeNotification,
+} from "../../../utils/firebase-messaging";
 import { Machine } from "../../../models/Machine";
 
 interface ClaimMachineRequest {
@@ -37,8 +40,9 @@ export const claimMachine = expressAsyncHandler(
       });
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository(Machine).findOneBy({
-        machineId: parseInt(machineId),
+      const machine = await AppDataSource.getRepository(Machine).findOne({
+        where: { machineId: parseInt(machineId) },
+        relations: ["room", "room.area"],
       });
 
       if (!machine) {
@@ -72,6 +76,11 @@ export const claimMachine = expressAsyncHandler(
 
       // now, claim the machine
       await _claimMachine(machineId, fcmToken, cycleTime);
+
+      // now, send a notification to the user
+      // TODO: if current status is available, send a DIFFERENT notification indication that
+      // notification tracking will be enabled
+      sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {

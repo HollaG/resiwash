@@ -15,7 +15,7 @@ interface SetManualStatusParams {
 
 /**
  * Trigger an initial "IN_USE" status update for a manual entry machine.
- * 
+ *
  * // TODO: THIS FUNCTION ONLY SUPPORTS IN_USE STATUS. PLEASE GENERALIZE IT
  * @param params
  */
@@ -69,7 +69,7 @@ export async function setMachineManualStatus(
     });
 
     // send notification to claimant if applicable
-    sendNotificationToClaimants(machine).catch((e) => { }); // do nothing
+    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
     return;
   }
 
@@ -91,10 +91,10 @@ export async function setMachineManualStatus(
     machine.previousStatusActiveTime =
       machine.lastChangeTime && machine.lastUpdated
         ? Math.floor(
-          (machine.lastChangeTime?.getTime() -
-            machine.lastUpdated?.getTime()) /
-          1000,
-        )
+            (machine.lastChangeTime?.getTime() -
+              machine.lastUpdated?.getTime()) /
+              1000,
+          )
         : 0; // calculate how long the machine was in the previous status in seconds
     machine.lastAvailableTime = now;
     machine.lastChangeTime = now;
@@ -120,11 +120,10 @@ export async function setMachineManualStatus(
     // note: we do not care if it succeeds or fails
     sendMachineGroupStatusChangedNotification({
       machine: machine,
-
     });
 
     // send notification to claimant if applicable
-    sendNotificationToClaimants(machine).catch((e) => { }); // do nothing
+    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
   } else if (status === MachineStatus.IN_USE) {
     // invalid cycleTime
     throw new Error("Cycle time must be provided and greater than 5");
@@ -134,9 +133,11 @@ export async function setMachineManualStatus(
 /**
  * In case of stuck machine, reset the machine status to available, and clear cycle time.
  * Note that this function does not check if the machine is actually stuck, so please do the necessary checks before calling this function.
- * @param machineId 
+ * @param machineId
  */
-export async function resetMachineStatusToAvailable(machineId: number): Promise<void> {
+export async function resetMachineStatusToAvailable(
+  machineId: number,
+): Promise<void> {
   try {
     const machineRepository = AppDataSource.getRepository(Machine);
     const machine = await machineRepository.findOne({
@@ -161,12 +162,11 @@ export async function resetMachineStatusToAvailable(machineId: number): Promise<
     const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
     await updateEventRepository.save(updateEvent);
 
-
     machine.previousStatusActiveTime = machine.lastChangeTime
       ? Math.floor(
-        (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
-        1000,
-      )
+          (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+            1000,
+        )
       : 0; // calculate how long the machine was in the previous status in seconds
     machine.previousStatus = machine.currentStatus;
     machine.currentStatus = MachineStatus.AVAILABLE;
@@ -179,14 +179,10 @@ export async function resetMachineStatusToAvailable(machineId: number): Promise<
     await machineRepository.save(machine);
 
     // don't send any notification
-
-
   } catch (e) {
     console.log(e);
     throw new Error("Failed to reset machine status");
   }
-
-
 }
 
 /**
@@ -203,9 +199,9 @@ const updateMachineStatusAfterTime = async (
 
   machine.previousStatusActiveTime = machine.lastChangeTime
     ? Math.floor(
-      (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
-      1000,
-    )
+        (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+          1000,
+      )
     : 0; // calculate how long the machine was in the previous status in seconds
   machine.previousStatus = machine.currentStatus;
   machine.currentStatus = status;
@@ -236,7 +232,7 @@ const updateMachineStatusAfterTime = async (
   });
 
   // send notification to claimant if applicable
-  sendNotificationToClaimants(machine).catch((e) => { }); // do nothing
+  sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
 
   if (status === MachineStatus.FINISHING) {
     const timeout = setTimeout(

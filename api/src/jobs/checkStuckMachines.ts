@@ -3,16 +3,19 @@ import { AppDataSource } from "../data-source";
 import { Machine } from "../models/Machine";
 import { Claim } from "../models/Claim";
 import { MachineStatus } from "../core/types";
-import { resetMachineStatusToAvailable, setMachineManualStatus } from "../services/machines.service";
+import {
+  resetMachineStatusToAvailable,
+  setMachineManualStatus,
+} from "../services/machines.service";
 
 /**
  * Scheduled job to check for "stuck" machines and clean up stale claims
- * 
+ *
  * Runs every minute to:
  * 1. Find manual machines that are IN_USE or FINISHING with a cycle time
  * 2. Reset machines that have exceeded their cycle time by more than 1 hour
  * 3. Remove claims that are older than 4 hours
- * 
+ *
  * This serves as a safety net for crashed processes or missed status updates
  */
 export const startStuckMachinesChecker = () => {
@@ -36,7 +39,7 @@ export const startStuckMachinesChecker = () => {
         .getMany();
 
       console.log(
-        `[Job] Found ${potentiallyStuckMachines.length} potentially stuck machines`
+        `[Job] Found ${potentiallyStuckMachines.length} potentially stuck machines`,
       );
 
       const now = new Date();
@@ -53,19 +56,17 @@ export const startStuckMachinesChecker = () => {
         if (elapsedMinutes > thresholdMinutes) {
           console.log(
             `[Job] Resetting stuck machine ${machine.machineId} (${machine.name}) - ` +
-            `elapsed: ${Math.round(elapsedMinutes)}min, threshold: ${thresholdMinutes}min`
+              `elapsed: ${Math.round(elapsedMinutes)}min, threshold: ${thresholdMinutes}min`,
           );
 
           try {
             // Reset machine to available status
-            await resetMachineStatusToAvailable(
-              machine.machineId,
-            );
+            await resetMachineStatusToAvailable(machine.machineId);
             resetCount++;
           } catch (error) {
             console.error(
               `[Job] Failed to reset machine ${machine.machineId}:`,
-              error
+              error,
             );
           }
         }
@@ -78,28 +79,30 @@ export const startStuckMachinesChecker = () => {
       }
 
       // Clean up old claims (4+ hours old)
-      console.log("[Job] Checking for stale claims...");
-      const claimRepository = AppDataSource.getRepository(Claim);
+      // console.log("[Job] Checking for stale claims...");
+      // const claimRepository = AppDataSource.getRepository(Claim);
 
-      const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+      // const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
 
-      const staleClaims = await claimRepository
-        .createQueryBuilder("claim")
-        .where("claim.claimedAt < :fourHoursAgo", { fourHoursAgo })
-        .getMany();
+      // const staleClaims = await claimRepository
+      //   .createQueryBuilder("claim")
+      //   .where("claim.claimedAt < :fourHoursAgo", { fourHoursAgo })
+      //   .getMany();
 
-      if (staleClaims.length > 0) {
-        await claimRepository.remove(staleClaims);
-        console.log(`[Job] Removed ${staleClaims.length} stale claim(s) (older than 4 hours)`);
-      } else {
-        console.log("[Job] No stale claims found");
-      }
+      // if (staleClaims.length > 0) {
+      //   await claimRepository.remove(staleClaims);
+      //   console.log(`[Job] Removed ${staleClaims.length} stale claim(s) (older than 4 hours)`);
+      // } else {
+      //   console.log("[Job] No stale claims found");
+      // }
     } catch (error) {
       console.error("[Job] Error checking stuck machines:", error);
     }
   });
 
-  console.log("[Job] Stuck machines checker and claim cleanup started (runs every minute)");
+  console.log(
+    "[Job] Stuck machines checker and claim cleanup started (runs every minute)",
+  );
 
   return task;
 };
