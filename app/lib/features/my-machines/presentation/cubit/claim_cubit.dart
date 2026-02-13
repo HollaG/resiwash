@@ -213,26 +213,6 @@ class ClaimCubit extends Cubit<ClaimState> {
             ),
           );
 
-          // If there was an old claimed machine, emit unclaimed for it
-          // if (oldClaimedMachineId != null && currentClaimedMachines != null) {
-          //   try {
-          //     final oldClaimedMachine = currentClaimedMachines.firstWhere(
-          //       (m) => m.machineId == oldClaimedMachineId,
-          //     );
-          //     if (isClosed) return;
-          //     emit(
-          //       Unclaimed(
-          //         claimedMachineMetadata: updatedClaimedMetadata,
-          //         claimedMachines: claimedMachines,
-          //         operatingMachine: oldClaimedMachine,
-          //       ),
-          //     );
-          //   } catch (e) {
-          //     // Old claimed machine not found in list, skip
-          //     appLog.w('Old claimed machine not found: $oldClaimedMachineId');
-          //   }
-          // }
-
           // refresh the machine, then show the claim status
           // Show notification
 
@@ -250,10 +230,12 @@ class ClaimCubit extends Cubit<ClaimState> {
             },
             (updatedMachine) {
               // Show notification with refreshed machine data
-              sl<LocalNotificationService>().showClaimedNotification(
-                updatedMachine,
-                updatedClaimedMetadataForThisMachine,
-              );
+              // sl<LocalNotificationService>().showClaimedNotification(
+              //   updatedMachine,
+              //   updatedClaimedMetadataForThisMachine,
+              // );
+
+              // TODO: update all machine data in state when claimed
             },
           );
 
@@ -462,12 +444,12 @@ class ClaimCubit extends Cubit<ClaimState> {
               .getClaimedMachinesMetadata();
 
           // refresh the notification
-          sl<LocalNotificationService>().showClaimedNotification(
-            machine,
-            updatedClaimedMetadata.firstWhere(
-              (meta) => meta.machineId == machineId,
-            ),
-          );
+          // sl<LocalNotificationService>().showClaimedNotification(
+          //   machine,
+          //   updatedClaimedMetadata.firstWhere(
+          //     (meta) => meta.machineId == machineId,
+          //   ),
+          // );
           if (isClosed) return;
           emit(
             Claimed(

@@ -48,32 +48,32 @@ class _CompletedSectionState extends State<CompletedSection> {
             spacing: 12,
 
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Completed",
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        RichText(
-                          text: TextSpan(
-                            text:
-                                "Swipe right on a machine to release it. You'll no longer be notified on changes after releasing.",
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                        // Text(
-                        //   "Swipe to edit",
-                        //   style: Theme.of(context).textTheme.bodySmall,
-                        // ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     Expanded(
+              //       child: Column(
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         children: [
+              //           Text(
+              //             "Completed",
+              //             style: Theme.of(context).textTheme.headlineSmall,
+              //           ),
+              //           RichText(
+              //             text: TextSpan(
+              //               text:
+              //                   "Swipe right on a machine to release it. You'll no longer be notified on changes after releasing.",
+              //               style: Theme.of(context).textTheme.bodySmall,
+              //             ),
+              //           ),
+              //           // Text(
+              //           //   "Swipe to edit",
+              //           //   style: Theme.of(context).textTheme.bodySmall,
+              //           // ),
+              //         ],
+              //       ),
+              //     ),
+              //   ],
+              // ),
 
               // claimed machines
               if (completedMetadata.isNotEmpty && completedMetadata.isNotEmpty)

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -212,26 +213,55 @@ class LocalNotificationService {
   }
 
   // Display a notification depending on machine status
-  void showClaimedNotification(
+  void __showClaimedNotification(
     MachineEntity machine,
     ClaimedMachineMetadata metadata,
   ) {
     switch (machine.currentStatus) {
       case MachineStatus.inUse:
-        _showClaimedTime(machine, metadata);
+        _oldshowClaimedTime(machine, metadata);
         break;
       case MachineStatus.finishing:
-        _showClaimFinishingSoonNotification(machine, metadata);
+        _oldshowClaimFinishingSoonNotification(machine, metadata);
         break;
       case MachineStatus.available:
-        _showClaimCompletedNotification(machine);
+        _oldshowClaimCompletedNotification(machine);
         break;
       default:
         break;
     }
   }
 
-  void _showClaimedTime(
+  // void showClaimedNotification(
+  //   RemoteMessage msg,
+  //   String title,
+  //   String body,
+  //   int secondsTillCompletion,
+  // ) {
+  //   final androidDetails = AndroidNotificationDetails(
+  //     channelCountdown.id,
+  //     channelCountdown.name,
+  //     channelDescription: channelCountdown.description,
+  //     importance: Importance.max,
+  //     priority: Priority.max,
+  //     ongoing: true,
+  //     when:
+  //         DateTime.now().millisecondsSinceEpoch +
+  //         (secondsLeftWhenCalled * 1000),
+  //     usesChronometer: true,
+  //     chronometerCountDown: true,
+  //     channelAction: AndroidNotificationChannelAction.createIfNotExists,
+  //   );
+
+  //   flutterLocalNotificationsPlugin.show(
+  //     claimedTimerNotificationId,
+  //     "${machine.name} finishing soon!",
+  //     "Please prepare to clear your laundry. Expected to finish by $expectedEndTime",
+  //     NotificationDetails(android: androidDetails),
+  //   );
+  // }
+
+  void _oldshowClaimedTime(
     MachineEntity machine,
     ClaimedMachineMetadata metadata,
   ) {
@@ -268,7 +298,7 @@ class LocalNotificationService {
     );
   }
 
-  void _showClaimFinishingSoonNotification(
+  void _oldshowClaimFinishingSoonNotification(
     MachineEntity machine,
     ClaimedMachineMetadata metadata,
   ) {
@@ -304,7 +334,7 @@ class LocalNotificationService {
     );
   }
 
-  void _showClaimCompletedNotification(MachineEntity machine) {
+  void _oldshowClaimCompletedNotification(MachineEntity machine) {
     flutterLocalNotificationsPlugin.show(
       claimedTimerNotificationId,
       "${machine.name} is done!",
@@ -315,6 +345,102 @@ class LocalNotificationService {
           claimedChannel.name,
           importance: Importance.high,
           priority: Priority.high,
+        ),
+      ),
+    );
+  }
+
+  void showClaimedMachineNowAvailableNotification(String title, String body) {
+    // 1. clear the timer notification
+    cancelClaimedNotification();
+
+    // 2. display a normal notification saying machine is available
+    flutterLocalNotificationsPlugin.show(
+      DateTime.now().hashCode,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          claimedChannel.id,
+          claimedChannel.name,
+          importance: Importance.max,
+          priority: Priority.max,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: claimedCategory.identifier,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+          presentAlert: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  void showClaimedMachineNowInUseNotification(
+    String title,
+    String body,
+    int secondsTillCompletion,
+  ) {
+    appLog.i("Showing claimed machine in use notification: $title");
+    // 1. start a system timer (TODO)
+
+    // 2. Show a normal notification saying machine is in use
+    try {
+      appLog.i("Channels initialized: claimed=${claimedChannel.id}");
+
+      final notificationId = DateTime.now().hashCode;
+      appLog.i("Using notification ID: $notificationId");
+
+      flutterLocalNotificationsPlugin.show(
+        notificationId,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            claimedChannel.id,
+            claimedChannel.name,
+            importance: Importance.max,
+            priority: Priority.max,
+          ),
+          iOS: DarwinNotificationDetails(
+            categoryIdentifier: claimedCategory.identifier,
+            interruptionLevel: InterruptionLevel.timeSensitive,
+            presentAlert: true,
+            presentSound: true,
+          ),
+        ),
+      );
+
+      appLog.i('Notification shown successfully');
+    } catch (e, stackTrace) {
+      appLog.e("Error showing notification: $e");
+      appLog.e("Stack: $stackTrace");
+    }
+  }
+
+  void showClaimedMachineFinishingNotification(
+    String title,
+    String body,
+    int secondsTillCompletion,
+  ) {
+    // 1. Show a normal notification saying machine is finishing soon
+    flutterLocalNotificationsPlugin.show(
+      // random ID
+      DateTime.now().hashCode,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          claimedChannel.id,
+          claimedChannel.name,
+          importance: Importance.max,
+          priority: Priority.max,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: claimedCategory.identifier,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+          presentAlert: true,
+          presentSound: true,
         ),
       ),
     );

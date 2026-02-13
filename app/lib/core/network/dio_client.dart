@@ -13,8 +13,9 @@ class DioClient {
     final dio = Dio(
       BaseOptions(
         baseUrl:
-            "https://resiwash.marcussoh.com/api/v2", //Jsonplaceholder is a great place for getting dummy data.
-        // "http://192.168.1.10:3000/api/v2", //Jsonplaceholder is a great place for getting dummy data.
+            // "https://resiwash.marcussoh.com/api/v2", // Production
+            "http://10.0.2.2:3000/api/v2", // Android Emulator localhost
+        // "http://192.168.1.10:3000/api/v2", // Physical device on same WiFi
         validateStatus: (status) {
           // Allow all status codes so the interceptor can handle them
           return true;

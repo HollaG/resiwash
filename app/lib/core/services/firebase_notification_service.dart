@@ -4,8 +4,10 @@ import 'package:resiwash/core/injections/room/room_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
+import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
 enum CustomFirebaseMessageChannel { claimed, subscribed, poke, subscribedGroup }
 
@@ -32,10 +34,10 @@ class FirebaseNotificationService {
     );
     // You can add navigation logic here based on message data
 
-    // _handleMessageWhenInApp(message);
+    // handleRemoteMessage(message);
   }
 
-  void _handleMessageWhenInApp(RemoteMessage message) {
+  void handleRemoteMessage(RemoteMessage message) {
     // Handle the message when the app is in the foreground
     appLog.i(
       "[FirebaseNotificationService] Message received in foreground: $message",
@@ -62,26 +64,116 @@ class FirebaseNotificationService {
 
       /// Subscribed: show notification directly as set from BE
       /// Claimed:
+      print("debug 1");
       switch (channel) {
         case CustomFirebaseMessageChannel.subscribed:
           // Handle subscribed channel
+          print("debug 2");
+
           sl<LocalNotificationService>().showSubscribed(message);
 
           break;
 
         case CustomFirebaseMessageChannel.claimed:
+          print("debug 3");
+
+          final currentMachineStatus = MachineStatus.values.firstWhere(
+            (e) => e.value == message.data['machineCurrentStatus'],
+            orElse: () => MachineStatus.unknown,
+          );
+
+          print("debug 4");
+
+          final secondsTillCompletion = int.tryParse(
+            message.data['secondsTillCompletion'] ?? '',
+          );
+
+          print("debug 5");
+
+          var title =
+              message.data['title'] as String? ??
+              'Your claimed machine has an update';
+
+          var body =
+              message.data['body'] as String? ??
+              'Tap to view details about your machine progress.';
+
+          print(
+            'debug title: $title, body: $body secondsTillCompletion: $secondsTillCompletion',
+          );
+          // if secondsTillCompletion is not null, calculate expected end time and replace "[[ expectedEndTime ]]" in both title and body
+          if (secondsTillCompletion != null) {
+            final expectedEndTime = DateTime.now().add(
+              Duration(seconds: secondsTillCompletion),
+            );
+
+            final expectedEndTimeString = DateTimeUtils.formatReadableTime(
+              expectedEndTime,
+            );
+
+            if (title.contains('[[ expectedEndTime ]]')) {
+              title = title.replaceAll(
+                '[[ expectedEndTime ]]',
+                expectedEndTimeString,
+              );
+            }
+
+            if (body.contains('[[ expectedEndTime ]]')) {
+              body = body.replaceAll(
+                '[[ expectedEndTime ]]',
+                expectedEndTimeString,
+              );
+            }
+          }
+
+          print('debug 6 currentMachineStat');
+
+          switch (currentMachineStatus) {
+            case MachineStatus.available:
+              sl<LocalNotificationService>()
+                  .showClaimedMachineNowAvailableNotification(title, body);
+              break;
+            case MachineStatus.inUse:
+              sl<LocalNotificationService>()
+                  .showClaimedMachineNowInUseNotification(
+                    title,
+                    body,
+                    secondsTillCompletion ?? 0,
+                  );
+              break;
+            case MachineStatus.finishing:
+              sl<LocalNotificationService>()
+                  .showClaimedMachineFinishingNotification(
+                    title,
+                    body,
+                    secondsTillCompletion ?? 0,
+                  );
+              break;
+            default:
+              appLog.w(
+                "[FirebaseNotificationService] Unknown machine status for claimed notification: $currentMachineStatus",
+              );
+            // show claimed notification
+            // sl<LocalNotificationService>().showClaimedNotification(message);
+          }
+
           // TODO: IMPLEMENT
           //
-          // data: {
-          //       machineId: machine.machineId.toString(),
-          //       machineName: machine.name,
-          //       machineRoomName: machine.room.name,
-          //       machineAreaShortName: machine.room.area.shortName,
-          //       machineCurrentStatus: machine.currentStatus,
-          //       machinePreviousStatus: machine.previousStatus,
+          // data: {title, body, secondsTillCompletion }
 
-          //       channel: "claimed",
-          //     },
+          // final machineId = message.data['machineId'] as String;
+          // final machineName = message.data['machineName'] as String;
+          // final machineRoomName = message.data['machineRoomName'] as String;
+          // final machineAreaShortName =
+          //     message.data['machineAreaShortName'] as String;
+          // final machineCurrentStatus = MachineStatus.values.firstWhere(
+          //   (e) => e.value == message.data['machineCurrentStatus'],
+          //   orElse: () => MachineStatus.unknown,
+          // );
+          // final machinePreviousStatus = MachineStatus.values.firstWhere(
+          //   (e) => e.value == message.data['machinePreviousStatus'],
+          //   orElse: () => MachineStatus.unknown,
+          // );
 
           // need to update the claimed notification
           // as well as force a refresh of the claimed machines in app
@@ -125,7 +217,7 @@ class FirebaseNotificationService {
       );
 
       // When app is minimized but not closed
-      FirebaseMessaging.onMessage.listen(_handleMessageWhenInApp);
+      FirebaseMessaging.onMessage.listen(handleRemoteMessage);
 
       // NOTE: Background message handler must be registered in main.dart as a top-level function
       // Do not register it here to avoid null check errors

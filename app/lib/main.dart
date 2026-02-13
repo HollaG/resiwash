@@ -41,20 +41,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   appLog.i('[BG Handler] Received FCM: $message');
 
+  // Ensure service locator is set up
+  if (!sl.isRegistered<LocalNotificationService>()) {
+    await setupServiceLocator();
+  }
+
+  // Always ensure channels are initialized in background
   await sl<LocalNotificationService>().ensureInitializedForBackground();
 
-  CustomFirebaseMessageChannel channel = getChannelFromString(
-    message.data['channel'],
-  );
-
-  if (channel == CustomFirebaseMessageChannel.poke) {
-    sl<LocalNotificationService>().showPoke(message);
-  } else if (channel == CustomFirebaseMessageChannel.claimed) {
-    sl<LocalNotificationService>().showClaimedIncomingNotification(message);
-  } else if (channel == CustomFirebaseMessageChannel.subscribed ||
-      channel == CustomFirebaseMessageChannel.subscribedGroup) {
-    sl<LocalNotificationService>().showSubscribed(message);
-  }
+  // Handle message
+  sl<FirebaseNotificationService>().handleRemoteMessage(message);
 
   return;
 }

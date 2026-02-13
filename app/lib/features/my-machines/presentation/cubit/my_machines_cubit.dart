@@ -475,10 +475,10 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
             ),
           );
 
-          sl<LocalNotificationService>().showClaimedNotification(
-            machine,
-            updatedClaimedMetadataForThisMachine,
-          );
+          // sl<LocalNotificationService>().showClaimedNotification(
+          //   machine,
+          //   updatedClaimedMetadataForThisMachine,
+          // );
 
           // unclaim the old
           if (oldClaimedMachineId != null) {
