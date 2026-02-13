@@ -64,31 +64,22 @@ class FirebaseNotificationService {
 
       /// Subscribed: show notification directly as set from BE
       /// Claimed:
-      print("debug 1");
       switch (channel) {
         case CustomFirebaseMessageChannel.subscribed:
           // Handle subscribed channel
-          print("debug 2");
-
           sl<LocalNotificationService>().showSubscribed(message);
 
           break;
 
         case CustomFirebaseMessageChannel.claimed:
-          print("debug 3");
-
           final currentMachineStatus = MachineStatus.values.firstWhere(
             (e) => e.value == message.data['machineCurrentStatus'],
             orElse: () => MachineStatus.unknown,
           );
 
-          print("debug 4");
-
           final secondsTillCompletion = int.tryParse(
             message.data['secondsTillCompletion'] ?? '',
           );
-
-          print("debug 5");
 
           var title =
               message.data['title'] as String? ??
@@ -98,9 +89,6 @@ class FirebaseNotificationService {
               message.data['body'] as String? ??
               'Tap to view details about your machine progress.';
 
-          print(
-            'debug title: $title, body: $body secondsTillCompletion: $secondsTillCompletion',
-          );
           // if secondsTillCompletion is not null, calculate expected end time and replace "[[ expectedEndTime ]]" in both title and body
           if (secondsTillCompletion != null) {
             final expectedEndTime = DateTime.now().add(
@@ -125,8 +113,6 @@ class FirebaseNotificationService {
               );
             }
           }
-
-          print('debug 6 currentMachineStat');
 
           switch (currentMachineStatus) {
             case MachineStatus.available:
