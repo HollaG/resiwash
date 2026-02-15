@@ -485,16 +485,14 @@ class _MachineRowState extends State<MachineRow>
                         }
 
                         if (claimState == ClaimState.claimed) {
-                          final claimCubit = context.read<ClaimCubit>();
-                          await claimCubit.unclaimMachine(widget.machine);
+                          await _claimCubit.unclaimMachine(widget.machine);
                         } else if (claimState == ClaimState.notClaimed) {
                           // Show dialog and get selected cycle time
                           final cycleTime = await _dialogBuilder(context);
 
                           // Only claim if user confirmed (didn't cancel)
                           if (cycleTime != null && mounted) {
-                            final claimCubit = context.read<ClaimCubit>();
-                            await claimCubit.claimMachine(
+                            await _claimCubit.claimMachine(
                               widget.machine,
                               cycleTime: cycleTime,
                             );
@@ -510,16 +508,14 @@ class _MachineRowState extends State<MachineRow>
                           if (claimState == ClaimState.loading) return;
 
                           if (claimState == ClaimState.claimed) {
-                            final claimCubit = context.read<ClaimCubit>();
-                            await claimCubit.unclaimMachine(widget.machine);
+                            await _claimCubit.unclaimMachine(widget.machine);
                           } else if (claimState == ClaimState.notClaimed) {
                             // Show dialog and get selected cycle time
                             final cycleTime = await _dialogBuilder(context);
 
                             // Only claim if user confirmed (didn't cancel)
                             if (cycleTime != null && mounted) {
-                              final claimCubit = context.read<ClaimCubit>();
-                              await claimCubit.claimMachine(
+                              await _claimCubit.claimMachine(
                                 widget.machine,
                                 cycleTime: cycleTime,
                               );
