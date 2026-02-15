@@ -68,7 +68,7 @@ class _MachineRowSlidableExplanationState
       // Left swipe action (Claim)
       startActionPane: ActionPane(
         motion: const BehindMotion(),
-        extentRatio: 0.4,
+        extentRatio: 0.6,
         dismissible: DismissiblePane(
           dismissThreshold: 0.4,
           onDismissed: () {},
@@ -107,7 +107,7 @@ class _MachineRowSlidableExplanationState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Claim',
+                  'Use this machine',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
