@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -19,51 +21,96 @@ class MobileScannerSimple extends StatefulWidget {
 }
 
 class _MobileScannerSimpleState extends State<MobileScannerSimple>
-    with RouteAware {
+    with WidgetsBindingObserver {
   Barcode? _barcode;
   String machineId = "";
   String roomId = "";
-  bool _navigating = false;
-  final MobileScannerController _controller = MobileScannerController();
+  bool _wasVisible = false;
+  final MobileScannerController controller = MobileScannerController(
+    autoStart: false,
+  );
 
   static String INFO_DEFAULT =
       'Scan a ResiWash QR code to mark a machine as in use by you.';
   String infoText = INFO_DEFAULT;
 
+  StreamSubscription<Object?>? _subscription;
+
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final route = ModalRoute.of(context);
-    if (route is PageRoute) {
-      routeObserver.subscribe(this, route);
+  void initState() {
+    super.initState();
+
+    // Start listening to lifecycle changes.
+    WidgetsBinding.instance.addObserver(this);
+
+    // Start listening to the barcode events.
+    _subscription = controller.barcodes.listen(_handleBarcode);
+
+    // Finally, start the scanner itself.
+    unawaited(controller.start());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // If the controller is not ready, do not try to start or stop it.
+    // Permission dialogs can trigger lifecycle changes before the controller is ready.
+
+    print("debug qr didChangeAppLifecycleState: $state");
+    if (!controller.value.hasCameraPermission) {
+      return;
+    }
+
+    switch (state) {
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+        return;
+      case AppLifecycleState.resumed:
+        // Restart the scanner when the app is resumed.
+        // Don't forget to resume listening to the barcode events.
+        _subscription = controller.barcodes.listen(_handleBarcode);
+
+      // unawaited(controller.start());
+      case AppLifecycleState.inactive:
+        // Stop the scanner when the app is paused.
+        // Also stop the barcode events subscription.
+        unawaited(_subscription?.cancel());
+        _subscription = null;
+        unawaited(controller.stop());
     }
   }
 
   @override
-  void dispose() {
-    routeObserver.unsubscribe(this);
-    _controller.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    print(
+      "debug qr didChangeDependencies, current machineId: $machineId, roomId: $roomId",
+    );
+
+    // Restart the scanner when coming back to this page
+    // Check if we're visible and the scanner is paused
+    // if (mounted && TickerMode.of(context)) {
+    //   if (!controller.value.isRunning && controller.value.hasCameraPermission) {
+    //     print("debug qr restarting scanner from didChangeDependencies");
+    //     unawaited(controller.start());
+    //   }
+    // }
+  }
+
+  @override
+  Future<void> dispose() async {
+    // Stop listening to lifecycle changes.
+    WidgetsBinding.instance.removeObserver(this);
+    // Stop listening to the barcode events.
+    unawaited(_subscription?.cancel());
+    _subscription = null;
+    // Dispose the widget itself.
     super.dispose();
+    // Finally, dispose of the controller.
+    await controller.dispose();
 
     print("debug qr disposed");
-  }
-
-  @override
-  void didPushNext() {
-    // User navigated away from this screen
-    _controller.stop();
-    super.didPushNext();
-
-    print("debug qr didPushNext");
-  }
-
-  @override
-  void didPopNext() {
-    // User came back to this screen
-    _controller.start();
-    super.didPopNext();
-
-    print("debug qr didPopNext");
   }
 
   void _handleBarcode(BarcodeCapture barcodes) async {
@@ -112,8 +159,7 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
 
     // based on the machineId, redirect the user to the MachineDetailScreen, and
     // also set extra information to popup "claim" option
-    await _controller.stop();
-    _navigating = true;
+    await controller.stop();
 
     if (!mounted) return;
 
@@ -135,6 +181,31 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
 
   @override
   Widget build(BuildContext context) {
+    final isVisible = TickerMode.of(context);
+
+    // Detect visibility changes
+    if (isVisible && !_wasVisible) {
+      // Became visible - restart scanner
+      print("debug qr became visible, restarting scanner");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted &&
+            !controller.value.isRunning &&
+            controller.value.hasCameraPermission) {
+          unawaited(controller.start());
+        }
+      });
+    } else if (!isVisible && _wasVisible) {
+      // Became invisible - stop scanner
+      print("debug qr became invisible, stopping scanner");
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && controller.value.isRunning) {
+          unawaited(controller.stop());
+        }
+      });
+    }
+
+    _wasVisible = isVisible;
+
     return BlocProvider(
       create: (context) =>
           MachineDetailCubit(getMachineUseCase: sl<GetMachineUseCase>()),
@@ -150,7 +221,7 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
                   aspectRatio: 1,
                   child: MobileScanner(
                     onDetect: _handleBarcode,
-                    controller: _controller,
+                    controller: controller,
                   ),
                 ),
               ),
