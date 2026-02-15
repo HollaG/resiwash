@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
@@ -383,7 +384,11 @@ class LocalNotificationService {
   ) {
     appLog.i("Showing claimed machine in use notification: $title");
     // 1. start a system timer (TODO)
-
+    FlutterAlarmClock.createTimer(
+      length: secondsTillCompletion,
+      title: title,
+      skipUi: true,
+    );
     // 2. Show a normal notification saying machine is in use
     try {
       appLog.i("Channels initialized: claimed=${claimedChannel.id}");

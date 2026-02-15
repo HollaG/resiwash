@@ -65,25 +65,18 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
             body: RefreshIndicator(
               child: SingleChildScrollView(
                 physics: AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    children: [
-                      AnimatedSize(
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.fastOutSlowIn,
-                        alignment: Alignment.topCenter,
-                        child: hasCompletedMachines
-                            ? Container(
-                                // height: 12,
-                                decoration: BoxDecoration(
-                                  // borderRadius: BorderRadius.only(
-                                  //   bottomLeft: Radius.circular(
-                                  //     24,
-                                  //   ), // 24 = padding, 12 = inner radius
-                                  //   bottomRight: Radius.circular(24),
-                                  // ),
-                                  gradient: LinearGradient(
+                child: SafeArea(
+                  child: SizedBox(
+                    width: double.infinity,
+
+                    child: Column(
+                      children: [
+                        // for COMPLETED machines only. Should be minimally full height, but can expand if there are more completed machines. If no completed machines, should be 0 height.
+                        AnimatedContainer(
+                          duration: Duration(milliseconds: 300),
+                          decoration: BoxDecoration(
+                            gradient: hasCompletedMachines
+                                ? LinearGradient(
                                     colors: [
                                       MachineStatusIndicator.getBackgroundColor(
                                         context,
@@ -96,60 +89,92 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                                     ],
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
+                                  )
+                                : LinearGradient(
+                                    colors: [
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                    ],
                                   ),
-                                ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: CompletedSection(),
-                                ),
-                              )
-                            : SizedBox(height: 0),
-                      ),
+                          ),
+                          child: AnimatedSize(
+                            duration: Duration(milliseconds: 500),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.topCenter,
+                            child: SizedBox(
+                              // full height minus top bar and nav bar
+                              // top bar height:
+                              height: hasCompletedMachines
+                                  ? MediaQuery.of(context).size.height -
+                                        kToolbarHeight
+                                  : 0,
 
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Column(
-                          spacing: 20,
-
-                          children: [
-                            // SizedBox(height: 0),
-
-                            // section 0:
-                            // "completed"
-                            // AnimatedSize(
-                            //   duration: Duration(milliseconds: 300),
-                            //   curve: Curves.fastOutSlowIn,
-                            //   alignment: Alignment.topCenter,
-                            //   child: CompletedSection(),
-                            // ),
-                            SizedBox(height: 0),
-
-                            // section 1:
-                            // "In use by you"
-                            // list of in use by you
-                            AnimatedSize(
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.fastOutSlowIn,
-                              alignment: Alignment.topCenter,
-                              child: InUseByYouSection(),
+                              child: Container(
+                                child: hasCompletedMachines
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(24),
+                                        child: CompletedSection(),
+                                      )
+                                    : Container(),
+                              ),
                             ),
-
-                            // section 2:
-                            // "Subscribed Machines"
-                            // list of subscribed machines
-                            SubscriptionsSection(),
-                            // section 3:
-                            // Issues reported
-                            // list of issues
-                            IssuesReportedSection(),
-                            // section 4:
-                            // Usage history
-                            // list of usage history
-                            UsageHistorySection(),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+
+                        Container(
+                          color: Theme.of(context).scaffoldBackgroundColor,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: Column(
+                              spacing: 20,
+
+                              children: [
+                                // SizedBox(height: 0),
+
+                                // section 0:
+                                // "completed"
+                                // AnimatedSize(
+                                //   duration: Duration(milliseconds: 300),
+                                //   curve: Curves.fastOutSlowIn,
+                                //   alignment: Alignment.topCenter,
+                                //   child: CompletedSection(),
+                                // ),
+                                SizedBox(height: 0),
+
+                                // section 1:
+                                // "In use by you"
+                                // list of in use by you
+                                AnimatedSize(
+                                  duration: Duration(milliseconds: 300),
+                                  curve: Curves.fastOutSlowIn,
+                                  alignment: Alignment.topCenter,
+                                  child: InUseByYouSection(),
+                                ),
+
+                                Divider(),
+
+                                // section 2:
+                                // "Subscribed Machines"
+                                // list of subscribed machines
+                                SubscriptionsSection(),
+
+                                // Divider(),
+                                // section 3:
+                                // Issues reported
+                                // list of issues
+                                // IssuesReportedSection(),
+                                // section 4:
+                                // Usage history
+                                // list of usage history
+                                // UsageHistorySection(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

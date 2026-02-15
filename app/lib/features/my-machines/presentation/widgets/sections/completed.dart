@@ -8,6 +8,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dar
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
     as claim_state;
 import 'package:resiwash/features/my-machines/presentation/widgets/tracker.dart';
+import 'package:resiwash/theme.dart';
 
 class CompletedSection extends StatefulWidget {
   const CompletedSection({super.key});
@@ -74,6 +75,35 @@ class _CompletedSectionState extends State<CompletedSection> {
               //     ),
               //   ],
               // ),
+              Center(
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: context.appColors.success.onColor,
+                    ),
+                    children: [
+                      TextSpan(text: "You have "),
+                      TextSpan(
+                        text: "${completedMachines.length}",
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              color: context.appColors.success.onColor,
+                            ),
+                      ),
+                      TextSpan(text: " finished machines.\n"),
+                      TextSpan(
+                        text:
+                            "Please do collect your laundry as soon as possible!",
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 8),
 
               // claimed machines
               if (completedMetadata.isNotEmpty && completedMetadata.isNotEmpty)
@@ -82,7 +112,7 @@ class _CompletedSectionState extends State<CompletedSection> {
                   children: completedMetadata
                       .map(
                         (claimedMeta) => Tracker(
-                          isEditing: isEditingClaimed,
+                          showControls: true,
                           claimedMetadata: claimedMeta,
                           machine: (completedMachines).firstWhere(
                             (machine) =>

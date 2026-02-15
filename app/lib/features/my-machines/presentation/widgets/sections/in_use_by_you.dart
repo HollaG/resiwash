@@ -345,7 +345,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                   children: inUseMetadata
                       .map(
                         (claimedMeta) => Tracker(
-                          isEditing: isEditingClaimed,
+                          showControls: isEditingClaimed,
                           claimedMetadata: claimedMeta,
                           machine: (inUseMachines).firstWhere(
                             (machine) =>

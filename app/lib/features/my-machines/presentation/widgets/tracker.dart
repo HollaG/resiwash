@@ -16,24 +16,25 @@ import 'package:go_router/go_router.dart';
 class Tracker extends StatefulWidget {
   final MachineEntity machine;
   final ClaimedMachineMetadata claimedMetadata;
-  final bool isEditing;
+  final bool showControls;
 
   const Tracker({
     super.key,
     required this.machine,
     required this.claimedMetadata,
-    required this.isEditing,
+    required this.showControls,
   });
 
   @override
   State<Tracker> createState() => _TrackerState();
 }
 
-class _TrackerState extends State<Tracker> {
+class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
   late Timer _timer;
   late Timer _refreshTimer;
   Timer _fastRefreshTimer = Timer(const Duration(seconds: 0), () {});
   int selectedCycleTime = 30;
+  late final SlidableController controller = SlidableController(this);
   // late Duration _timeSe;
 
   @override
@@ -58,6 +59,9 @@ class _TrackerState extends State<Tracker> {
     _timer.cancel();
     _refreshTimer.cancel();
     _fastRefreshTimer.cancel();
+    // Ensure slidable is closed before disposing to stop any active animations
+    controller.close();
+    controller.dispose();
     super.dispose();
   }
 
@@ -299,10 +303,17 @@ class _TrackerState extends State<Tracker> {
     );
   }
 
+  Future<void> onUnclaimPress() async {
+    controller.openTo(1.0);
+    // controller.
+    await context.read<ClaimCubit>().unclaimMachine(widget.machine);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Slidable(
       key: Key(widget.machine.machineId),
+      controller: controller,
       enabled: true,
       closeOnScroll: true,
       // Left swipe action (Unclaim)
@@ -375,7 +386,7 @@ class _TrackerState extends State<Tracker> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Unclaim',
+                  'Release',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSecondaryContainer,
                   ),
@@ -578,15 +589,13 @@ class _TrackerState extends State<Tracker> {
               ),
 
               Visibility(
-                visible: widget.isEditing,
+                visible: widget.showControls,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
                       onPressed: () {
-                        context.read<ClaimCubit>().unclaimMachine(
-                          widget.machine,
-                        );
+                        onUnclaimPress();
                       },
                       style: ButtonStyle(
                         // backgroundColor: WidgetStateProperty.all<Color>(
@@ -596,30 +605,30 @@ class _TrackerState extends State<Tracker> {
                           Theme.of(context).colorScheme.error,
                         ),
                       ),
-                      child: const Text("Unclaim"),
+                      child: const Text("Release"),
                     ),
-                    TextButton.icon(
-                      onPressed: () {
-                        int initialCycleTime =
-                            widget.claimedMetadata.cycleTime ??
-                            30; // default to 30 if null
-                        _dialogBuilder(context, initialCycleTime).then((
-                          newTime,
-                        ) {
-                          if (newTime != null) {
-                            // Update the cycle time in the cubit
-                            if (mounted) {
-                              context.read<ClaimCubit>().updateCycleTime(
-                                widget.machine,
-                                newTime,
-                              );
-                            }
-                          }
-                        });
-                      },
-                      label: Text("Edit cycle time"),
-                      icon: Icon(Icons.edit),
-                    ),
+                    // TextButton.icon(
+                    //   onPressed: () {
+                    //     int initialCycleTime =
+                    //         widget.claimedMetadata.cycleTime ??
+                    //         30; // default to 30 if null
+                    //     _dialogBuilder(context, initialCycleTime).then((
+                    //       newTime,
+                    //     ) {
+                    //       if (newTime != null) {
+                    //         // Update the cycle time in the cubit
+                    //         if (mounted) {
+                    //           context.read<ClaimCubit>().updateCycleTime(
+                    //             widget.machine,
+                    //             newTime,
+                    //           );
+                    //         }
+                    //       }
+                    //     });
+                    //   },
+                    //   label: Text("Edit cycle time"),
+                    //   icon: Icon(Icons.edit),
+                    // ),
                   ],
                 ),
               ),

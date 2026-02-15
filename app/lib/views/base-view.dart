@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/claim_machine_help_info.dart';
 import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
@@ -20,31 +21,32 @@ class BaseView extends StatelessWidget {
     );
   }
 
+  void _onHelpClicked(BuildContext context) {
+    ClaimMachineHelpInfo.show(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Only show FAB on home (branch 0) and my-machines (branch 1) pages
+    // Do NOT show FAB on the scan QR page, since it would be redundant and could cause issues if the user tries to open multiple scan QR pages. Instead, only show the FAB on the Home and My Machines pages.
     final path = shellState.uri.path;
 
-    // final shouldShowFAB =
-    //     path == AppRoutes.home || path == AppRoutes.myMachines;
-
-    final shouldShowFAB = path != AppRoutes.scanQr;
-
-    print("debug path is $path, show FAB: $shouldShowFAB");
-
+    final isOnScanQrPage = path == AppRoutes.scanQr;
+    print(
+      "debug currentPage is now $path, isOnScanQrPage: $isOnScanQrPage, currentNavigationIndex is ${navigationShell.currentIndex}",
+    );
     return Scaffold(
       body: navigationShell,
-      floatingActionButton: shouldShowFAB
-          ? FloatingActionButton(
-              onPressed: () => context.push(AppRoutes.scanQr),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Icon(
-                Icons.qr_code_scanner,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButton: shouldShowFAB
+      //     ? FloatingActionButton(
+      //         onPressed: () => context.push(AppRoutes.scanQr),
+      //         backgroundColor: Theme.of(context).colorScheme.primary,
+      //         child: Icon(
+      //           Icons.qr_code_scanner,
+      //           color: Theme.of(context).colorScheme.onPrimary,
+      //         ),
+      //       )
+      //     : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           labelTextStyle: WidgetStateTextStyle.resolveWith((states) {
@@ -59,6 +61,11 @@ class BaseView extends StatelessWidget {
           indicatorColor: Colors.transparent,
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
           onDestinationSelected: _goBranch,
+          labelBehavior: isOnScanQrPage
+              ? NavigationDestinationLabelBehavior.alwaysHide
+              : NavigationDestinationLabelBehavior.onlyShowSelected,
+
+          // height: 24,
           destinations: [
             _menuItem(
               context,
@@ -74,13 +81,42 @@ class BaseView extends StatelessWidget {
               icon: Icons.local_laundry_service,
               label: 'My Machines',
             ),
+            _menuItem(
+              context,
+              index: 2,
+              currentIndex: navigationShell.currentIndex,
+              icon: Icons.settings,
+              label: 'Settings',
+            ),
+
             // _menuItem(
             //   context,
-            //   index: 2,
+            //   index: 3,
             //   currentIndex: navigationShell.currentIndex,
-            //   icon: Icons.settings,
-            //   label: 'Settings',
+            //   label: 'Scan',
+            //   icon: Icons.qr_code_scanner,
             // ),
+            // empty
+            // Container(),
+            Center(
+              child: FloatingActionButton(
+                onPressed: () {
+                  if (!isOnScanQrPage) {
+                    navigationShell.goBranch(
+                      3,
+                      initialLocation: 3 == navigationShell.currentIndex,
+                    );
+                  } else {
+                    _onHelpClicked(context);
+                  }
+                },
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: Icon(
+                  isOnScanQrPage ? Icons.help : Icons.qr_code_scanner,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ),
           ],
         ),
       ),

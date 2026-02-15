@@ -12,9 +12,8 @@ class DioClient {
   static Dio instance() {
     final dio = Dio(
       BaseOptions(
-        baseUrl:
-            // "https://resiwash.marcussoh.com/api/v2", // Production
-            "http://10.0.2.2:3000/api/v2", // Android Emulator localhost
+        baseUrl: "https://resiwash.marcussoh.com/api/v2", // Production
+        // "http://10.0.2.2:3000/api/v2", // Android Emulator localhost
         // "http://192.168.1.10:3000/api/v2", // Physical device on same WiFi
         validateStatus: (status) {
           // Allow all status codes so the interceptor can handle them

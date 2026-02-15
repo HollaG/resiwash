@@ -390,6 +390,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_alarm_clock:
+    dependency: "direct main"
+    description:
+      name: flutter_alarm_clock
+      sha256: "681dcf04ad043cb249f0100ed359afe57360d8ffcb96f3e3e3af20218ed08dd8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   flutter_app_group_directory:
     dependency: transitive
     description:

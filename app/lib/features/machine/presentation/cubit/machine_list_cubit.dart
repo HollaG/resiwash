@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/core/extensions/safecubit.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
@@ -19,9 +20,9 @@ class MachineListCubit extends Cubit<MachineListState> {
     List<String>? types,
   }) async {
     if (state is MachineListLoaded) {
-      emit(MachineListRefreshing((state as MachineListLoaded).machines));
+      safeEmit(MachineListRefreshing((state as MachineListLoaded).machines));
     } else {
-      emit(const MachineListLoading());
+      safeEmit(const MachineListLoading());
     }
     final params = ListMachinesParams(
       roomIds: roomIds,
@@ -36,8 +37,8 @@ class MachineListCubit extends Cubit<MachineListState> {
 
     appLog.d('[MachineListCubit] Loaded machines: $result');
     result.fold(
-      (failure) => emit(MachineListError(failure.toString())),
-      (machines) => emit(MachineListLoaded(machines)),
+      (failure) => safeEmit(MachineListError(failure.toString())),
+      (machines) => safeEmit(MachineListLoaded(machines)),
     );
   }
 

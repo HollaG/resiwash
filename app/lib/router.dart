@@ -2,6 +2,7 @@ import 'package:resiwash/features/machine/presentation/screens/machine_detail_sc
 import 'package:resiwash/features/my-machines/presentation/screens/scan_qr.dart';
 import 'package:resiwash/features/overview/presentation/screens/home_screen.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_list_screen.dart';
+import 'package:resiwash/features/preferences/presentation/screens/preferences_screen.dart';
 import 'package:resiwash/main.dart';
 import 'package:resiwash/views/base-view.dart';
 
@@ -84,6 +85,16 @@ final router = GoRouter(
             ),
           ],
         ),
+
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.settings,
+              builder: (context, state) => PreferencesScreen(),
+            ),
+          ],
+        ),
+
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -116,6 +127,8 @@ class AppRoutes {
   static const String myMachines = '/me';
   static const String profile = '/profile';
   static const String scanQr = '/scan-qr';
+
+  static const String settings = '/settings';
 
   // // Helper methods for navigation
   // static String buildMachineListRoute({
