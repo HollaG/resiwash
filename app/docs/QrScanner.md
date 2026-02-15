@@ -129,6 +129,7 @@ Widget build(BuildContext context) {
 **Result:** ✅ Works! `TickerMode.of(context)` changes when branch visibility changes, triggering scanner start/stop.
 
 **Key Points:**
+
 - Detects both visibility transitions: `false → true` (restart) and `true → false` (stop)
 - Uses `addPostFrameCallback` to defer camera operations until after build completes
 - Prevents camera from running in background when user navigates away
