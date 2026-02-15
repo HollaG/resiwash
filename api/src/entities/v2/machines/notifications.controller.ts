@@ -63,6 +63,10 @@ export const claimMachine = expressAsyncHandler(
       if (machine.isManualEntry) {
         try {
           console.log("Setting initial IN_USE status for manual machine claim");
+
+          // claim the machine
+          await _claimMachine(machineId, fcmToken, cycleTime);
+
           await setMachineManualStatus({
             machineId: machine.machineId,
             status: MachineStatus.IN_USE,
@@ -74,13 +78,8 @@ export const claimMachine = expressAsyncHandler(
         }
       }
 
-      // now, claim the machine
-      await _claimMachine(machineId, fcmToken, cycleTime);
-
       // now, send a notification to the user
-      // TODO: if current status is available, send a DIFFERENT notification indication that
-      // notification tracking will be enabled
-      sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
+      // sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {

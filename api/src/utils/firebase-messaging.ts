@@ -125,7 +125,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
       }
     }
   } else if (machine.currentStatus === MachineStatus.AVAILABLE) {
-    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} has finished!`;
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} has finished!`;
     body = `Please collect your clothes as soon as possible.`;
 
     if (machine.type === MachineType.WASHER) {

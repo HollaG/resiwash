@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/homeMainCard.dart';
@@ -42,20 +44,6 @@ class HomeHeader extends StatelessWidget {
                       // fontWeight is already bold from theme
                     ),
                   ),
-                  // Text(
-                  //   "Welcome back,",
-                  //   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  //     color: Theme.of(context).colorScheme.onPrimary,
-                  //     fontWeight: FontWeight.normal,
-                  //   ),
-                  // ),
-                  // Text(
-                  //   "Marcus!",
-                  //   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  //     color: Theme.of(context).colorScheme.onPrimary,
-                  //     // fontWeight is already bold from theme
-                  //   ),
-                  // ),
                 ],
               ),
 
@@ -75,6 +63,9 @@ class HomeHeader extends StatelessWidget {
                     int dryerCount = dryerInfo[CountKey.available] ?? 0;
                     int totalDryers = dryerInfo[CountKey.total] ?? 0;
 
+                    final loadedLocations = sl<SharedPreferencesService>()
+                        .getSavedLocations();
+
                     return Row(
                       children: [
                         Expanded(
@@ -91,6 +82,8 @@ class HomeHeader extends StatelessWidget {
                                   path: AppRoutes.machineList,
                                   queryParameters: {
                                     'types[]': [MachineType.dryer.name],
+                                    'roomIds[]': loadedLocations
+                                        .getAllRoomIds(),
                                   },
                                 ).toString(),
                                 extra: {
@@ -116,6 +109,8 @@ class HomeHeader extends StatelessWidget {
                                   path: AppRoutes.machineList,
                                   queryParameters: {
                                     'types[]': [MachineType.washer.name],
+                                    'roomIds[]': loadedLocations
+                                        .getAllRoomIds(),
                                   },
                                 ).toString(),
                                 extra: {
