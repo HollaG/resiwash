@@ -1,4 +1,4 @@
-import { startMachineCycleEndChecker } from "./checkStuckMachines";
+import { startMachineCycleEndChecker } from "./automaticallySetManualMachineStatus";
 
 /**
  * Initialize all scheduled jobs
