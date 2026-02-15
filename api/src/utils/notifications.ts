@@ -70,7 +70,7 @@ export const unclaimMachine = async (machineId: string, fcmToken: string) => {
 export const claimMachine = async (
   machineId: string,
   fcmToken: string,
-  cycleTime: number
+  cycleTime: number,
 ) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
@@ -85,7 +85,7 @@ export const claimMachine = async (
   if (existingClaim) {
     // already claimed by this user
     console.log(`Machine ${machineId} already claimed by ${fcmToken}`);
-    return; // no error
+    return false; // no error
   }
 
   // if the user has already claimed another machine, unclaim it
@@ -106,13 +106,17 @@ export const claimMachine = async (
 
   await claimRepository.save(claim);
 
-  console.log(`Claimed machine ${machineId} for ${fcmToken} with cycle time ${cycleTime}`);
+  console.log(
+    `Claimed machine ${machineId} for ${fcmToken} with cycle time ${cycleTime}`,
+  );
+
+  return true;
 };
 
 export const updateCycleTime = async (
   machineId: string,
   fcmToken: string,
-  cycleTime: number
+  cycleTime: number,
 ) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
@@ -136,12 +140,14 @@ export const updateCycleTime = async (
     "on machine",
     machineId,
     "to",
-    cycleTime
+    cycleTime,
   );
   return true;
 };
 
-export const getClaimants = async (machineId: string): Promise<IClaimMapEntry[]> => {
+export const getClaimants = async (
+  machineId: string,
+): Promise<IClaimMapEntry[]> => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
   const claims = await claimRepository.find({
@@ -150,7 +156,7 @@ export const getClaimants = async (machineId: string): Promise<IClaimMapEntry[]>
     },
   });
 
-  return claims.map(claim => ({
+  return claims.map((claim) => ({
     fcmToken: claim.fcmToken,
     cycleTime: claim.cycleTime,
     claimedAt: claim.claimedAt,
@@ -159,7 +165,9 @@ export const getClaimants = async (machineId: string): Promise<IClaimMapEntry[]>
 
 export const sendNotificationToClaimants = async (machine: Machine) => {
   const claimants = await getClaimants(machine.machineId.toString());
-  console.log(`Sending notifications to ${claimants.length} claimants for machine ${machine.machineId}`);
+  console.log(
+    `Sending notifications to ${claimants.length} claimants for machine ${machine.machineId}`,
+  );
 
   for (const claimant of claimants) {
     // send notification to claimant.fcmToken
@@ -168,7 +176,7 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
       oldStatus: null,
       newStatus: null,
       machine,
-    }).catch((e) => { }); // do nothing
+    }).catch((e) => {}); // do nothing
   }
 };
 

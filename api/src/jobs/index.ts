@@ -1,4 +1,4 @@
-import { startStuckMachinesChecker } from "./checkStuckMachines";
+import { startMachineCycleEndChecker } from "./checkStuckMachines";
 
 /**
  * Initialize all scheduled jobs
@@ -8,7 +8,7 @@ export const initializeJobs = () => {
   console.log("[Jobs] Initializing scheduled jobs...");
 
   // Start the stuck machines checker (runs every minute)
-  startStuckMachinesChecker();
+  startMachineCycleEndChecker();
 
   // Add more jobs here as needed
   // Example: startOtherJob();

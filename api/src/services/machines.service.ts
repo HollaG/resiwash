@@ -5,8 +5,6 @@ import { MachineStatus } from "../core/types";
 import { sendMachineGroupStatusChangedNotification } from "../utils/firebase-messaging";
 import { sendNotificationToClaimants } from "../utils/notifications";
 
-const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
-
 interface SetManualStatusParams {
   machineId: number;
   status: MachineStatus;
@@ -104,17 +102,19 @@ export async function setMachineManualStatus(
     machine.currentCycleTime = cycleTime;
 
     await machineRepository.save(machine);
-    const timeout = setTimeout(
-      () => {
-        updateMachineStatusAfterTime(MachineStatus.FINISHING, machine);
-      },
-      cycleTime * 60 * 1000 - 5 * 60 * 1000,
-      // 10000,
-    ); // convert minutes to milliseconds
-    if (TIMEOUT_TRACKER[machine.machineId]) {
-      clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
-    }
-    TIMEOUT_TRACKER[machine.machineId] = timeout;
+
+    // NOTE:: this logic has been moved into a 1-minute cycling function. See checkStuckMachines.ts for details. The reason is that if we rely on setTimeout, if the server restarts, all the timeouts will be lost, and the machines will be stuck in IN_USE or FINISHING status until someone manually resets them or claims/unclaims them.
+    // const timeout = setTimeout(
+    //   () => {
+    //     updateMachineStatusAfterTime(MachineStatus.FINISHING, machine);
+    //   },
+    //   cycleTime * 60 * 1000 - 5 * 60 * 1000,
+    //   // 10000,
+    // ); // convert minutes to milliseconds
+    // if (TIMEOUT_TRACKER[machine.machineId]) {
+    //   clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+    // }
+    // TIMEOUT_TRACKER[machine.machineId] = timeout;
 
     // asynchronously send notification
     // note: we do not care if it succeeds or fails
@@ -191,7 +191,7 @@ export async function resetMachineStatusToAvailable(
  * @param status
  * @param machine
  */
-const updateMachineStatusAfterTime = async (
+export const updateMachineStatusAfterTime = async (
   status: MachineStatus,
   machine: Machine,
 ) => {
@@ -234,22 +234,22 @@ const updateMachineStatusAfterTime = async (
   // send notification to claimant if applicable
   sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
 
-  if (status === MachineStatus.FINISHING) {
-    const timeout = setTimeout(
-      () => {
-        updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machine);
-      },
-      5 * 60 * 1000,
-    );
-    if (TIMEOUT_TRACKER[machine.machineId]) {
-      clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
-    }
-    TIMEOUT_TRACKER[machine.machineId] = timeout;
-  } else {
-    // clear timeout tracker
-    if (TIMEOUT_TRACKER[machine.machineId]) {
-      clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
-      delete TIMEOUT_TRACKER[machine.machineId];
-    }
-  }
+  // if (status === MachineStatus.FINISHING) {
+  //   const timeout = setTimeout(
+  //     () => {
+  //       updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machine);
+  //     },
+  //     5 * 60 * 1000,
+  //   );
+  //   if (TIMEOUT_TRACKER[machine.machineId]) {
+  //     clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+  //   }
+  //   TIMEOUT_TRACKER[machine.machineId] = timeout;
+  // } else {
+  //   // clear timeout tracker
+  //   if (TIMEOUT_TRACKER[machine.machineId]) {
+  //     clearTimeout(TIMEOUT_TRACKER[machine.machineId]);
+  //     delete TIMEOUT_TRACKER[machine.machineId];
+  //   }
+  // }
 };

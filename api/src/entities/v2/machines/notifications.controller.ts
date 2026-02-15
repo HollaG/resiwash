@@ -22,8 +22,8 @@ interface ClaimMachineRequest {
   cycleTime: number; // minutes
 }
 
-// TEMPORARY IN MEMORY MAP
-
+// If a user tries to claim a machine that has already been claimed,
+// we will just update the claim to the new user. This is because the most likely scenario is that someone claimed a machine by accident, and they will want to claim it for real right after. It's less likely that someone will maliciously claim a machine that isn't theirs.
 export const claimMachine = expressAsyncHandler(
   async (
     req: Request<{ machineId: string }, unknown, unknown, ClaimMachineRequest>,
@@ -65,13 +65,24 @@ export const claimMachine = expressAsyncHandler(
           console.log("Setting initial IN_USE status for manual machine claim");
 
           // claim the machine
-          await _claimMachine(machineId, fcmToken, cycleTime);
-
-          await setMachineManualStatus({
-            machineId: machine.machineId,
-            status: MachineStatus.IN_USE,
+          const isFirstClaimaint = await _claimMachine(
+            machineId,
+            fcmToken,
             cycleTime,
-          });
+          );
+          if (isFirstClaimaint) {
+            await setMachineManualStatus({
+              machineId: machine.machineId,
+              status: MachineStatus.IN_USE,
+              cycleTime,
+            });
+          } else {
+            console.log(
+              `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
+            );
+            // return sendErrorResponse(res, "Machine already claimed by this user", 400);
+            sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
+          }
         } catch (error: any) {
           console.error(error);
           return sendErrorResponse(res, error.message, 400);

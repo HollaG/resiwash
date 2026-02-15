@@ -6,6 +6,7 @@ import { MachineStatus } from "../core/types";
 import {
   resetMachineStatusToAvailable,
   setMachineManualStatus,
+  updateMachineStatusAfterTime,
 } from "../services/machines.service";
 
 /**
@@ -13,12 +14,12 @@ import {
  *
  * Runs every minute to:
  * 1. Find manual machines that are IN_USE or FINISHING with a cycle time
- * 2. Reset machines that have exceeded their cycle time by more than 1 hour
- * 3. Remove claims that are older than 4 hours
+ * 2. If cycleTime - 5 <= activeTime < cycleTime, set machine to FINISHING status if not already
+ * 3. Set status to AVAILABLE if activeTime >= cycleTime
  *
  * This serves as a safety net for crashed processes or missed status updates
  */
-export const startStuckMachinesChecker = () => {
+export const startMachineCycleEndChecker = () => {
   // Run every minute: '* * * * *'
   // Format: minute hour day month weekday
   const task = cron.schedule("* * * * *", async () => {
@@ -28,7 +29,7 @@ export const startStuckMachinesChecker = () => {
       const machineRepository = AppDataSource.getRepository(Machine);
 
       // Query machines that could be stuck
-      const potentiallyStuckMachines = await machineRepository
+      const potentiallyEndableMachines = await machineRepository
         .createQueryBuilder("machine")
         .where("machine.currentStatus IN (:...statuses)", {
           statuses: [MachineStatus.IN_USE, MachineStatus.FINISHING],
@@ -39,33 +40,53 @@ export const startStuckMachinesChecker = () => {
         .getMany();
 
       console.log(
-        `[Job] Found ${potentiallyStuckMachines.length} potentially stuck machines`,
+        `[Job] Found ${potentiallyEndableMachines.length} potentially endable machines`,
       );
 
       const now = new Date();
       let resetCount = 0;
 
-      for (const machine of potentiallyStuckMachines) {
-        // Calculate elapsed time since the machine became unavailable
-        const elapsedMinutes =
-          (now.getTime() - machine.lastAvailableTime.getTime()) / 60000;
+      for (const machine of potentiallyEndableMachines) {
+        // change back to available if it's been more than cycleTime + 30 seconds since last available time
+        const elapsedMilliseconds =
+          now.getTime() - machine.lastAvailableTime.getTime();
+        const cycleTimeMilliseconds = machine.currentCycleTime! * 60 * 1000;
+        const bufferMilliseconds = 30 * 1000; // 30 seconds buffer
 
-        // Threshold = cycle time + 1 hour buffer
-        const thresholdMinutes = machine.currentCycleTime! + 10;
-
-        if (elapsedMinutes > thresholdMinutes) {
+        if (elapsedMilliseconds > cycleTimeMilliseconds + bufferMilliseconds) {
           console.log(
-            `[Job] Resetting stuck machine ${machine.machineId} (${machine.name}) - ` +
-              `elapsed: ${Math.round(elapsedMinutes)}min, threshold: ${thresholdMinutes}min`,
+            `[Job] Resetting endable machine ${machine.machineId} (${machine.name}) - ` +
+              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.currentCycleTime}s`,
           );
-
           try {
-            // Reset machine to available status
-            await resetMachineStatusToAvailable(machine.machineId);
+            await updateMachineStatusAfterTime(
+              MachineStatus.AVAILABLE,
+              machine,
+            );
             resetCount++;
           } catch (error) {
             console.error(
-              `[Job] Failed to reset machine ${machine.machineId}:`,
+              `[Job] Failed to reset machine ${machine.machineId} to AVAILABLE:`,
+              error,
+            );
+          }
+        } else if (
+          elapsedMilliseconds >= cycleTimeMilliseconds - 5 * 60 * 1000 &&
+          machine.currentStatus !== MachineStatus.FINISHING
+        ) {
+          console.log(
+            `[Job] Setting machine ${machine.machineId} (${machine.name}) to FINISHING - ` +
+              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.currentCycleTime}s`,
+          );
+          try {
+            await updateMachineStatusAfterTime(
+              MachineStatus.FINISHING,
+              machine,
+            );
+            resetCount++;
+          } catch (error) {
+            console.error(
+              `[Job] Failed to set machine ${machine.machineId} to FINISHING:`,
               error,
             );
           }
@@ -73,9 +94,9 @@ export const startStuckMachinesChecker = () => {
       }
 
       if (resetCount > 0) {
-        console.log(`[Job] Reset ${resetCount} stuck machine(s)`);
+        console.log(`[Job] Updated ${resetCount} machine(s)`);
       } else {
-        console.log("[Job] No stuck machines found");
+        console.log("[Job] No machines that need a state change found");
       }
 
       // Clean up old claims (4+ hours old)
