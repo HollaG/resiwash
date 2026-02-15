@@ -9,25 +9,6 @@ import 'package:resiwash/features/machine/presentation/cubit/machine_detail_cubi
 import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
 import 'package:resiwash/router.dart';
 
-// class ScanQrScreen extends StatelessWidget {
-//   const ScanQrScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('Scan QR Code'),
-//       ),
-//       body: const Center(
-//         child: Text(
-//           'Scan QR Code',
-//           style: TextStyle(fontSize: 24),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 /// Implementation of Mobile Scanner example with simple configuration
 class MobileScannerSimple extends StatefulWidget {
   /// Constructor for simple Mobile Scanner example
@@ -63,6 +44,8 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     routeObserver.unsubscribe(this);
     _controller.dispose();
     super.dispose();
+
+    print("debug qr disposed");
   }
 
   @override
@@ -70,6 +53,8 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     // User navigated away from this screen
     _controller.stop();
     super.didPushNext();
+
+    print("debug qr didPushNext");
   }
 
   @override
@@ -77,22 +62,8 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     // User came back to this screen
     _controller.start();
     super.didPopNext();
-  }
 
-  Widget _barcodePreview(Barcode? value) {
-    if (value == null) {
-      return const Text(
-        'Scan something!',
-        overflow: TextOverflow.fade,
-        style: TextStyle(color: Colors.white),
-      );
-    }
-
-    return Text(
-      value.displayValue ?? 'No display value.',
-      overflow: TextOverflow.fade,
-      style: const TextStyle(color: Colors.white),
-    );
+    print("debug qr didPopNext");
   }
 
   void _handleBarcode(BarcodeCapture barcodes) async {
@@ -147,11 +118,16 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     if (!mounted) return;
 
     if (machineId.isNotEmpty) {
-      // TODO: I want to use PUSH here, but the app does not seem to let me
-      // restart the camera scanner when I come back if I use push.
-      context.replace(
-        Uri(path: AppRoutes.buildMachineDetailRoute(machineId)).toString(),
-        // extra: {'machine': widget.machine},
+      final uri = Uri(
+        path: '/machines/$machineId',
+        queryParameters: {
+          'roomIds[]': [roomId],
+          'types[]': ['washer', 'dryer'],
+        },
+      );
+
+      context.go(
+        uri.toString(),
         extra: {'initialAction': InitialPageAction.claim},
       );
     }

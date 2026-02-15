@@ -1,5 +1,5 @@
 import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
-import 'package:resiwash/features/my-machines/presentation/screens/scan_qr.dart';
+import 'package:resiwash/features/my-machines/presentation/screens/scan_qr_screen.dart';
 import 'package:resiwash/features/overview/presentation/screens/home_screen.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_list_screen.dart';
 import 'package:resiwash/features/preferences/presentation/screens/preferences_screen.dart';
@@ -29,50 +29,50 @@ final router = GoRouter(
             GoRoute(
               path: AppRoutes.home,
               builder: (context, state) => HomeScreen(),
-            ),
-            GoRoute(
-              path: AppRoutes.machineList,
-              name: 'machines', // Add name for easier navigation
-              builder: (context, state) {
-                print(
-                  'Machine route hit with URI: ${state.uri}',
-                ); // Debug print
-                final roomIds = state.uri.queryParametersAll['roomIds[]'] ?? [];
-                final areaIds = state.uri.queryParametersAll['areaIds[]'] ?? [];
-                final machineIds =
-                    state.uri.queryParametersAll['machineIds[]'] ?? [];
-                final types = state.uri.queryParametersAll['types[]'] ?? [];
+              routes: [
+                GoRoute(
+                  path: AppRoutes.machineList,
+                  name: 'machines',
+                  builder: (context, state) {
+                    print('Machine route hit with URI: ${state.uri}');
+                    final roomIds =
+                        state.uri.queryParametersAll['roomIds[]'] ?? [];
+                    final areaIds =
+                        state.uri.queryParametersAll['areaIds[]'] ?? [];
+                    final machineIds =
+                        state.uri.queryParametersAll['machineIds[]'] ?? [];
+                    final types = state.uri.queryParametersAll['types[]'] ?? [];
 
-                Map<String, dynamic>? extra =
-                    state.extra as Map<String, dynamic>?;
+                    Map<String, dynamic>? extra =
+                        state.extra as Map<String, dynamic>?;
 
-                return MachineListScreen(
-                  areaIds: areaIds,
-                  roomIds: roomIds,
-                  machineIds: machineIds,
-                  title: extra?['title'] as String?,
-                  count: extra?['count'] as String?,
-                  types: types,
-                );
-              },
-            ),
-            GoRoute(
-              path: AppRoutes.machineDetail,
-              name: 'machineDetail',
-              builder: (context, state) {
-                final machineId = state.pathParameters['machineId']!;
-                Map<String, dynamic>? extra =
-                    state.extra as Map<String, dynamic>?;
-                return MachineDetailScreen(
-                  key: ValueKey(
-                    'machine_$machineId',
-                  ), // Force rebuild when machineId changes
-                  machineId: machineId,
-                  initialAction:
-                      extra?['initialAction'] as InitialPageAction? ??
-                      InitialPageAction.none,
-                );
-              },
+                    return MachineListScreen(
+                      areaIds: areaIds,
+                      roomIds: roomIds,
+                      machineIds: machineIds,
+                      title: extra?['title'] as String?,
+                      count: extra?['count'] as String?,
+                      types: types,
+                    );
+                  },
+                ),
+                GoRoute(
+                  path: '${AppRoutes.machineList}/${AppRoutes.machineDetail}',
+                  name: 'machineDetail',
+                  builder: (context, state) {
+                    final machineId = state.pathParameters['machineId']!;
+                    Map<String, dynamic>? extra =
+                        state.extra as Map<String, dynamic>?;
+                    return MachineDetailScreen(
+                      key: ValueKey('machine_$machineId'),
+                      machineId: machineId,
+                      initialAction:
+                          extra?['initialAction'] as InitialPageAction? ??
+                          InitialPageAction.none,
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),
@@ -121,8 +121,8 @@ class AppRoutes {
 
   // -- routes for Home page -- //
   static const String home = '/';
-  static const String machineList = '/machines';
-  static const String machineDetail = '/machines/:machineId';
+  static const String machineList = 'machines'; // nested under home
+  static const String machineDetail = ':machineId'; // nested under machineList
 
   static const String myMachines = '/me';
   static const String profile = '/profile';
