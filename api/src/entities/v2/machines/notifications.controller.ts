@@ -10,6 +10,7 @@ import {
   unclaimMachine as _unclaimMachine,
   canPoke,
   getClaimants,
+  sendAndCleanupInvalidToken,
 } from "../../../utils/notifications";
 import {
   sendClaimedMachineStatusChangedNotification,
@@ -81,7 +82,15 @@ export const claimMachine = expressAsyncHandler(
               `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
             );
             // return sendErrorResponse(res, "Machine already claimed by this user", 400);
-            sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
+            await sendAndCleanupInvalidToken(
+              () =>
+                sendClaimedMachineStatusChangedNotification({
+                  machine,
+                  fcmToken,
+                }),
+              fcmToken,
+              machineId,
+            );
           }
         } catch (error: any) {
           console.error(error);
@@ -158,7 +167,11 @@ export const pokeClaimant = expressAsyncHandler(
         // await sendPokeNotification(machine, claimant.fcmToken);
 
         for (const claimant of claimants) {
-          await sendPokeNotification(machine, claimant.fcmToken);
+          await sendAndCleanupInvalidToken(
+            () => sendPokeNotification(machine, claimant.fcmToken),
+            claimant.fcmToken,
+            machineId,
+          );
         }
 
         return sendOkResponse(res, { message: "Poke sent successfully" });

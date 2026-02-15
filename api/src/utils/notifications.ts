@@ -4,6 +4,42 @@ import { LastPoke } from "../models/LastPoke";
 import { AppDataSource } from "../data-source";
 import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
 
+/**
+ * Helper function to send notifications and automatically clean up invalid tokens
+ * @param sendFn The notification function to call
+ * @param fcmToken The FCM token to send to
+ * @param machineId The machine ID for cleanup purposes
+ * @returns The response from the notification function
+ */
+export const sendAndCleanupInvalidToken = async <T>(
+  sendFn: () => Promise<T>,
+  fcmToken: string,
+  machineId: string,
+): Promise<T | null> => {
+  try {
+    const response = await sendFn();
+
+    // Check if token is no longer valid
+    if (
+      response &&
+      typeof response === "object" &&
+      "error" in response &&
+      (response as any).error === "token-not-registered"
+    ) {
+      console.log(
+        `[sendAndCleanup] Removing invalid token from claims: ${fcmToken}`,
+      );
+      await unclaimMachine(machineId, fcmToken);
+      return null;
+    }
+
+    return response;
+  } catch (e) {
+    console.error(`[sendAndCleanup] Failed to send to ${fcmToken}:`, e);
+    throw e;
+  }
+};
+
 // Important things to decide
 // Should we allow multiple users to claim the same machine?
 // If we allow multiple users to claim the machine, how do we handle the cycleTime?
@@ -170,13 +206,17 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
   );
 
   for (const claimant of claimants) {
-    // send notification to claimant.fcmToken
-    sendClaimedMachineStatusChangedNotification({
-      fcmToken: claimant.fcmToken,
-      oldStatus: null,
-      newStatus: null,
-      machine,
-    }).catch((e) => {}); // do nothing
+    await sendAndCleanupInvalidToken(
+      () =>
+        sendClaimedMachineStatusChangedNotification({
+          fcmToken: claimant.fcmToken,
+          oldStatus: null,
+          newStatus: null,
+          machine,
+        }),
+      claimant.fcmToken,
+      machine.machineId.toString(),
+    );
   }
 };
 

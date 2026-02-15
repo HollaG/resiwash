@@ -203,8 +203,19 @@ export const sendClaimedMachineStatusChangedNotification = async ({
     console.log("[🔥🏠] Successfully sent message:", response);
 
     return response;
-  } catch (e) {
+  } catch (e: any) {
     console.error("[🔥🏠] Error sending message:", e);
+
+    // Check if the error is due to an invalid/unregistered token
+    if (e.code === "messaging/registration-token-not-registered") {
+      console.log(
+        "[🔥🏠] Token no longer registered, will be cleaned up:",
+        fcmToken,
+      );
+      // Return the error info so the caller can handle cleanup
+      return { error: "token-not-registered", fcmToken };
+    }
+
     throw e;
   }
 };
@@ -349,8 +360,19 @@ export const sendPokeNotification = async (
     const response = await getMessaging().send(message);
     console.log("[🔥🏠] Successfully sent Poke message:", response);
     return response;
-  } catch (e) {
+  } catch (e: any) {
     console.error("[🔥🏠] Error sending Poke message:", e);
+
+    // Check if the error is due to an invalid/unregistered token
+    if (e.code === "messaging/registration-token-not-registered") {
+      console.log(
+        "[🔥🏠] Token no longer registered for poke, will be cleaned up:",
+        fcmToken,
+      );
+      // Return the error info so the caller can handle cleanup
+      return { error: "token-not-registered", fcmToken };
+    }
+
     throw e;
   }
 };
