@@ -31,6 +31,8 @@ export const startMachineCycleEndChecker = () => {
       // Query machines that could be stuck
       const potentiallyEndableMachines = await machineRepository
         .createQueryBuilder("machine")
+        .leftJoinAndSelect("machine.room", "room")
+        .leftJoinAndSelect("room.area", "area")
         .where("machine.currentStatus IN (:...statuses)", {
           statuses: [MachineStatus.IN_USE, MachineStatus.FINISHING],
         })
