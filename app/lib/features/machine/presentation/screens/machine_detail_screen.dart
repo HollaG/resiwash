@@ -555,50 +555,50 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                     MachineTimeline(machine: machine),
                                   ],
                                 ),
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Active issues (0)",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall
-                                              ?.copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [Text("Feature coming soon!")],
-                                    ),
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Issue history",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineSmall
-                                              ?.copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                    Column(
-                                      children: [Text("Feature coming soon!")],
-                                    ),
-                                  ],
-                                ),
+                                // Column(
+                                //   children: [
+                                //     Row(
+                                //       children: [
+                                //         Text(
+                                //           "Active issues (0)",
+                                //           style: Theme.of(context)
+                                //               .textTheme
+                                //               .headlineSmall
+                                //               ?.copyWith(
+                                //                 color: Theme.of(
+                                //                   context,
+                                //                 ).colorScheme.tertiary,
+                                //               ),
+                                //         ),
+                                //       ],
+                                //     ),
+                                //     Column(
+                                //       children: [Text("Feature coming soon!")],
+                                //     ),
+                                //   ],
+                                // ),
+                                // Column(
+                                //   children: [
+                                //     Row(
+                                //       children: [
+                                //         Text(
+                                //           "Issue history",
+                                //           style: Theme.of(context)
+                                //               .textTheme
+                                //               .headlineSmall
+                                //               ?.copyWith(
+                                //                 color: Theme.of(
+                                //                   context,
+                                //                 ).colorScheme.tertiary,
+                                //               ),
+                                //         ),
+                                //       ],
+                                //     ),
+                                //     Column(
+                                //       children: [Text("Feature coming soon!")],
+                                //     ),
+                                //   ],
+                                // ),
                               ],
                             ),
                           ),

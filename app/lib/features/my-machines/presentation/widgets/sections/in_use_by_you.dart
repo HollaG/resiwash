@@ -287,54 +287,6 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                       ],
                     ),
                   ),
-                  // const SizedBox(width: 8),
-                  // AnimatedOpacity(
-                  //   opacity: canEditClaimed ? 1 : 0,
-                  //   duration: Duration(milliseconds: 100),
-                  //   child: AnimatedSwitcher(
-                  //     duration: Duration(milliseconds: 100),
-                  //     child: isEditingClaimed
-                  //         ? FilledButton.icon(
-                  //             style: ButtonStyle(),
-                  //             key: ValueKey('finish_button'),
-                  //             onPressed: _onFinishPressed,
-                  //             icon: Icon(Icons.check),
-                  //             label: Text("Finish"),
-                  //           )
-                  //         : OutlinedButton.icon(
-                  //             key: ValueKey('edit_button'),
-                  //             onPressed: () {
-                  //               _onEditPressed(context);
-                  //             },
-                  //             label: Text("Edit"),
-                  //             icon: Icon(Icons.edit),
-                  //           ),
-                  //   ),
-                  // ),
-                  // if (!isEditingClaimed)
-                  //   AnimatedOpacity(
-                  //     opacity: canEditClaimed ? 1.0 : 0,
-                  //     duration: Duration(milliseconds: 100),
-                  //     child: OutlinedButton.icon(
-                  //       onPressed: () {
-                  //         if (state is! MyMachinesLoaded) return;
-                  //         _onEditPressed(context);
-                  //       },
-                  //       label: Text("Edit"),
-                  //       icon: Icon(Icons.edit),
-                  //     ),
-                  //   ),
-                  // // IconButton(onPressed: () {}, icon: Icon(Icons.add)),
-                  // if (isEditingClaimed)
-                  //   AnimatedOpacity(
-                  //     opacity: canEditClaimed ? 1.0 : 0,
-                  //     duration: Duration(milliseconds: 100),
-                  //     child: FilledButton.icon(
-                  //       onPressed: _onFinishPressed,
-                  //       icon: Icon(Icons.check),
-                  //       label: Text("Finish"),
-                  //     ),
-                  //   ),
                 ],
               ),
 

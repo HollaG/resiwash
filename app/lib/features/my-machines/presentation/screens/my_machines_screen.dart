@@ -9,9 +9,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cu
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/completed.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
-import 'package:resiwash/features/my-machines/presentation/widgets/sections/issues_reported.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/subscriptions.dart';
-import 'package:resiwash/features/my-machines/presentation/widgets/sections/usage_history.dart';
 
 class MyMachinesScreen extends StatefulWidget {
   const MyMachinesScreen({super.key});
@@ -21,7 +19,7 @@ class MyMachinesScreen extends StatefulWidget {
 }
 
 class _MyMachinesScreenState extends State<MyMachinesScreen> {
-  bool hasCompletedMachines = true;
+  bool hasCompletedMachines = false;
 
   @override
   Widget build(BuildContext context) {
@@ -131,16 +129,6 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                               spacing: 20,
 
                               children: [
-                                // SizedBox(height: 0),
-
-                                // section 0:
-                                // "completed"
-                                // AnimatedSize(
-                                //   duration: Duration(milliseconds: 300),
-                                //   curve: Curves.fastOutSlowIn,
-                                //   alignment: Alignment.topCenter,
-                                //   child: CompletedSection(),
-                                // ),
                                 SizedBox(height: 0),
 
                                 // section 1:
