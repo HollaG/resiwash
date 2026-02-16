@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:resiwash/asset-export.dart';
-import 'package:resiwash/features/my-machines/presentation/widgets/claim_machine_help_info.dart';
+import 'package:resiwash/features/my-machines/presentation/screens/scan_qr_screen.dart';
 import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
@@ -22,7 +21,7 @@ class BaseView extends StatelessWidget {
   }
 
   void _onHelpClicked(BuildContext context) {
-    ClaimMachineHelpInfo.show(context);
+    MobileScannerSimple.showHelpInfo(context);
   }
 
   @override

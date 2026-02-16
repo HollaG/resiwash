@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
@@ -205,7 +206,7 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
       builder: (context) {
         return SizedBox(
           width: double.infinity,
-          height: 375,
+          height: max(MediaQuery.of(context).size.height / 2, 375),
           child: Container(
             padding: const EdgeInsets.all(24.0),
             child: Column(

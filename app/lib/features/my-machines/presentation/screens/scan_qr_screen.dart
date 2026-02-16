@@ -10,11 +10,47 @@ import 'package:resiwash/features/machine/domain/usecases/get_machine_usecase.da
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_cubit.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
 import 'package:resiwash/router.dart';
+import 'package:resiwash/theme.dart';
 
 /// Implementation of Mobile Scanner example with simple configuration
 class MobileScannerSimple extends StatefulWidget {
   /// Constructor for simple Mobile Scanner example
   const MobileScannerSimple({super.key});
+
+  static void showHelpInfo(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('What is this?'),
+        content: Column(
+          spacing: 8,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Scan the QR code pasted on the machines to mark them as in use by you.',
+            ),
+            const Text(
+              "A timer will be set automatically on your phone and you will be notified once your machine is done.",
+            ),
+
+            const Text(
+              "Alternatively, you can tap your phone on the Tap icon, below the QR code (NFC must be available and enabled).",
+            ),
+            Divider(),
+            const Text(
+              "Please note that QR codes are only available in select locations. If you don't see a QR code on your machine, you can still mark it as in use by you through the app and receive notifications as normal.",
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   State<MobileScannerSimple> createState() => _MobileScannerSimpleState();
@@ -30,9 +66,7 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     autoStart: false,
   );
 
-  static String INFO_DEFAULT =
-      'Scan a ResiWash QR code to mark a machine as in use by you.';
-  String infoText = INFO_DEFAULT;
+  String errorText = '';
 
   StreamSubscription<Object?>? _subscription;
 
@@ -69,7 +103,10 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
         // Restart the scanner when the app is resumed.
         // Don't forget to resume listening to the barcode events.
         _subscription = controller.barcodes.listen(_handleBarcode);
-
+        if (!controller.value.isRunning) {
+          print("debug qr restarting scanner from didChangeAppLifecycleState");
+          unawaited(controller.start());
+        }
       // unawaited(controller.start());
       case AppLifecycleState.inactive:
         // Stop the scanner when the app is paused.
@@ -129,14 +166,14 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
 
     if (!rawValue.startsWith('https://resi-wash.com/manual')) {
       setState(() {
-        infoText = 'Invalid QR code scanned. Please try again.';
+        errorText = 'Invalid QR code scanned. Please try again.';
       });
 
-      // Reset info text after 3 seconds
+      // Reset error text after 3 seconds
       Future.delayed(const Duration(seconds: 3), () {
         if (mounted) {
           setState(() {
-            infoText = INFO_DEFAULT;
+            errorText = '';
           });
         }
       });
@@ -221,12 +258,52 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
               Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Center(
-                  child: Text(
-                    infoText,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  child: Column(
+                    children: [
+                      if (errorText.isNotEmpty)
+                        Text(
+                          errorText,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                        ),
+                      Text(
+                        "Scan a ResiWash QR code to mark a machine as in use by you.",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
                   ),
                 ),
+              ),
+
+              Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(48, 0, 48, 0),
+
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryFixed,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        spacing: 8,
+                        children: [
+                          Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                          Text("Automatic timer notifications "),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               // BlocConsumer<MachineDetailCubit, MachineDetailState>(
               //   listener: (context, state) {

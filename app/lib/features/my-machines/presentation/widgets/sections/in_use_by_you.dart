@@ -275,7 +275,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                               ),
                               TextSpan(
                                 text:
-                                    "notification for machines you are currently using.",
+                                    "notification for machines you are currently using. Swipe right to release.",
                               ),
                             ],
                           ),
