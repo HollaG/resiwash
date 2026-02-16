@@ -81,30 +81,22 @@ class BaseView extends StatelessWidget {
               icon: Icons.local_laundry_service,
               label: 'My Machines',
             ),
-            _menuItem(
-              context,
-              index: 2,
-              currentIndex: navigationShell.currentIndex,
-              icon: Icons.settings,
-              label: 'Settings',
-            ),
 
+            // IMPORTANT: When uncommenting this, make sure to change the goBranch of the FAB
             // _menuItem(
             //   context,
-            //   index: 3,
+            //   index: 2,
             //   currentIndex: navigationShell.currentIndex,
-            //   label: 'Scan',
-            //   icon: Icons.qr_code_scanner,
+            //   icon: Icons.settings,
+            //   label: 'Settings',
             // ),
-            // empty
-            // Container(),
             Center(
               child: FloatingActionButton(
                 onPressed: () {
                   if (!isOnScanQrPage) {
                     navigationShell.goBranch(
-                      3,
-                      initialLocation: 3 == navigationShell.currentIndex,
+                      2,
+                      initialLocation: 2 == navigationShell.currentIndex,
                     );
                   } else {
                     _onHelpClicked(context);

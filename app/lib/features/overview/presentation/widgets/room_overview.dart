@@ -29,13 +29,13 @@ class RoomOverview extends StatelessWidget {
           return InkWell(
             onTap: () => {
               // navigate to specific room page
-              context.push(
-                Uri(
-                  path: AppRoutes.machineList,
-                  queryParameters: {
-                    'roomIds[]': [roomId],
-                  },
-                ).toString(),
+              context.pushNamed(
+                'machines',
+
+                queryParameters: {
+                  'roomIds[]': [roomId],
+                },
+
                 extra: {
                   'title': room.name,
                   'count': machines.length.toString(),

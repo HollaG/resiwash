@@ -101,7 +101,10 @@ void notificationTapBackground(NotificationResponse response) async {
                 "[BG Notification tap] Navigating to machine detail $machineId",
               );
               // Use pushReplacement to force navigation even if already on a machine detail page
-              context.go(AppRoutes.buildMachineDetailRoute(machineId));
+              context.goNamed(
+                AppRoutes.machineDetailName,
+                pathParameters: {'machineId': machineId},
+              );
             }
             break;
           case CustomFirebaseMessageChannel.claimed:

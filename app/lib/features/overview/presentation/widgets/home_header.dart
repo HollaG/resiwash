@@ -18,144 +18,136 @@ class HomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        brightness: Brightness.light,
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(36.0, 48, 36, 48),
-        color: Theme.of(context).colorScheme.primary,
+    return BlocBuilder<OverviewCubit, OverviewState>(
+      builder: (context, state) {
+        // Calculate counts based on state
+        int washerCount = 0;
+        int totalWashers = 0;
+        int dryerCount = 0;
+        int totalDryers = 0;
+        bool isLoading = true;
 
-        child: SafeArea(
-          child: Column(
-            spacing: 20,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  Text(
-                    "Welcome back!",
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimary,
-                      // fontWeight is already bold from theme
+        if (state is OverviewLoaded) {
+          isLoading = false;
+          Map<CountKey, int> washerInfo = state.getTypeCount(
+            MachineType.washer,
+          );
+          washerCount = washerInfo[CountKey.available] ?? 0;
+          totalWashers = washerInfo[CountKey.total] ?? 0;
+
+          Map<CountKey, int> dryerInfo = state.getTypeCount(MachineType.dryer);
+          dryerCount = dryerInfo[CountKey.available] ?? 0;
+          totalDryers = dryerInfo[CountKey.total] ?? 0;
+        }
+
+        final loadedLocations = sl<SharedPreferencesService>()
+            .getSavedLocations();
+
+        int numberOfRooms = loadedLocations.getAllRoomIds().length;
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(36.0, 48, 36, 48),
+          color: Theme.of(context).colorScheme.primary,
+          child: SafeArea(
+            child: Column(
+              spacing: 20,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    Text(
+                      "Welcome${numberOfRooms > 0 ? " back" : ""}!",
+                      style: Theme.of(context).textTheme.headlineMedium
+                          ?.copyWith(
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                     ),
+                  ],
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: Builder(
+                    builder: (context) {
+                      if ((numberOfRooms == 0 ||
+                          totalDryers + totalWashers == 0)) {
+                        return Row();
+                      } else {
+                        return Row(
+                          spacing: 12,
+                          children: [
+                            // TODO: hide if no machine of type
+                            if (totalDryers > 0)
+                              Expanded(
+                                child: HomeMainCard(
+                                  leading: AssetIcons.dryerIcon(context),
+                                  title: "Dryers",
+                                  count: isLoading
+                                      ? "Loading..."
+                                      : "$dryerCount/$totalDryers",
+                                  actionText: "View",
+                                  onAction: isLoading
+                                      ? () {}
+                                      : () {
+                                          context.pushNamed(
+                                            'machines',
+                                            queryParameters: {
+                                              'types[]': [
+                                                MachineType.dryer.name,
+                                              ],
+                                              'roomIds[]': loadedLocations
+                                                  .getAllRoomIds(),
+                                            },
+                                            extra: {
+                                              'title': "Dryers",
+                                              'count': totalDryers.toString(),
+                                            },
+                                          );
+                                        },
+                                ),
+                              ),
+                            if (totalWashers > 0)
+                              Expanded(
+                                child: HomeMainCard(
+                                  leading: AssetIcons.washerIcon(context),
+                                  title: "Washers",
+                                  count: isLoading
+                                      ? "Loading..."
+                                      : "$washerCount/$totalWashers",
+                                  actionText: "View",
+                                  onAction: isLoading
+                                      ? () {}
+                                      : () {
+                                          context.pushNamed(
+                                            'machines',
+                                            queryParameters: {
+                                              'types[]': [
+                                                MachineType.washer.name,
+                                              ],
+                                              'roomIds[]': loadedLocations
+                                                  .getAllRoomIds(),
+                                            },
+                                            extra: {
+                                              'title': "Washers",
+                                              'count': totalWashers.toString(),
+                                            },
+                                          );
+                                        },
+                                ),
+                              ),
+                          ],
+                        );
+                      }
+                    },
                   ),
-                ],
-              ),
-
-              BlocBuilder<OverviewCubit, OverviewState>(
-                builder: (context, state) {
-                  if (state is OverviewLoaded) {
-                    // Calculate counts based on actual data
-                    Map<CountKey, int> washerInfo = state.getTypeCount(
-                      MachineType.washer,
-                    );
-                    int washerCount = washerInfo[CountKey.available] ?? 0;
-                    int totalWashers = washerInfo[CountKey.total] ?? 0;
-
-                    Map<CountKey, int> dryerInfo = state.getTypeCount(
-                      MachineType.dryer,
-                    );
-                    int dryerCount = dryerInfo[CountKey.available] ?? 0;
-                    int totalDryers = dryerInfo[CountKey.total] ?? 0;
-
-                    final loadedLocations = sl<SharedPreferencesService>()
-                        .getSavedLocations();
-
-                    return Row(
-                      children: [
-                        Expanded(
-                          child: HomeMainCard(
-                            leading: AssetIcons.dryerIcon(context),
-                            title: "Dryers",
-                            count: "$dryerCount/$totalDryers",
-
-                            actionText: "View",
-                            onAction: () {
-                              // Navigate to the washer list page
-                              context.push(
-                                Uri(
-                                  path: AppRoutes.machineList,
-                                  queryParameters: {
-                                    'types[]': [MachineType.dryer.name],
-                                    'roomIds[]': loadedLocations
-                                        .getAllRoomIds(),
-                                  },
-                                ).toString(),
-                                extra: {
-                                  'title': "Dryers",
-                                  'count': totalDryers.toString(),
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 12),
-                        Expanded(
-                          child: HomeMainCard(
-                            leading: AssetIcons.washerIcon(context),
-                            title: "Washers",
-                            count: "$washerCount/$totalWashers",
-
-                            actionText: "View",
-                            onAction: () {
-                              // Navigate to the washer list page
-                              context.push(
-                                Uri(
-                                  path: AppRoutes.machineList,
-                                  queryParameters: {
-                                    'types[]': [MachineType.washer.name],
-                                    'roomIds[]': loadedLocations
-                                        .getAllRoomIds(),
-                                  },
-                                ).toString(),
-                                extra: {
-                                  'title': "Washers",
-                                  'count': totalWashers.toString(),
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: HomeMainCard(
-                          leading: AssetIcons.washerIcon(context),
-                          title: "Washers",
-                          count: "Loading...",
-
-                          actionText: "View",
-                          onAction: () {},
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: HomeMainCard(
-                          leading: AssetIcons.dryerIcon(context),
-                          title: "Dryers",
-                          count: "Loading...",
-
-                          actionText: "View",
-                          onAction: () {},
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

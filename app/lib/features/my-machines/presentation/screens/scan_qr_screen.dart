@@ -164,16 +164,9 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     if (!mounted) return;
 
     if (machineId.isNotEmpty) {
-      final uri = Uri(
-        path: '/machines/$machineId',
-        queryParameters: {
-          'roomIds[]': [roomId],
-          'types[]': ['washer', 'dryer'],
-        },
-      );
-
-      context.go(
-        uri.toString(),
+      context.replaceNamed(
+        AppRoutes.machineDetailName,
+        pathParameters: {'machineId': machineId},
         extra: {'initialAction': InitialPageAction.claim},
       );
     }

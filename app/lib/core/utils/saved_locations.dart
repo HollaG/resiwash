@@ -49,7 +49,6 @@ class SavedLocations {
     List<String> roomIds = locations.values
         .expand((roomIds) => roomIds)
         .toList();
-    appLog.d("[SharedPreferencesService] getAllRoomIds: $roomIds");
     return roomIds;
   }
 

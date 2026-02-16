@@ -132,13 +132,31 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
                       onPressed: () {
                         showChangeRoomSheet(context, locations);
                       },
-                      label: Text("Edit"),
-                      icon: Icon(Icons.edit),
+                      label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
+                      icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
                     ),
                   ],
                 ),
-                // TODO:
-                // 1. figure out why this refreshindicator can appear at the top of the screen
+                if (numberOfRooms == 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+
+                    child: Column(
+                      spacing: 8,
+                      children: [
+                        Text(
+                          textAlign: TextAlign.center,
+                          "You have not added any rooms.",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          textAlign: TextAlign.center,
+                          "Click the Add button to select rooms to display here.",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
                 ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(0),
@@ -155,15 +173,16 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
                 //     return RoomOverview(roomId: roomId);
                 //   }).toList(),
                 // ),
-                Center(
-                  child: Text(
-                    // can be OverviewLoaded or OverviewRefreshing
-                    "Last updated at $formattedLastUpdateTime",
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                if (numberOfRooms > 0)
+                  Center(
+                    child: Text(
+                      // can be OverviewLoaded or OverviewRefreshing
+                      "Last updated at $formattedLastUpdateTime",
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           );

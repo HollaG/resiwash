@@ -32,7 +32,7 @@ final router = GoRouter(
               routes: [
                 GoRoute(
                   path: AppRoutes.machineList,
-                  name: 'machines',
+                  name: AppRoutes.machineListName,
                   builder: (context, state) {
                     print('Machine route hit with URI: ${state.uri}');
                     final roomIds =
@@ -58,7 +58,7 @@ final router = GoRouter(
                 ),
                 GoRoute(
                   path: '${AppRoutes.machineList}/${AppRoutes.machineDetail}',
-                  name: 'machineDetail',
+                  name: AppRoutes.machineDetailName,
                   builder: (context, state) {
                     final machineId = state.pathParameters['machineId']!;
                     Map<String, dynamic>? extra =
@@ -81,24 +81,26 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.myMachines,
+              name: AppRoutes.myMachinesName,
               builder: (context, state) => MyMachinesScreen(),
             ),
           ],
         ),
 
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: AppRoutes.settings,
-              builder: (context, state) => PreferencesScreen(),
-            ),
-          ],
-        ),
-
+        // StatefulShellBranch(
+        //   routes: [
+        //     GoRoute(
+        //       path: AppRoutes.settings,
+        //       name: AppRoutes.settingsName,
+        //       builder: (context, state) => PreferencesScreen(),
+        //     ),
+        //   ],
+        // ),
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: AppRoutes.scanQr,
+              name: AppRoutes.scanQrName,
               builder: (context, state) => MobileScannerSimple(),
             ),
           ],
@@ -107,6 +109,7 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: AppRoutes.profile,
+              name: AppRoutes.profileName,
               builder: (context, state) => ProfilePage(),
             ),
           ],
@@ -130,23 +133,13 @@ class AppRoutes {
 
   static const String settings = '/settings';
 
-  // // Helper methods for navigation
-  // static String buildMachineListRoute({
-  //   List<String>? roomIds,
-  //   List<String>? areaIds,
-  //   List<String>? machineIds,
-  // }) {
-  //   final uri = Uri(
-  //     path: machineList,
-  //     queryParameters: {
-  //       if (roomIds != null && roomIds.isNotEmpty) 'roomIds[]': roomIds,
-  //       if (areaIds != null && areaIds.isNotEmpty) 'areaIds[]': areaIds,
-  //       if (machineIds != null && machineIds.isNotEmpty)
-  //         'machineIds[]': machineIds,
-  //     },
-  //   );
-  //   return uri.toString();
-  // }
+  // -- route names -- //
+  static const String machineListName = 'machines';
+  static const String machineDetailName = 'machineDetail';
+  static const String myMachinesName = 'myMachines';
+  static const String scanQrName = 'scanQr';
+  static const String profileName = 'profile';
+  static const String settingsName = 'settings';
 
   static String buildMachineDetailRoute(String machineId) {
     return machineDetail.replaceFirst(':machineId', machineId);

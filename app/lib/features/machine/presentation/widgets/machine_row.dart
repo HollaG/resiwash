@@ -640,12 +640,9 @@ class _MachineRowState extends State<MachineRow>
               child: ListTile(
                 onTap: () {
                   // go to /machines/:id
-                  context.push(
-                    Uri(
-                      path: AppRoutes.buildMachineDetailRoute(
-                        widget.machine.machineId,
-                      ),
-                    ).toString(),
+                  context.pushNamed(
+                    AppRoutes.machineDetailName,
+                    pathParameters: {'machineId': widget.machine.machineId},
                     extra: {'machine': widget.machine},
                   );
                   // .then((_) => {_checkSubscriptionStatus()});

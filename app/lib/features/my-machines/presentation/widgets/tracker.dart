@@ -415,12 +415,9 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
               InkWell(
                 onTap: () {
                   // Navigate to machine details page
-                  context.push(
-                    Uri(
-                      path: AppRoutes.buildMachineDetailRoute(
-                        widget.machine.machineId,
-                      ),
-                    ).toString(),
+                  context.goNamed(
+                    AppRoutes.machineDetailName,
+                    pathParameters: {'machineId': widget.machine.machineId},
                     extra: {'machine': widget.machine},
                   );
                 },
