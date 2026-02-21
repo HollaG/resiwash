@@ -34,6 +34,7 @@ dependencies:
   flutter_slidable: ^3.1.1
   mobile_scanner: ^7.1.4
   flutter_alarm_clock: ^0.1.2
+  app_links: ^6.4.1
 
 dev_dependencies:
   flutter_test:

@@ -10,6 +10,7 @@
         android:name="${applicationName}"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/launcher_icon">
+        <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         <activity
             android:name="com.resiwash.app.MainActivity"
             android:exported="true"
@@ -30,6 +31,14 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- App link -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="resi-wash.com" android:pathPrefix="/manual" />
             </intent-filter>
 
         </activity>

@@ -19,6 +19,17 @@ final router = GoRouter(
   navigatorKey: navigatorKey,
   observers: [routeObserver],
   routes: [
+    // Deep link handler for NFC tags
+    GoRoute(
+      path: '/manual',
+      redirect: (context, state) {
+        final machineId = state.uri.queryParameters['machineId'];
+        if (machineId != null) {
+          return '/machines/$machineId?claim=true';
+        }
+        return '/'; // Fallback to home if no machineId
+      },
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return BaseView(navigationShell: navigationShell, shellState: state);
@@ -63,12 +74,18 @@ final router = GoRouter(
                     final machineId = state.pathParameters['machineId']!;
                     Map<String, dynamic>? extra =
                         state.extra as Map<String, dynamic>?;
+
+                    // Check if this is from a deep link (has 'claim' query param)
+                    final shouldClaim =
+                        state.uri.queryParameters['claim'] == 'true';
+
                     return MachineDetailScreen(
                       key: ValueKey('machine_$machineId'),
                       machineId: machineId,
-                      initialAction:
-                          extra?['initialAction'] as InitialPageAction? ??
-                          InitialPageAction.none,
+                      initialAction: shouldClaim
+                          ? InitialPageAction.claim
+                          : (extra?['initialAction'] as InitialPageAction? ??
+                                InitialPageAction.none),
                     );
                   },
                 ),
