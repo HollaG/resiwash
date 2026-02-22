@@ -108,8 +108,16 @@ class _MachineRowState extends State<MachineRow>
     super.dispose();
   }
 
-  Future<int?> _dialogBuilder(BuildContext context) {
+  Future<int?> _dialogBuilder(
+    BuildContext context,
+    MachineEntity machine,
+  ) async {
     int selectedCycleTime = 30;
+
+    List<int> cycleTimes = [30, 45, 60];
+    if (machine.type == MachineType.washer) {
+      cycleTimes = [30, 32, 34];
+    }
 
     return showDialog<int>(
       context: context,
@@ -150,10 +158,12 @@ class _MachineRowState extends State<MachineRow>
                           },
                         ),
                       ),
-                      segments: const <ButtonSegment<int>>[
-                        ButtonSegment<int>(value: 30, label: Text('30m')),
-                        ButtonSegment<int>(value: 45, label: Text('45m')),
-                        ButtonSegment<int>(value: 60, label: Text('60m')),
+                      segments: <ButtonSegment<int>>[
+                        for (int cycleTime in cycleTimes)
+                          ButtonSegment<int>(
+                            value: cycleTime,
+                            label: Text('${cycleTime}m'),
+                          ),
                       ],
                       selected: <int>{selectedCycleTime},
                       onSelectionChanged: (Set<int> newSelection) {
@@ -488,7 +498,10 @@ class _MachineRowState extends State<MachineRow>
                           await _claimCubit.unclaimMachine(widget.machine);
                         } else if (claimState == ClaimState.notClaimed) {
                           // Show dialog and get selected cycle time
-                          final cycleTime = await _dialogBuilder(context);
+                          final cycleTime = await _dialogBuilder(
+                            context,
+                            widget.machine,
+                          );
 
                           // Only claim if user confirmed (didn't cancel)
                           if (cycleTime != null && mounted) {
@@ -511,7 +524,10 @@ class _MachineRowState extends State<MachineRow>
                             await _claimCubit.unclaimMachine(widget.machine);
                           } else if (claimState == ClaimState.notClaimed) {
                             // Show dialog and get selected cycle time
-                            final cycleTime = await _dialogBuilder(context);
+                            final cycleTime = await _dialogBuilder(
+                              context,
+                              widget.machine,
+                            );
 
                             // Only claim if user confirmed (didn't cancel)
                             if (cycleTime != null && mounted) {

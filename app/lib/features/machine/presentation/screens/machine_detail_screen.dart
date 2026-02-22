@@ -11,6 +11,7 @@ import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/widgets/detail_row.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/usecases/get_machine_usecase.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_cubit.dart';
 import 'package:resiwash/features/machine/presentation/cubit/machine_detail_state.dart';
@@ -74,8 +75,14 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
         });
   }
 
-  Future<int?> _dialogBuilder(BuildContext context) {
+  Future<int?> _dialogBuilder(BuildContext context, MachineEntity machine) {
+    // TODO: make this user-selectable
     int selectedCycleTime = 30;
+
+    List<int> cycleTimes = [30, 45, 60];
+    if (machine.type == MachineType.washer) {
+      cycleTimes = [30, 32, 34];
+    }
 
     return showDialog<int>(
       context: context,
@@ -116,10 +123,13 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                           },
                         ),
                       ),
-                      segments: const <ButtonSegment<int>>[
-                        ButtonSegment<int>(value: 30, label: Text('30m')),
-                        ButtonSegment<int>(value: 45, label: Text('45m')),
-                        ButtonSegment<int>(value: 60, label: Text('60m')),
+                      segments: <ButtonSegment<int>>[
+                        cycleTimes.isNotEmpty
+                            ? ButtonSegment<int>(
+                                value: cycleTimes[0],
+                                label: Text('${cycleTimes[0]}m'),
+                              )
+                            : ButtonSegment<int>(value: 30, label: Text('30m')),
                       ],
                       selected: <int>{selectedCycleTime},
                       onSelectionChanged: (Set<int> newSelection) {
@@ -192,7 +202,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                   widget.initialAction == InitialPageAction.claim) {
                 _hasHandledInitialAction = true;
                 final machine = state.machine;
-                int? cycleTime = await _dialogBuilder(context);
+                int? cycleTime = await _dialogBuilder(context, machine);
                 if (cycleTime != null && mounted && context.mounted) {
                   context.read<ClaimCubit>().claimMachine(
                     machine,
@@ -425,9 +435,10 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                               if (value) {
                                                 // claim
 
-                                                _dialogBuilder(context).then((
-                                                  cycleTime,
-                                                ) {
+                                                _dialogBuilder(
+                                                  context,
+                                                  machine,
+                                                ).then((cycleTime) {
                                                   if (cycleTime != null &&
                                                       mounted &&
                                                       context.mounted) {
