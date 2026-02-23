@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesService {
@@ -9,6 +12,10 @@ class SharedPreferencesService {
   static const String subscribedMachinesKey = 'notif_subscribedMachines';
   static const String subscribedGroupsKey = 'notif_subscribedGroups';
   static const String claimedMachinesKey = 'claimedMachines';
+  static const Map<MachineType, int?> defaultCycleTimes = {
+    MachineType.washer: null,
+    MachineType.dryer: null,
+  };
 
   final SharedPreferences _prefs;
 
@@ -147,6 +154,7 @@ class SharedPreferencesService {
   }
 
   // Update cycle time for a claimed machine
+  // deprecated, just reclaim
   void updateClaimedMachineCycleTime(String machineId, int cycleTime) {
     final existingMachines = getClaimedMachinesMetadata();
     final index = existingMachines.indexWhere((m) => m.machineId == machineId);
@@ -163,6 +171,57 @@ class SharedPreferencesService {
       final encodedMachines = existingMachines.map((m) => m.encode()).toList();
       _prefs.setStringList(claimedMachinesKey, encodedMachines);
     }
+  }
+
+  /// Save the preferred cycle times map to SharedPreferences
+  Future<void> setPreferredCycleTimes(Map<MachineType, int?> cycleTimes) async {
+    // Convert enum keys to string for JSON serialization
+    final mapToSave = cycleTimes.map((k, v) => MapEntry(k.name, v));
+    final jsonString = mapToSave.isEmpty ? null : jsonEncode(mapToSave);
+    if (jsonString != null) {
+      await _prefs.setString('preferredCycleTimes', jsonString);
+    } else {
+      await _prefs.remove('preferredCycleTimes');
+    }
+  }
+
+  /// Retrieve the preferred cycle times map from SharedPreferences
+  Map<MachineType, int?> getPreferredCycleTimes() {
+    final jsonString = _prefs.getString('preferredCycleTimes');
+    if (jsonString == null) return {};
+    final Map<String, dynamic> decoded = jsonDecode(jsonString);
+    // Convert string keys back to enum
+    return decoded.map((k, v) {
+      final type = MachineType.values.firstWhere(
+        (e) => e.name == k,
+        orElse: () => throw Exception('Unknown MachineType: $k'),
+      );
+      return MapEntry(type, v as int?);
+    });
+  }
+
+  /// Set a single preferred cycle time for a machine type
+  Future<void> setPreferredCycleTime(
+    MachineType machineType,
+    int? cycleTime,
+  ) async {
+    final current = getPreferredCycleTimes();
+    if (cycleTime != null) {
+      current[machineType] = cycleTime;
+    } else {
+      current.remove(machineType);
+    }
+    await setPreferredCycleTimes(current);
+  }
+
+  /// Get a single preferred cycle time for a machine type
+  int? getPreferredCycleTime(MachineType machineType) {
+    final current = getPreferredCycleTimes();
+    return current[machineType];
+  }
+
+  void clearPreferredCycleTime(MachineType machineType) {
+    setPreferredCycleTime(machineType, null);
   }
 
   // // Save a list of room IDs

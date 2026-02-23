@@ -85,7 +85,11 @@ class MachineDisplayUtils {
   }
 
   static String getType(MachineEntity machine) {
-    switch (machine.type) {
+    return getTypeFromEnum(machine.type);
+  }
+
+  static String getTypeFromEnum(MachineType type) {
+    switch (type) {
       case MachineType.washer:
         return 'Washer';
       case MachineType.dryer:

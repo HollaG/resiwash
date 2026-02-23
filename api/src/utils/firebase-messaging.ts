@@ -87,6 +87,11 @@ export const sendClaimedMachineStatusChangedNotification = async ({
   newStatus?: MachineStatus;
   fcmToken: string;
 }) => {
+  if (fcmToken.startsWith("web_")) {
+    // just return as we use web_ prefix to indicate web clients, which don't need this notification
+    return;
+  }
+
   let title = "";
   let body = "";
   let secondsTillCompletion = null;
@@ -329,6 +334,10 @@ export const sendPokeNotification = async (
   machine: Machine,
   fcmToken: string,
 ) => {
+  if (fcmToken.startsWith("web_")) {
+    // just return as we use web_ prefix to indicate web clients, which don't need this notification
+    return;
+  }
   const message: CustomMessage = {
     token: fcmToken,
     // notification: {

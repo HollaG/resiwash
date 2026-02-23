@@ -6,6 +6,7 @@ import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
 
 import 'package:resiwash/core/widgets/detail_row.dart';
@@ -24,6 +25,8 @@ import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dar
     as claim_state;
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_state.dart'
     as sub_state;
+import 'package:resiwash/router.dart';
+import 'package:go_router/go_router.dart';
 
 enum InitialPageAction { none, subscribe, unsubscribe, claim, unclaim }
 
@@ -75,13 +78,23 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
         });
   }
 
-  Future<int?> _dialogBuilder(BuildContext context, MachineEntity machine) {
+  Future<int?> _dialogBuilder(
+    BuildContext context,
+    MachineEntity machine,
+  ) async {
     // TODO: make this user-selectable
     int selectedCycleTime = 30;
 
     List<int> cycleTimes = [30, 45, 60];
     if (machine.type == MachineType.washer) {
       cycleTimes = [30, 32, 34];
+    }
+
+    int? defaultCycleTime = sl<SharedPreferencesService>()
+        .getPreferredCycleTime(machine.type);
+
+    if (defaultCycleTime != null) {
+      return defaultCycleTime;
     }
 
     return showDialog<int>(
@@ -124,12 +137,11 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                         ),
                       ),
                       segments: <ButtonSegment<int>>[
-                        cycleTimes.isNotEmpty
-                            ? ButtonSegment<int>(
-                                value: cycleTimes[0],
-                                label: Text('${cycleTimes[0]}m'),
-                              )
-                            : ButtonSegment<int>(value: 30, label: Text('30m')),
+                        for (int cycleTime in cycleTimes)
+                          ButtonSegment<int>(
+                            value: cycleTime,
+                            label: Text('${cycleTime}m'),
+                          ),
                       ],
                       selected: <int>{selectedCycleTime},
                       onSelectionChanged: (Set<int> newSelection) {
@@ -438,16 +450,24 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                                 _dialogBuilder(
                                                   context,
                                                   machine,
-                                                ).then((cycleTime) {
+                                                ).then((cycleTime) async {
                                                   if (cycleTime != null &&
                                                       mounted &&
                                                       context.mounted) {
-                                                    context
+                                                    await context
                                                         .read<ClaimCubit>()
                                                         .claimMachine(
                                                           machine,
                                                           cycleTime: cycleTime,
                                                         );
+                                                    // redirect to MyMachines page after claiming
+                                                    if (mounted &&
+                                                        context.mounted) {
+                                                      context.goNamed(
+                                                        AppRoutes
+                                                            .myMachinesName,
+                                                      );
+                                                    }
                                                   }
                                                 });
                                               } else {

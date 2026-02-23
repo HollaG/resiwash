@@ -5,7 +5,7 @@ import * as Select from '@radix-ui/react-select';
 import * as ToggleGroup from '@radix-ui/react-toggle-group';
 import { Button } from "@/components/ui/button";
 import { BASE_URL } from "@/types/enums";
-import { MachineStatus } from "@/types/datatypes";
+import { MachineStatus, MachineType } from "@/types/datatypes";
 import { MachineCell } from "@/components/room/MachineCell";
 import { MachineDetailSheet } from "@/components/machine/MachineDetailSheet";
 import { useRoomInfo } from "@/hooks/query/useRoomInfo";
@@ -29,25 +29,67 @@ export const ManualEntry = () => {
 
   const [cycleTime, setCycleTime] = useState<string>("30");
 
+  // Determine machine type for cycle time options
+  let cycleTimeOptions: { value: string; label: string }[] = [];
+  if (selectedMachineData?.type === MachineType.WASHER) {
+    cycleTimeOptions = [
+      { value: '30', label: '30 min' },
+      { value: '32', label: '32 min' },
+      { value: '34', label: '34 min' },
+    ];
+  } else if (selectedMachineData?.type === MachineType.DRYER) {
+    cycleTimeOptions = [
+      { value: '30', label: '30 min' },
+      { value: '45', label: '45 min' },
+      { value: '60', label: '60 min' },
+    ];
+  } else {
+    cycleTimeOptions = [
+      { value: '30', label: '30 min' },
+      { value: '45', label: '45 min' },
+      { value: '60', label: '60 min' },
+    ];
+  }
+
 
   const [isLoading, setIsLoading] = useState(false);
 
   const onConfirm = () => {
     setIsLoading(true);
-    fetch(`${BASE_URL}/machines/${selectedMachineId}/manual`, {
+    // fetch(`${BASE_URL}/machines/${selectedMachineId}/manual`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+
+    //     status: MachineStatus.IN_USE, // hardcoded for now!
+    //     cycleTime: Number(cycleTime),
+    //   })
+    // }).then((response) => response.json()).then(res => {
+    //   if (res.status === 'success') {
+    //     // redirect user to home
+    //     window.location.href = '/';
+    //   }
+    // }).catch(console.error).finally(() => setIsLoading(false));
+
+    fetch(`${BASE_URL}/machines/${selectedMachineId}/claim`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
 
-        status: MachineStatus.IN_USE, // hardcoded for now!
         cycleTime: Number(cycleTime),
+        fcmToken: "web_" + crypto.randomUUID(), // generate random token for claiming machine, prefixed with "web_" to indicate it's from the web interface
       })
     }).then((response) => response.json()).then(res => {
       if (res.status === 'success') {
         // redirect user to home
         window.location.href = '/';
+      } else {
+        console.error('Failed to claim machine:', res.message);
+        alert('Failed to claim machine: ' + res.message);
       }
     }).catch(console.error).finally(() => setIsLoading(false));
   }
@@ -92,24 +134,15 @@ export const ManualEntry = () => {
         onValueChange={(value) => { if (value) setCycleTime(value) }}
         className="flex gap-2"
       >
-        <ToggleGroup.Item
-          value="30"
-          className="flex-1 px-4 py-3 border border-app rounded-lg text-primary font-mono hover:border-secondary transition-colors data-[state=on]:bg-orange-200 data-[state=on]:text-app data-[state=on]:border-primary"
-        >
-          30 min
-        </ToggleGroup.Item>
-        <ToggleGroup.Item
-          value="45"
-          className="flex-1 px-4 py-3 border border-app rounded-lg text-primary font-mono hover:border-secondary transition-colors data-[state=on]:bg-orange-200 data-[state=on]:text-app data-[state=on]:border-primary"
-        >
-          45 min
-        </ToggleGroup.Item>
-        <ToggleGroup.Item
-          value="60"
-          className={"flex-1 px-4 py-3 border border-app rounded-lg text-primary font-mono hover:border-secondary transition-colors data-[state=on]:bg-orange-200 data-[state=on]:text-app data-[state=on]:border-primary"}
-        >
-          60 min
-        </ToggleGroup.Item>
+        {cycleTimeOptions.map(option => (
+          <ToggleGroup.Item
+            key={option.value}
+            value={option.value}
+            className="flex-1 px-4 py-3 border border-app rounded-lg text-primary font-mono hover:border-secondary transition-colors data-[state=on]:bg-orange-200 data-[state=on]:text-app data-[state=on]:border-primary"
+          >
+            {option.label}
+          </ToggleGroup.Item>
+        ))}
       </ToggleGroup.Root>
 
       <div className="w-full justify-center flex">

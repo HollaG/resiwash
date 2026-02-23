@@ -387,7 +387,7 @@ class LocalNotificationService {
     FlutterAlarmClock.createTimer(
       length: secondsTillCompletion,
       title: title,
-      skipUi: true,
+      skipUi: false,
     );
     // 2. Show a normal notification saying machine is in use
     try {

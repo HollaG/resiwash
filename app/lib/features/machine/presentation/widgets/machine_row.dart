@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
@@ -119,6 +122,13 @@ class _MachineRowState extends State<MachineRow>
       cycleTimes = [30, 32, 34];
     }
 
+    int? defaultCycleTime = sl<SharedPreferencesService>()
+        .getPreferredCycleTime(machine.type);
+
+    if (defaultCycleTime != null) {
+      return defaultCycleTime;
+    }
+
     return showDialog<int>(
       context: context,
       builder: (BuildContext context) {
@@ -218,7 +228,7 @@ class _MachineRowState extends State<MachineRow>
 
   Future<void> closeControllerAfterDelay() async {
     await Future.delayed(const Duration(seconds: 1));
-    controller.close();
+    if (mounted) controller.close();
   }
 
   @override
@@ -509,6 +519,48 @@ class _MachineRowState extends State<MachineRow>
                               widget.machine,
                               cycleTime: cycleTime,
                             );
+
+                            // final completer = Completer<void>();
+                            // // Wait for the claim operation to complete before closing the slidable
+                            // final subscription = context
+                            //     .read<ClaimCubit>()
+                            //     .stream
+                            //     .where(
+                            //       (state) =>
+                            //           (state is claim_state.Claimed &&
+                            //               state.operatingMachine.machineId ==
+                            //                   widget.machine.machineId) ||
+                            //           (state is claim_state.Unclaimed &&
+                            //               state.operatingMachine.machineId ==
+                            //                   widget.machine.machineId) ||
+                            //           (state is claim_state.ClaimOperationError &&
+                            //               state.operatingMachine.machineId ==
+                            //                   widget.machine.machineId),
+                            //     )
+                            //     .listen((state) {
+                            //       if ((state is claim_state.Claimed &&
+                            //               state.operatingMachine.machineId ==
+                            //                   widget.machine.machineId) ||
+                            //           (state is claim_state.Unclaimed &&
+                            //               state.operatingMachine.machineId ==
+                            //                   widget.machine.machineId)) {
+                            //         completer.complete();
+                            //       }
+
+                            //       if (state
+                            //               is claim_state.ClaimOperationError &&
+                            //           state.operatingMachine.machineId ==
+                            //               widget.machine.machineId) {
+                            //         completer.complete();
+                            //       }
+                            //     });
+
+                            // redirect to MyMachines page after claiming
+                            // completer.future.then((_) {
+                            if (mounted && context.mounted) {
+                              context.goNamed(AppRoutes.myMachinesName);
+                            }
+                            // });
                           }
                         }
                         closeControllerAfterDelay();
@@ -535,6 +587,10 @@ class _MachineRowState extends State<MachineRow>
                                 widget.machine,
                                 cycleTime: cycleTime,
                               );
+                              // redirect to MyMachines page after claiming
+                              if (mounted && context.mounted) {
+                                context.goNamed(AppRoutes.myMachinesName);
+                              }
                             }
                           }
                         },

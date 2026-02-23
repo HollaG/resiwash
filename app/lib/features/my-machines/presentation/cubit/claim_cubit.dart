@@ -385,6 +385,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
   /// Update the cycle time for a claimed machine
   /// NOTE: hits the backend
+  /// deprecated, just reclaim with new cycle time instead of updating
   Future<void> updateCycleTime(MachineEntity machine, int cycleTime) async {
     final machineId = machine.machineId;
     try {

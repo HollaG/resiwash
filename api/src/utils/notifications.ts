@@ -95,34 +95,41 @@ export const unclaimMachine = async (machineId: string, fcmToken: string) => {
 };
 
 /**
- * Claim a machine for a user
+ * Add a claim to the claim log for future reference.
  *
- * Note: Multiple users can claim a machine at the same time
+ * Note: Only one user can claim a machine at one time
  *
  * @param machineId
  * @param fcmToken
  * @param cycleTime
  */
-export const claimMachine = async (
+export const addToClaimHistory = async (
   machineId: string,
   fcmToken: string,
   cycleTime: number,
 ) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
-  // Check if this user has already claimed this machine
-  const existingClaim = await claimRepository.findOne({
-    where: {
-      machineId: Number(machineId),
-      fcmToken: fcmToken,
-    },
-  });
+  const claim = new Claim();
+  claim.machineId = Number(machineId);
+  claim.fcmToken = fcmToken;
+  claim.cycleTime = cycleTime;
 
-  if (existingClaim) {
-    // already claimed by this user
-    console.log(`Machine ${machineId} already claimed by ${fcmToken}`);
-    return false; // no error
-  }
+  await claimRepository.save(claim);
+
+  // // Check if this user has already claimed this machine
+  // const existingClaim = await claimRepository.findOne({
+  //   where: {
+  //     machineId: Number(machineId),
+  //     fcmToken: fcmToken,
+  //   },
+  // });
+
+  // if (existingClaim) {
+  //   // already claimed by this user
+  //   console.log(`Machine ${machineId} already claimed by ${fcmToken}`);
+  //   return false; // no error
+  // }
 
   // if the user has already claimed another machine, unclaim it
   // const previousClaim = await claimRepository.findOne({
@@ -134,13 +141,6 @@ export const claimMachine = async (
   //   // unclaim previous machine
   //   await unclaimMachine(previousClaim.machineId.toString(), fcmToken);
   // }
-
-  const claim = new Claim();
-  claim.machineId = Number(machineId);
-  claim.fcmToken = fcmToken;
-  claim.cycleTime = cycleTime;
-
-  await claimRepository.save(claim);
 
   console.log(
     `Claimed machine ${machineId} for ${fcmToken} with cycle time ${cycleTime}`,

@@ -88,4 +88,8 @@ export class Machine {
   // Note that if `isManualEntry` is true, this field will always be set.
   @Column({ nullable: true })
   currentCycleTime: number; // in minutes. calculate the end time by taking lastAvailableTime + currentCycleTime
+
+  // Note that currentClaimantToken & currentCycleTime will be set together.
+  @Column({ nullable: true, select: false }) // this is a PRIVATE field. do NOT leak to frontend
+  currentClaimantToken: string;
 }

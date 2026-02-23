@@ -726,6 +726,7 @@ class MyMachinesCubit extends Cubit<MyMachinesState> {
     return _sharedPreferencesService.isMachineClaimed(machineId);
   }
 
+  // deprecated, just reclaim
   Future<void> updateCycleTime(MachineEntity machine, int cycleTime) async {
     final machineId = machine.machineId;
     try {

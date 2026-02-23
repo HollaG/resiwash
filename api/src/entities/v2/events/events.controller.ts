@@ -525,10 +525,10 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-            (machine.lastChangeTime.getTime() -
-              machine.lastUpdated!.getTime()) /
-            1000,
-          )
+              (machine.lastChangeTime.getTime() -
+                machine.lastUpdated!.getTime()) /
+                1000,
+            )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
@@ -545,7 +545,7 @@ export const createMultipleEvents = asyncHandler(
         });
 
         // send notification to claimant if applicable
-        sendNotificationToClaimants(machine).catch((e) => { }); // do nothing
+        sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
       }
     });
     await machineRepository.save(machinesToUpdate);

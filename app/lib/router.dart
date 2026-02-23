@@ -104,15 +104,15 @@ final router = GoRouter(
           ],
         ),
 
-        // StatefulShellBranch(
-        //   routes: [
-        //     GoRoute(
-        //       path: AppRoutes.settings,
-        //       name: AppRoutes.settingsName,
-        //       builder: (context, state) => PreferencesScreen(),
-        //     ),
-        //   ],
-        // ),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: AppRoutes.settings,
+              name: AppRoutes.settingsName,
+              builder: (context, state) => PreferencesScreen(),
+            ),
+          ],
+        ),
         StatefulShellBranch(
           routes: [
             GoRoute(

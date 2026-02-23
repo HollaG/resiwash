@@ -82,20 +82,20 @@ class BaseView extends StatelessWidget {
             ),
 
             // IMPORTANT: When uncommenting this, make sure to change the goBranch of the FAB
-            // _menuItem(
-            //   context,
-            //   index: 2,
-            //   currentIndex: navigationShell.currentIndex,
-            //   icon: Icons.settings,
-            //   label: 'Settings',
-            // ),
+            _menuItem(
+              context,
+              index: 2,
+              currentIndex: navigationShell.currentIndex,
+              icon: Icons.settings,
+              label: 'Settings',
+            ),
             Center(
               child: FloatingActionButton(
                 onPressed: () {
                   if (!isOnScanQrPage) {
                     navigationShell.goBranch(
-                      2,
-                      initialLocation: 2 == navigationShell.currentIndex,
+                      3,
+                      initialLocation: 3 == navigationShell.currentIndex,
                     );
                   } else {
                     _onHelpClicked(context);

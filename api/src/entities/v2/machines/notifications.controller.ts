@@ -6,7 +6,7 @@ import { setMachineManualStatus } from "../../../services/machines.service";
 import { MachineStatus } from "../../../core/types";
 
 import {
-  claimMachine as _claimMachine,
+  addToClaimHistory,
   unclaimMachine as _unclaimMachine,
   canPoke,
   getClaimants,
@@ -23,8 +23,6 @@ interface ClaimMachineRequest {
   cycleTime: number; // minutes
 }
 
-// If a user tries to claim a machine that has already been claimed,
-// we will just update the claim to the new user. This is because the most likely scenario is that someone claimed a machine by accident, and they will want to claim it for real right after. It's less likely that someone will maliciously claim a machine that isn't theirs.
 export const claimMachine = expressAsyncHandler(
   async (
     req: Request<{ machineId: string }, unknown, unknown, ClaimMachineRequest>,
@@ -41,23 +39,39 @@ export const claimMachine = expressAsyncHandler(
       });
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository(Machine).findOne({
-        where: { machineId: parseInt(machineId) },
-        relations: ["room", "room.area"],
-      });
+      const machine = await AppDataSource.getRepository(Machine)
+        .createQueryBuilder("machine")
+        .leftJoinAndSelect("machine.room", "room")
+        .leftJoinAndSelect("room.area", "area")
+        .addSelect("machine.currentClaimantToken") // REMEMBER TO SANTIZE THIS
+        .where("machine.machineId = :id", { id: parseInt(machineId, 10) })
+        .getOne();
 
       if (!machine) {
         return sendErrorResponse(res, "Machine not found", 404);
       }
 
-      // This has to be set before calling setMachineManualStatus, as re-saving will overwrite any changes made in that function.
-      // The `if` block only runs for manual machines. Note that cycleTime is also set in the setMachineManualStatus function,
-      // however we still need to set it here as well for non-manual machines.
-      // Cycle time is set in the setMachineManualStatus function as it's also used in the API call for manual status updates, from the browser.
-      // The browser has no concept of claiming, so we need to set cycle time in both places.
-      // TODO: refactor the browser one to use this claimMachine method, and just ignore the fcmToken.
+      if (
+        machine.currentClaimantToken &&
+        machine.currentClaimantToken !== fcmToken &&
+        machine.currentStatus !== MachineStatus.AVAILABLE
+      ) {
+        // not allowed to claim if there's already a claimant and it's not the same user, and the machine is not available.
+        return sendErrorResponse(
+          res,
+          "Machine is already claimed by another user",
+          400,
+        );
+      }
+      // allowed to claim
+
+      // 1. update the machine object with the new claimant and cycle time
+      machine.currentClaimantToken = fcmToken;
       machine.currentCycleTime = cycleTime;
       await AppDataSource.getRepository(Machine).save(machine);
+
+      // 2. update the claims table with the new claim
+      await addToClaimHistory(machineId, fcmToken, cycleTime);
 
       // if the machine is manual mode, we also need to set the status
       console.log({ machine });
@@ -66,7 +80,7 @@ export const claimMachine = expressAsyncHandler(
           console.log("Setting initial IN_USE status for manual machine claim");
 
           // claim the machine
-          const isFirstClaimaint = await _claimMachine(
+          const isFirstClaimaint = await addToClaimHistory(
             machineId,
             fcmToken,
             cycleTime,
@@ -198,7 +212,7 @@ export const updateClaimCycle = expressAsyncHandler(
       }
 
       // now, update the claim cycle time
-      await _claimMachine(machineId, fcmToken, cycleTime);
+      await addToClaimHistory(machineId, fcmToken, cycleTime);
 
       sendOkResponse(res, { message: "Claim cycle updated successfully" });
     } catch (error) {
