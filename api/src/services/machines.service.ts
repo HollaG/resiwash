@@ -193,9 +193,17 @@ export async function resetMachineStatusToAvailable(
  */
 export const updateMachineStatusAfterTime = async (
   status: MachineStatus,
-  machine: Machine,
+  machineId: string
 ) => {
   const machineRepository = AppDataSource.getRepository(Machine);
+  const machine = await machineRepository.findOne({
+    where: { machineId: parseInt(machineId, 10) },
+    relations: ["room", "room.area"],
+  });
+
+  if (!machine) {
+    throw new Error(`Machine with ID ${machineId} not found`);
+  }
 
   machine.previousStatusActiveTime = machine.lastChangeTime
     ? Math.floor(

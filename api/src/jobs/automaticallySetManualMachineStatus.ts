@@ -63,7 +63,7 @@ export const startMachineCycleEndChecker = () => {
           try {
             await updateMachineStatusAfterTime(
               MachineStatus.AVAILABLE,
-              machine,
+              machine.machineId.toString(),
             );
             resetCount++;
           } catch (error) {
@@ -83,7 +83,7 @@ export const startMachineCycleEndChecker = () => {
           try {
             await updateMachineStatusAfterTime(
               MachineStatus.FINISHING,
-              machine,
+              machine.machineId.toString(),
             );
             resetCount++;
           } catch (error) {

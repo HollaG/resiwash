@@ -14,6 +14,7 @@ import { UpdateEvent } from "./UpdateEvent";
 import { MachineStatus, MachineType } from "../core/types";
 import { RawEvent } from "./RawEvent";
 import { SensorToMachine } from "./SensorToMachine";
+import { Claim } from "./Claim";
 
 @Entity()
 export class Machine {
@@ -92,4 +93,8 @@ export class Machine {
   // Note that currentClaimantToken & currentCycleTime will be set together.
   @Column({ nullable: true, select: false }) // this is a PRIVATE field. do NOT leak to frontend
   currentClaimantToken: string;
+
+  // @OneToOne(() => Claim, (claim) => claim.machine)
+  // @JoinColumn({name: "claimId"})
+  // claim: Claim;
 }

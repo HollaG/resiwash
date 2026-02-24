@@ -14,6 +14,7 @@ import {
 } from "../../../utils/notifications";
 import {
   sendClaimedMachineStatusChangedNotification,
+  sendMachineGroupStatusChangedNotification,
   sendPokeNotification,
 } from "../../../utils/firebase-messaging";
 import { Machine } from "../../../models/Machine";
@@ -43,7 +44,7 @@ export const claimMachine = expressAsyncHandler(
         .createQueryBuilder("machine")
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area")
-        .addSelect("machine.currentClaimantToken") // REMEMBER TO SANTIZE THIS
+        .addSelect("machine.currentClaimantToken") // alert(sanity): REMEMBER TO SANTIZE THIS
         .where("machine.machineId = :id", { id: parseInt(machineId, 10) })
         .getOne();
 
@@ -79,33 +80,34 @@ export const claimMachine = expressAsyncHandler(
         try {
           console.log("Setting initial IN_USE status for manual machine claim");
 
-          // claim the machine
-          const isFirstClaimaint = await addToClaimHistory(
-            machineId,
-            fcmToken,
+          
+
+          await setMachineManualStatus({
+            machineId: machine.machineId,
+            status: MachineStatus.IN_USE,
             cycleTime,
+          });
+
+          console.log(
+            `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
           );
-          if (isFirstClaimaint) {
-            await setMachineManualStatus({
-              machineId: machine.machineId,
-              status: MachineStatus.IN_USE,
-              cycleTime,
-            });
-          } else {
-            console.log(
-              `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
-            );
-            // return sendErrorResponse(res, "Machine already claimed by this user", 400);
-            await sendAndCleanupInvalidToken(
-              () =>
-                sendClaimedMachineStatusChangedNotification({
-                  machine,
-                  fcmToken,
-                }),
-              fcmToken,
-              machineId,
-            );
-          }
+          // return sendErrorResponse(res, "Machine already claimed by this user", 400);
+          sendAndCleanupInvalidToken(
+            () =>
+              sendClaimedMachineStatusChangedNotification({
+                machine,
+                fcmToken,
+              }),
+            fcmToken,
+            machineId,
+          );
+
+          // notify all listeners
+          sendMachineGroupStatusChangedNotification({
+            machine,
+          })
+          
+
         } catch (error: any) {
           console.error(error);
           return sendErrorResponse(res, error.message, 400);
@@ -125,6 +127,8 @@ export const claimMachine = expressAsyncHandler(
 interface UnclaimMachineRequest {
   fcmToken: string;
 }
+
+// Unpair a FCM token fro ma machine. Note: also reset the machine status back to available, if it is NOT available (ONLY for Manual machines)
 export const unclaimMachine = expressAsyncHandler(
   async (req: Request, res: Response) => {
     try {

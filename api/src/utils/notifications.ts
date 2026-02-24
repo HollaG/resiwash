@@ -3,6 +3,8 @@ import { Claim } from "../models/Claim";
 import { LastPoke } from "../models/LastPoke";
 import { AppDataSource } from "../data-source";
 import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
+import { updateMachineStatusAfterTime } from "../services/machines.service";
+import { MachineStatus } from "../core/types";
 
 /**
  * Helper function to send notifications and automatically clean up invalid tokens
@@ -79,18 +81,39 @@ class NotClaimedError extends ClaimError {
 // }
 
 export const unclaimMachine = async (machineId: string, fcmToken: string) => {
-  const claimRepository = AppDataSource.getRepository(Claim);
+  // const claimRepository = AppDataSource.getRepository(Claim);
 
-  const claim = await claimRepository.findOne({
-    where: {
-      machineId: Number(machineId),
-      fcmToken: fcmToken,
-    },
+  // const claim = await claimRepository.findOne({
+  //   where: {
+  //     machineId: Number(machineId),
+  //     fcmToken: fcmToken,
+  //   },
+  // });
+
+  // if (claim) {
+  //   await claimRepository.remove(claim);
+  //   console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
+  // }
+
+  const machineRepository = AppDataSource.getRepository(Machine);
+
+  const machine = await machineRepository.findOne({
+    where: { machineId: Number(machineId) },
+
   });
 
-  if (claim) {
-    await claimRepository.remove(claim);
+  // set the FCM token to null
+  if (machine) {
+    machine.currentClaimantToken = null;
+
+    await machineRepository.save(machine);
+
+    if (machine.isManualEntry) {
+      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    }
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
+  } else {
+    console.log(`Machine ${machineId} not found when trying to unclaim for ${fcmToken}`);
   }
 };
 
@@ -181,22 +204,55 @@ export const updateCycleTime = async (
   return true;
 };
 
+// Note: As of now, there can only be ONE claimant per machine. We will leave the return value
+// as an array for future expansion in case we want to allow multiple claimants per machine.
 export const getClaimants = async (
   machineId: string,
 ): Promise<IClaimMapEntry[]> => {
-  const claimRepository = AppDataSource.getRepository(Claim);
+  // const claimRepository = AppDataSource.getRepository(Claim);
 
-  const claims = await claimRepository.find({
-    where: {
-      machineId: Number(machineId),
-    },
-  });
+  // const claims = await claimRepository.find({
+  //   where: {
+  //     machineId: Number(machineId),
+  //   },
+  // });
 
-  return claims.map((claim) => ({
-    fcmToken: claim.fcmToken,
-    cycleTime: claim.cycleTime,
-    claimedAt: claim.claimedAt,
-  }));
+  // return claims.map((claim) => ({
+  //   fcmToken: claim.fcmToken,
+  //   cycleTime: claim.cycleTime,
+  //   claimedAt: claim.claimedAt,
+  // }));
+
+  const machineRepository = AppDataSource.getRepository(Machine);
+
+  // remember to add the FCM token
+  // first, check for valid machineId in DB
+  const machine = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.room", "room")
+    .leftJoinAndSelect("room.area", "area")
+    .addSelect("machine.currentClaimantToken") // alert(sanity): REMEMBER TO SANTIZE THIS
+    .where("machine.machineId = :id", { id: parseInt(machineId, 10) })
+    .getOne();
+
+  if (!machine) {
+    throw new Error("Machine not found");
+  }
+
+  const fcmToken = machine.currentClaimantToken;
+
+  if (fcmToken) {
+    return [
+      {
+        fcmToken,
+        cycleTime: machine.currentCycleTime || 0,
+        claimedAt: machine.lastChangeTime || new Date(),
+      },
+    ];
+  } else {
+    return [];
+  }
+
 };
 
 export const sendNotificationToClaimants = async (machine: Machine) => {
