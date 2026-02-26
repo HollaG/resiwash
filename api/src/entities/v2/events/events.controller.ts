@@ -514,6 +514,8 @@ export const createMultipleEvents = asyncHandler(
     // for all actual events, update the machine's lastChangeTime timestamp,
     // copy the currentStatus to previousStatus,
     // set the currentStatus to the new status
+    await machineRepository.save(machinesToUpdate);
+
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
         (m) => m.machineId === event.machine.machineId,
@@ -548,7 +550,6 @@ export const createMultipleEvents = asyncHandler(
         sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
       }
     });
-    await machineRepository.save(machinesToUpdate);
 
     sendOkResponse(res, savedRawEvents);
 

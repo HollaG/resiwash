@@ -16,7 +16,7 @@ import {
   claimMachine,
   pokeClaimant,
   unclaimMachine,
-  updateClaimCycle,
+  updateClaimCycleHandler,
 } from "./notifications.controller";
 
 const router = express.Router({ mergeParams: true });
@@ -30,7 +30,7 @@ router.put("/:machineId", updateMachine);
 router.post("/:machineId/claim", claimMachine);
 router.post("/:machineId/unclaim", unclaimMachine);
 router.post("/:machineId/poke", pokeClaimant);
-router.post("/:machineId/update", updateClaimCycle);
+router.post("/:machineId/update", updateClaimCycleHandler);
 
 router.post("/:machineId/manual", manualSetStatus);
 

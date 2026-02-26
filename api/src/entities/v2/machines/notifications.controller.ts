@@ -11,6 +11,7 @@ import {
   canPoke,
   getClaimants,
   sendAndCleanupInvalidToken,
+  updateCycleTime,
 } from "../../../utils/notifications";
 import {
   sendClaimedMachineStatusChangedNotification,
@@ -203,7 +204,7 @@ export const pokeClaimant = expressAsyncHandler(
   },
 );
 
-export const updateClaimCycle = expressAsyncHandler(
+export const updateClaimCycleHandler = expressAsyncHandler(
   async (req: Request, res: Response) => {
     try {
       const { machineId: _machineId } = req.params;
@@ -214,16 +215,36 @@ export const updateClaimCycle = expressAsyncHandler(
       const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository(Machine).findOneBy({
-        machineId: machineId,
-      });
+      const machine = await AppDataSource.getRepository(Machine)
+        .createQueryBuilder("machine")
+        .leftJoinAndSelect("machine.room", "room")
+        .leftJoinAndSelect("room.area", "area")
+        .leftJoinAndSelect("machine.claim", "claim") // join with Claim to check existing claimants
+        .addSelect("claim.fcmToken") // alert(sanity): REMEMBER TO SANTIZE THIS
+        .where("machine.machineId = :id", { id: machineId })
+        .where("claim.fcmToken = :fcmToken", { fcmToken })
+        .getOne();
 
       if (!machine) {
-        return sendErrorResponse(res, "Machine not found", 404);
+        return sendErrorResponse(res, "Machine not found or you have not claimed this machine", 404);
+      }
+
+      // update the claim cycle time in the claim history table
+      await updateCycleTime(machine.claimId, cycleTime);
+
+      // notify claimaints
+      const claimants = await getClaimants(machineId);
+
+      for (const claimant of claimants) {
+        await sendAndCleanupInvalidToken(
+          () => sendClaimedMachineStatusChangedNotification({ machineId, fcmToken: claimant.fcmToken }),
+          claimant.fcmToken,
+          machineId,
+        );
       }
 
       // now, update the claim cycle time
-      await addToClaimHistory(machineId, fcmToken, cycleTime);
+      // await addToClaimHistory(machineId, fcmToken, cycleTime);
 
       sendOkResponse(res, { message: "Claim cycle updated successfully" });
     } catch (error) {

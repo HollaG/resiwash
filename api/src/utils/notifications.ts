@@ -160,16 +160,14 @@ export const addToClaimHistory = async (
 };
 
 export const updateCycleTime = async (
-  machineId: string,
-  fcmToken: string,
+  claimId: number,
   cycleTime: number,
 ) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
   const claim = await claimRepository.findOne({
     where: {
-      machineId: Number(machineId),
-      fcmToken: fcmToken,
+      claimId: claimId,
     },
   });
 
@@ -182,9 +180,9 @@ export const updateCycleTime = async (
 
   console.log(
     "Updated cycle time for",
-    fcmToken,
+    claim.fcmToken,
     "on machine",
-    machineId,
+    claim.machineId,
     "to",
     cycleTime,
   );
