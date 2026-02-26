@@ -177,15 +177,11 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                               ),
                               TextSpan(
                                 text:
-                                    "notification for machines you are currently using. Swipe right to release.",
+                                    "notification for machines you are currently using. Tap to edit.",
                               ),
                             ],
                           ),
                         ),
-                        // Text(
-                        //   "Swipe to edit",
-                        //   style: Theme.of(context).textTheme.bodySmall,
-                        // ),
                       ],
                     ),
                   ),
@@ -223,7 +219,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                       ),
                       Text(
                         textAlign: TextAlign.center,
-                        "Swipe right on a machine, or scan a QR code to mark a machine as in use by you.",
+                        "Swipe right on a machine, scan a QR code, or tap your phone on the NFC tag to mark a machine as in use by you.",
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       MachineRowSlidableExplanation(

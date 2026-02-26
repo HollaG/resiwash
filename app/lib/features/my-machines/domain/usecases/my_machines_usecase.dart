@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/update_machine_params.dart';
 import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
 
 class MyMachinesUseCase {
@@ -37,9 +38,9 @@ class MyMachinesUseCase {
     required int cycleTime,
     required String fcmToken,
   }) async {
-    return await repository.claimMachine(
+    return await repository.updateClaim(
       machineId: machineId,
-      params: ClaimMachineParams(cycleTime: cycleTime, fcmToken: fcmToken),
+      params: UpdateClaimParams(cycleTime: cycleTime, fcmToken: fcmToken),
     );
   }
 }

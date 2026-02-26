@@ -82,7 +82,6 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
     BuildContext context,
     MachineEntity machine,
   ) async {
-    // TODO: make this user-selectable
     int selectedCycleTime = 30;
 
     List<int> cycleTimes = [30, 45, 60];

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:resiwash/asset-export.dart';
+import 'package:resiwash/core/injections/room/room_service_locator.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
@@ -223,15 +225,124 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
     await context.read<ClaimCubit>().unclaimMachine(widget.machine);
   }
 
+  Future<int?> _dialogBuilder(
+    BuildContext context,
+    MachineEntity machine,
+  ) async {
+    int selectedCycleTime =
+        widget.claimedMetadata.cycleTime ?? 30; // default to 30 if null
+
+    List<int> cycleTimes = [30, 45, 60];
+    if (machine.type == MachineType.washer) {
+      cycleTimes = [30, 32, 34];
+    }
+
+    return showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.all(12),
+              title: Text(
+                'Update cycle time (now ${widget.claimedMetadata.cycleTime} min)',
+              ),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Please choose your cycle time for the machine you are using.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Center(
+                    child: SegmentedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return (Theme.of(context).colorScheme.primary);
+                            }
+                            return Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh;
+                          },
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.onPrimary;
+                            }
+                            return Theme.of(context).colorScheme.onSurface;
+                          },
+                        ),
+                      ),
+                      segments: <ButtonSegment<int>>[
+                        for (int cycleTime in cycleTimes)
+                          ButtonSegment<int>(
+                            value: cycleTime,
+                            label: Text('${cycleTime}m'),
+                          ),
+                      ],
+                      selected: <int>{selectedCycleTime},
+                      onSelectionChanged: (Set<int> newSelection) {
+                        setState(() {
+                          selectedCycleTime = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+
+                  // Padding(
+                  //   padding: const EdgeInsets.fromLTRB(24.0, 0, 24, 0),
+                  //   child: Row(
+                  //     spacing: 20,
+                  //     children: [
+                  //       Expanded(child: Divider(), flex: 1),
+                  //       Text("or"),
+                  //       Expanded(child: Divider(), flex: 1),
+                  //     ],
+                  //   ),
+                  // ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Returns null
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    Navigator.of(
+                      context,
+                    ).pop(selectedCycleTime); // Return selected time
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Slidable(
       key: Key(widget.machine.machineId),
       controller: controller,
       enabled: true,
-      closeOnScroll:
-          false, // if not, slidables will close when the height of the page changes
-      // Left swipe action (Unclaim)
+      closeOnScroll: false,
       startActionPane: ActionPane(
         motion: const BehindMotion(),
         extentRatio: 0.3,
@@ -271,7 +382,6 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
           ),
         ],
       ),
-      // Right swipe action (Unclaim)
       endActionPane: ActionPane(
         motion: const BehindMotion(),
         extentRatio: 0.4,
@@ -311,240 +421,272 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
           ),
         ],
       ),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: context.accent.colorContainer,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.fastOutSlowIn,
-          alignment: Alignment.topCenter,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // top widget
-              InkWell(
-                onTap: () {
-                  // Navigate to machine details page
-                  context.goNamed(
-                    AppRoutes.machineDetailName,
-                    pathParameters: {'machineId': widget.machine.machineId},
-                    extra: {'machine': widget.machine},
-                  );
+      child: Card(
+        elevation: 3,
+        color: context.accent.colorContainer,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(0),
+        child: InkWell(
+          onTap: widget.machine.currentStatus == MachineStatus.available
+              ? null
+              : () {
+                  _dialogBuilder(context, widget.machine).then((
+                    newCycleTime,
+                  ) async {
+                    if (newCycleTime != null) {
+                      // Update the cycle time in the cubit
+                      if (mounted && context.mounted) {
+                        final didUpdate = await context
+                            .read<ClaimCubit>()
+                            .updateCycleTime(widget.machine, newCycleTime);
+                        if (!mounted || !context.mounted) return;
+                        if (!didUpdate) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Failed to update cycle time. Please try again.",
+                              ),
+                            ),
+                          );
+                        } else {
+                          // refresh the page
+                          if (mounted && context.mounted) {
+                            context.read<ClaimCubit>().refreshClaimedMachines();
+                          }
+                        }
+                      }
+                    }
+                  });
                 },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    spacing: 12,
-                    children: [
-                      MachineStatusIndicator(
-                        status: widget.machine.currentStatus,
-                        size: BoxSize.large,
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.machine.name,
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            Text(
-                              "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName ?? widget.machine.room?.area?.name}",
-                            ),
-                          ],
-                        ),
-                      ),
-                      widget.machine.type == MachineType.washer
-                          ? AssetIcons.washerIcon(context)
-                          : AssetIcons.dryerIcon(context),
-                    ],
-                  ),
-                ),
-              ),
-
-              // todo
-              SizedBox(height: 16),
-              Row(
-                spacing: 24,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.fastOutSlowIn,
+              alignment: Alignment.topCenter,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Stack(
-                    children: [
-                      Center(
-                        child: SizedBox(
-                          width: 96,
-                          height: 96,
-                          child: CircularProgressIndicator(
-                            value: _calculatePercentDone(context) / 100,
-                            strokeAlign: -1,
-                            strokeWidth: 16,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              MachineStatusIndicator.getConnectorColor(
-                                context,
-                                widget.machine.currentStatus,
-                              ),
-                            ),
-                          ),
-                        ),
+                  // top widget
+                  InkWell(
+                    onTap: () {
+                      context.goNamed(
+                        AppRoutes.machineDetailName,
+                        pathParameters: {'machineId': widget.machine.machineId},
+                        extra: {'machine': widget.machine},
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      SizedBox(
-                        width: 96,
-                        height: 96,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: MachineStatusIndicator.getIndicatorColor(
-                                context,
-                                widget.machine.currentStatus,
-                              ),
-                              width: 2,
-                            ),
-                            shape: BoxShape.circle,
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        spacing: 12,
+                        children: [
+                          MachineStatusIndicator(
+                            status: widget.machine.currentStatus,
+                            size: BoxSize.large,
                           ),
-                          alignment: Alignment.center,
-                        ),
-                      ),
-
-                      SizedBox(
-                        width: 96,
-                        height: 96,
-
-                        child: Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Theme.of(context).colorScheme.primary,
-                                width: 2,
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 96.0,
-                        height: 96.0,
-
-                        child: Center(
-                          child: Container(
-                            width: 96 - 16 * 2 - 2,
-                            height: 96 - 16 * 2 - 2,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Theme.of(context).colorScheme.surface,
-                              boxShadow: [
-                                BoxShadow(
-                                  // color: Colors.black.withOpacity(0.25),
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.3),
-                                  blurRadius: 4,
-                                  offset: Offset(0, 2),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  widget.machine.name,
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                                Text(
+                                  "${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName ?? widget.machine.room?.area?.name}",
                                 ),
                               ],
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              "${_calculatePercentDone(context)}%",
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
+                          ),
+                          widget.machine.type == MachineType.washer
+                              ? AssetIcons.washerIcon(context)
+                              : AssetIcons.dryerIcon(context),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+                  Row(
+                    spacing: 24,
+                    children: [
+                      Stack(
+                        children: [
+                          Center(
+                            child: SizedBox(
+                              width: 96,
+                              height: 96,
+                              child: CircularProgressIndicator(
+                                value: _calculatePercentDone(context) / 100,
+                                strokeAlign: -1,
+                                strokeWidth: 16,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  MachineStatusIndicator.getConnectorColor(
+                                    context,
+                                    widget.machine.currentStatus,
                                   ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 2,
-                    children: [
-                      // cycle indicator
-                      Row(
-                        spacing: 4,
-                        children: [
-                          Icon(
-                            Icons.timer,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.tertiary,
-                          ),
-                          Text(
-                            "${widget.claimedMetadata.cycleTime} minute cycle",
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.tertiary,
+                          SizedBox(
+                            width: 96,
+                            height: 96,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color:
+                                      MachineStatusIndicator.getIndicatorColor(
+                                        context,
+                                        widget.machine.currentStatus,
+                                      ),
+                                  width: 2,
                                 ),
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                            ),
+                          ),
+
+                          SizedBox(
+                            width: 96,
+                            height: 96,
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                  shape: BoxShape.circle,
+                                ),
+                                alignment: Alignment.center,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 96.0,
+                            height: 96.0,
+                            child: Center(
+                              child: Container(
+                                width: 96 - 16 * 2 - 2,
+                                height: 96 - 16 * 2 - 2,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Theme.of(context).colorScheme.surface,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.3),
+                                      blurRadius: 4,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  "${_calculatePercentDone(context)}%",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondary,
+                                      ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 2,
+                        children: [
+                          Row(
+                            spacing: 4,
+                            children: [
+                              Icon(
+                                Icons.timer,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.tertiary,
+                              ),
+                              Text(
+                                "${widget.claimedMetadata.cycleTime} minute cycle",
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.tertiary,
+                                    ),
+                              ),
+                            ],
+                          ),
 
-                      // time left
-                      _calculateTimeLeftText(context),
-
-                      // time since started
-                      _calculateTimeSinceText(context),
+                          _calculateTimeLeftText(context),
+                          _calculateTimeSinceText(context),
+                        ],
+                      ),
                     ],
+                  ),
+
+                  Visibility(
+                    visible: widget.showControls,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            onUnclaimPress();
+                          },
+                          style: ButtonStyle(
+                            foregroundColor: WidgetStateProperty.all<Color>(
+                              context.success.color,
+                            ),
+                          ),
+                          child: const Text("I have collected!"),
+                        ),
+                        // TextButton.icon(
+                        //   onPressed: () {
+                        //     // int initialCycleTime =
+                        //     //     widget.claimedMetadata.cycleTime ??
+                        //     //     30; // default to 30 if null
+                        //     // _dialogBuilder(context, initialCycleTime).then((
+                        //     //   newTime,
+                        //     // ) {
+                        //     //   if (newTime != null) {
+                        //     //     // Update the cycle time in the cubit
+                        //     //     if (mounted) {
+                        //     //       context.read<ClaimCubit>().updateCycleTime(
+                        //     //         widget.machine,
+                        //     //         newTime,
+                        //     //       );
+                        //     //     }
+                        //     //   }
+                        //     // });
+                        //   },
+                        //   label: Text("Edit cycle time"),
+                        //   icon: Icon(Icons.edit),
+                        // ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-
-              Visibility(
-                visible: widget.showControls,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        onUnclaimPress();
-                      },
-                      style: ButtonStyle(
-                        // backgroundColor: WidgetStateProperty.all<Color>(
-                        //   Theme.of(context).colorScheme.primaryContainer,
-                        // ),
-                        foregroundColor: WidgetStateProperty.all<Color>(
-                          Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                      child: const Text("Release"),
-                    ),
-                    // TextButton.icon(
-                    //   onPressed: () {
-                    //     int initialCycleTime =
-                    //         widget.claimedMetadata.cycleTime ??
-                    //         30; // default to 30 if null
-                    //     _dialogBuilder(context, initialCycleTime).then((
-                    //       newTime,
-                    //     ) {
-                    //       if (newTime != null) {
-                    //         // Update the cycle time in the cubit
-                    //         if (mounted) {
-                    //           context.read<ClaimCubit>().updateCycleTime(
-                    //             widget.machine,
-                    //             newTime,
-                    //           );
-                    //         }
-                    //       }
-                    //     });
-                    //   },
-                    //   label: Text("Edit cycle time"),
-                    //   icon: Icon(Icons.edit),
-                    // ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

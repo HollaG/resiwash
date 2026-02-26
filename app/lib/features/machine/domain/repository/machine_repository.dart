@@ -5,6 +5,7 @@ import 'package:resiwash/features/machine/domain/params/claim_machine_params.dar
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/update_machine_params.dart';
 
 abstract interface class MachineRepository {
   Future<Either<Failure, List<MachineEntity>>> getMachines(
@@ -28,6 +29,6 @@ abstract interface class MachineRepository {
 
   Future<Either<Failure, void>> updateClaim({
     required String machineId,
-    required ClaimMachineParams params,
+    required UpdateClaimParams params,
   });
 }

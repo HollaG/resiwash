@@ -6,6 +6,7 @@ import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/update_machine_params.dart';
 import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 
@@ -81,13 +82,13 @@ class MachineRepositoryImpl implements MachineRepository {
   @override
   Future<Either<Failure, void>> updateClaim({
     required String machineId,
-    required ClaimMachineParams params,
+    required UpdateClaimParams params,
   }) async {
     try {
-      await dataSource.claimMachine(machineId: machineId, params: params);
+      await dataSource.updateClaim(machineId: machineId, params: params);
       return const Right(null);
     } on Failure catch (e) {
-      print("MachineRepositoryImpl claimMachine error: ${e.message}");
+      print("MachineRepositoryImpl updateClaim error: ${e.message}");
       return Left(e);
     } catch (e) {
       return Left(Failure());

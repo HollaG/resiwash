@@ -402,8 +402,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
   /// Update the cycle time for a claimed machine
   /// NOTE: hits the backend
-  /// deprecated, just reclaim with new cycle time instead of updating
-  Future<void> updateCycleTime(MachineEntity machine, int cycleTime) async {
+  Future<bool> updateCycleTime(MachineEntity machine, int cycleTime) async {
     final machineId = machine.machineId;
     try {
       final currentState = state;
@@ -415,7 +414,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         currentClaimedMachines = currentState.claimedMachines;
       }
 
-      if (isClosed) return;
+      if (isClosed) return false;
       emit(
         Claiming(
           claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -434,13 +433,13 @@ class ClaimCubit extends Cubit<ClaimState> {
         fcmToken: fcmToken,
       );
 
-      myMachinesEither.fold(
-        (failure) {
+      final didUpdate = await myMachinesEither.fold(
+        (failure) async {
           appLog.e(
             'Error updating cycle time for machine $machineId: ${failure.message}',
           );
 
-          if (isClosed) return;
+          if (isClosed) return false;
           emit(
             ClaimOperationError(
               claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -449,8 +448,9 @@ class ClaimCubit extends Cubit<ClaimState> {
               message: failure.message,
             ),
           );
+          return false;
         },
-        (_) {
+        (_) async {
           // Update in SharedPreferences
           _sharedPreferencesService.updateClaimedMachineCycleTime(
             machineId,
@@ -461,14 +461,7 @@ class ClaimCubit extends Cubit<ClaimState> {
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachinesMetadata();
 
-          // refresh the notification
-          // sl<LocalNotificationService>().showClaimedNotification(
-          //   machine,
-          //   updatedClaimedMetadata.firstWhere(
-          //     (meta) => meta.machineId == machineId,
-          //   ),
-          // );
-          if (isClosed) return;
+          if (isClosed) return false;
           emit(
             Claimed(
               claimedMachineMetadata: updatedClaimedMetadata,
@@ -478,10 +471,15 @@ class ClaimCubit extends Cubit<ClaimState> {
           );
 
           appLog.i('Updated cycle time for machine: $machineId to $cycleTime');
+          return true;
         },
       );
+
+      return didUpdate;
     } catch (e) {
       appLog.e('Error updating cycle time for machine $machineId: $e');
+      
+      return false;
     }
   }
 }
