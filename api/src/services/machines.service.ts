@@ -13,11 +13,12 @@ interface SetManualStatusParams {
 
 /**
  * Trigger an initial "IN_USE" status update for a manual entry machine.
+ * 
  *
  * // TODO: THIS FUNCTION ONLY SUPPORTS IN_USE STATUS. PLEASE GENERALIZE IT
  * @param params
  */
-export async function setMachineManualStatus(
+export async function setMachineManualStatusAndNotify(
   params: SetManualStatusParams,
 ): Promise<void> {
   const { machineId, status, cycleTime } = params;

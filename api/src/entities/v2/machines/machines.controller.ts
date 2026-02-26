@@ -4,7 +4,7 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Machine } from "../../../models/Machine";
-import { setMachineManualStatus } from "../../../services/machines.service";
+import { setMachineManualStatusAndNotify } from "../../../services/machines.service";
 import {
   GetQueryBoolean,
   MachineStatus,
@@ -96,21 +96,21 @@ export const getMachines = asyncHandler(
     if (roomIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("room.roomId IN (:...roomIds)", {
-            roomIds: roomIds.map(Number),
-          })
+          roomIds: roomIds.map(Number),
+        })
         : machines.andWhere("room.roomId IN (:...roomIds)", {
-            roomIds: roomIds.map(Number),
-          });
+          roomIds: roomIds.map(Number),
+        });
     }
 
     if (machineIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("machine.machineId IN (:...machineIds)", {
-            machineIds: machineIds.map(Number),
-          })
+          machineIds: machineIds.map(Number),
+        })
         : machines.andWhere("machine.machineId IN (:...machineIds)", {
-            machineIds: machineIds.map(Number),
-          });
+          machineIds: machineIds.map(Number),
+        });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
@@ -357,7 +357,7 @@ export const updateMachine = asyncHandler(
 const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
 
 // TODO: implement getTimeOptions based on possible cycleTimes
-export const getTimeOptions = () => {}; //
+export const getTimeOptions = () => { }; //
 
 interface ManualSetStatusRequest {
   status: MachineStatus;
@@ -366,6 +366,7 @@ interface ManualSetStatusRequest {
 }
 // For manually setting a machine to used (via QR code, etc)
 // POST /api/v{version}/machines/:machineId/manual
+// deprecated
 export const manualSetStatus = asyncHandler(
   async (
     req: Request<{ machineId: string }, {}, ManualSetStatusRequest>,
@@ -379,7 +380,7 @@ export const manualSetStatus = asyncHandler(
     const { status, cycleTime, fcmToken } = req.body;
 
     try {
-      await setMachineManualStatus({ machineId, status, cycleTime });
+      await setMachineManualStatusAndNotify({ machineId, status, cycleTime });
 
       return sendOkResponse(res, {
         message: `Machine status set to ${status}${cycleTime ? ` for ${cycleTime} minutes` : ""}`,
@@ -389,7 +390,7 @@ export const manualSetStatus = asyncHandler(
         error.message === "Machine not found"
           ? 404
           : error.message ===
-              "Manual status update not allowed for this machine"
+            "Manual status update not allowed for this machine"
             ? 403
             : 400;
       return sendErrorResponse(res, { message: error.message }, statusCode);

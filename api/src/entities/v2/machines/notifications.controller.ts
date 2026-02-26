@@ -2,7 +2,7 @@ import expressAsyncHandler from "express-async-handler";
 import { Request, Response } from "express";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
-import { setMachineManualStatus } from "../../../services/machines.service";
+import { setMachineManualStatusAndNotify } from "../../../services/machines.service";
 import { MachineStatus } from "../../../core/types";
 
 import {
@@ -86,7 +86,7 @@ export const claimMachine = expressAsyncHandler(
 
 
 
-          await setMachineManualStatus({
+          await setMachineManualStatusAndNotify({
             machineId: machine.machineId,
             status: MachineStatus.IN_USE,
             cycleTime,
@@ -96,20 +96,6 @@ export const claimMachine = expressAsyncHandler(
             `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
           );
           // return sendErrorResponse(res, "Machine already claimed by this user", 400);
-          sendAndCleanupInvalidToken(
-            () =>
-              sendClaimedMachineStatusChangedNotification({
-                machineId: machineId,
-                fcmToken,
-              }),
-            fcmToken,
-            machineId,
-          );
-
-          // notify all listeners
-          sendMachineGroupStatusChangedNotification({
-            machineId: machineId,
-          })
 
 
         } catch (error: any) {

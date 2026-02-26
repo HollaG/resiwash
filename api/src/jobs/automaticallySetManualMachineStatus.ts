@@ -5,7 +5,7 @@ import { Claim } from "../models/Claim";
 import { MachineStatus } from "../core/types";
 import {
   resetMachineStatusToAvailable,
-  setMachineManualStatus,
+  setMachineManualStatusAndNotify,
   updateMachineStatusAfterTime,
 } from "../services/machines.service";
 
