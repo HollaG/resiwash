@@ -243,6 +243,20 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                     extra: true,
                   );
                 }
+              } else if (state is claim_state.ClaimOperationError &&
+                  state.operatingMachine.machineId == widget.machineId) {
+                // reset to previous state on error
+
+                print('Error claiming machine: ${state.message}');
+                // show error message in snackbar only if this route is currently active
+                // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
+                if (!TickerMode.of(context)) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               }
             },
           ),
@@ -454,15 +468,18 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                                   if (cycleTime != null &&
                                                       mounted &&
                                                       context.mounted) {
-                                                    await context
-                                                        .read<ClaimCubit>()
-                                                        .claimMachine(
-                                                          machine,
-                                                          cycleTime: cycleTime,
-                                                        );
+                                                    final didClaim =
+                                                        await context
+                                                            .read<ClaimCubit>()
+                                                            .claimMachine(
+                                                              machine,
+                                                              cycleTime:
+                                                                  cycleTime,
+                                                            );
                                                     // redirect to MyMachines page after claiming
                                                     if (mounted &&
-                                                        context.mounted) {
+                                                        context.mounted &&
+                                                        didClaim) {
                                                       context.goNamed(
                                                         AppRoutes
                                                             .myMachinesName,

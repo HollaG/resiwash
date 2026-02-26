@@ -515,7 +515,7 @@ class _MachineRowState extends State<MachineRow>
 
                           // Only claim if user confirmed (didn't cancel)
                           if (cycleTime != null && mounted) {
-                            await _claimCubit.claimMachine(
+                            final didClaim = await _claimCubit.claimMachine(
                               widget.machine,
                               cycleTime: cycleTime,
                             );
@@ -557,7 +557,7 @@ class _MachineRowState extends State<MachineRow>
 
                             // redirect to MyMachines page after claiming
                             // completer.future.then((_) {
-                            if (mounted && context.mounted) {
+                            if (mounted && context.mounted && didClaim) {
                               context.goNamed(AppRoutes.myMachinesName);
                             }
                             // });

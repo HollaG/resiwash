@@ -145,7 +145,7 @@ class ClaimCubit extends Cubit<ClaimState> {
   ///       If we ever expand in the future, we can.
   ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
   /// [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
-  Future<void> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
+  Future<bool> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
     final currentState = state;
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
@@ -160,7 +160,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         ? currentClaimedMachineMetadata.first.machineId
         : null;
 
-    if (isClosed) return;
+    if (isClosed) return false;
     emit(
       Claiming(
         claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -183,7 +183,7 @@ class ClaimCubit extends Cubit<ClaimState> {
         (failure) {
           appLog.e('Error claiming machine $machineId: ${failure.message}');
 
-          if (isClosed) return;
+          if (isClosed) return false;
           emit(
             ClaimOperationError(
               claimedMachineMetadata: currentClaimedMachineMetadata,
@@ -192,6 +192,7 @@ class ClaimCubit extends Cubit<ClaimState> {
               message: failure.message,
             ),
           );
+          return false;
         },
         (_) async {
           // Add to SharedPreferences with cycle time
@@ -204,7 +205,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
           final claimedMachines = await _getClaimedMachines();
 
-          if (isClosed) return;
+          if (isClosed) return false;
           emit(
             Claimed(
               claimedMachineMetadata: updatedClaimedMetadata,
@@ -227,6 +228,8 @@ class ClaimCubit extends Cubit<ClaimState> {
               // If refresh fails, still show notification with old machine data
               appLog.w('Failed to refresh machine data: ${failure.message}');
               // TODO: show error notif
+
+              return false;
             },
             (updatedMachine) {
               // Show notification with refreshed machine data
@@ -236,12 +239,16 @@ class ClaimCubit extends Cubit<ClaimState> {
               // );
 
               // TODO: update all machine data in state when claimed
+
+              return true;
             },
           );
 
           appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
         },
       );
+
+      return false;
     } catch (e) {
       appLog.e('Error claiming machine $machineId: $e');
 
@@ -253,6 +260,8 @@ class ClaimCubit extends Cubit<ClaimState> {
           message: e.toString(),
         ),
       );
+
+      return false;
     }
   }
 
