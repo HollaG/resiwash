@@ -359,8 +359,8 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
             onPressed: (context) {
               context.read<ClaimCubit>().unclaimMachine(widget.machine);
             },
-            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
             borderRadius: BorderRadius.circular(8),
             autoClose: true,
             child: Column(
@@ -368,13 +368,13 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
               children: [
                 Icon(
                   Icons.person_off_rounded,
-                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Release',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
@@ -398,8 +398,8 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
             onPressed: (context) {
               context.read<ClaimCubit>().unclaimMachine(widget.machine);
             },
-            backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
-            foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
             borderRadius: BorderRadius.circular(8),
             autoClose: true,
             child: Column(
@@ -407,13 +407,13 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
               children: [
                 Icon(
                   Icons.person_off_rounded,
-                  color: Theme.of(context).colorScheme.onSecondaryContainer,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Release',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
                   ),
                 ),
               ],
