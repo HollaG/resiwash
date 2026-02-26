@@ -112,6 +112,10 @@ export const sendClaimedMachineStatusChangedNotification = async ({
   } else if (machine.currentStatus === MachineStatus.FINISHING) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} finishing in approx. 5 - 10 minutes...`;
     body = `Please be ready to collect your clothes soon!`;
+    const expectedEndTime =
+      machine.lastAvailableTime!.getTime() +
+      (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+    secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
 
     if (machine.type === MachineType.WASHER) {
       // search for nearby available dryers in the same room and add to notification body
