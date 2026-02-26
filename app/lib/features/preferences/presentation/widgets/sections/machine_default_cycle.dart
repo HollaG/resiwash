@@ -76,17 +76,22 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
           onChanged: (value) {
             setState(() {
               hasSetDefault = value;
-              if (!value) {
-                sl<SharedPreferencesService>().clearPreferredCycleTime(
-                  widget.machineType,
-                );
-              } else {
-                sl<SharedPreferencesService>().setPreferredCycleTime(
-                  widget.machineType,
-                  selectedCycleTime,
-                );
-              }
             });
+
+            if (!value) {
+              sl<SharedPreferencesService>().clearPreferredCycleTime(
+                widget.machineType,
+              );
+            } else {
+              sl<SharedPreferencesService>().setPreferredCycleTime(
+                widget.machineType,
+                selectedCycleTime,
+              );
+            }
+
+            print(
+              "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",
+            );
           },
 
           title: Text(
@@ -137,6 +142,15 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
                       setState(() {
                         selectedCycleTime = newSelection.first;
                       });
+
+                      sl<SharedPreferencesService>().setPreferredCycleTime(
+                        widget.machineType,
+                        newSelection.first,
+                      );
+
+                      print(
+                        "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",
+                      );
                     },
                   ),
                 )

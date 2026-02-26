@@ -125,6 +125,10 @@ class _MachineRowState extends State<MachineRow>
     int? defaultCycleTime = sl<SharedPreferencesService>()
         .getPreferredCycleTime(machine.type);
 
+    print(
+      "debug defaultCycleTime is $defaultCycleTime for machine type ${machine.type}",
+    );
+
     if (defaultCycleTime != null) {
       return defaultCycleTime;
     }
