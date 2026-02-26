@@ -82,16 +82,19 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
               sl<SharedPreferencesService>().clearPreferredCycleTime(
                 widget.machineType,
               );
+              print(
+                "debug Cleared defaultCycleTime for ${widget.machineType}, hasSetDefault: $hasSetDefault",
+              );
             } else {
               sl<SharedPreferencesService>().setPreferredCycleTime(
                 widget.machineType,
                 selectedCycleTime,
               );
-            }
 
-            print(
-              "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",
-            );
+              print(
+                "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",
+              );
+            }
           },
 
           title: Text(
