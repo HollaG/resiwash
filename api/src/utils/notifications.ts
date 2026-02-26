@@ -16,7 +16,7 @@ import { MachineStatus } from "../core/types";
 export const sendAndCleanupInvalidToken = async <T>(
   sendFn: () => Promise<T>,
   fcmToken: string,
-  machineId: string,
+  machineId: number,
 ): Promise<T | null> => {
   try {
     const response = await sendFn();
@@ -80,21 +80,7 @@ class NotClaimedError extends ClaimError {
 //   }
 // }
 
-export const unclaimMachine = async (machineId: string, fcmToken: string) => {
-  // const claimRepository = AppDataSource.getRepository(Claim);
-
-  // const claim = await claimRepository.findOne({
-  //   where: {
-  //     machineId: Number(machineId),
-  //     fcmToken: fcmToken,
-  //   },
-  // });
-
-  // if (claim) {
-  //   await claimRepository.remove(claim);
-  //   console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
-  // }
-
+export const unclaimMachine = async (machineId: number, fcmToken: string) => {
   const machineRepository = AppDataSource.getRepository(Machine);
 
   const machine = await machineRepository.findOne({
@@ -102,9 +88,10 @@ export const unclaimMachine = async (machineId: string, fcmToken: string) => {
 
   });
 
-  // set the FCM token to null
   if (machine) {
-    machine.currentClaimantToken = null;
+    // machine.currentClaimantToken = null;
+
+    machine.claimId = null; // remove the claim association but leave it in the claim history
 
     await machineRepository.save(machine);
 
@@ -127,23 +114,27 @@ export const unclaimMachine = async (machineId: string, fcmToken: string) => {
  * @param cycleTime
  */
 export const addToClaimHistory = async (
-  machineId: string,
+  machineId: number,
   fcmToken: string,
   cycleTime: number,
 ) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
   const claim = new Claim();
-  claim.machineId = Number(machineId);
+  claim.machineId = machineId;
   claim.fcmToken = fcmToken;
   claim.cycleTime = cycleTime;
 
-  await claimRepository.save(claim);
+  const savedClaim = await claimRepository.save(claim);
 
+  console.log(
+    `Added claim history for machine ${machineId}, token ${fcmToken}, cycle time ${cycleTime}`,
+  );
+  return savedClaim;
   // // Check if this user has already claimed this machine
   // const existingClaim = await claimRepository.findOne({
   //   where: {
-  //     machineId: Number(machineId),
+  //     machineId: machineId,
   //     fcmToken: fcmToken,
   //   },
   // });
@@ -165,11 +156,7 @@ export const addToClaimHistory = async (
   //   await unclaimMachine(previousClaim.machineId.toString(), fcmToken);
   // }
 
-  console.log(
-    `Claimed machine ${machineId} for ${fcmToken} with cycle time ${cycleTime}`,
-  );
 
-  return true;
 };
 
 export const updateCycleTime = async (
@@ -207,23 +194,9 @@ export const updateCycleTime = async (
 // Note: As of now, there can only be ONE claimant per machine. We will leave the return value
 // as an array for future expansion in case we want to allow multiple claimants per machine.
 export const getClaimants = async (
-  machineId: string,
+  machineId: number,
 ): Promise<IClaimMapEntry[]> => {
-  // const claimRepository = AppDataSource.getRepository(Claim);
 
-  // const claims = await claimRepository.find({
-  //   where: {
-  //     machineId: Number(machineId),
-  //   },
-  // });
-
-  // return claims.map((claim) => ({
-  //   fcmToken: claim.fcmToken,
-  //   cycleTime: claim.cycleTime,
-  //   claimedAt: claim.claimedAt,
-  // }));
-
-  const machineRepository = AppDataSource.getRepository(Machine);
 
   // remember to add the FCM token
   // first, check for valid machineId in DB
@@ -231,22 +204,23 @@ export const getClaimants = async (
     .createQueryBuilder("machine")
     .leftJoinAndSelect("machine.room", "room")
     .leftJoinAndSelect("room.area", "area")
-    .addSelect("machine.currentClaimantToken") // alert(sanity): REMEMBER TO SANTIZE THIS
-    .where("machine.machineId = :id", { id: parseInt(machineId, 10) })
+    .leftJoinAndSelect("machine.claim", "claim") // join with Claim to check existing claimants
+    .addSelect("claim.fcmToken") // alert(sanity): REMEMBER TO SANTIZE THIS
+    .where("machine.machineId = :id", { id: machineId })
     .getOne();
 
   if (!machine) {
     throw new Error("Machine not found");
   }
 
-  const fcmToken = machine.currentClaimantToken;
+  const fcmToken = machine.claim?.fcmToken;
 
   if (fcmToken) {
     return [
       {
         fcmToken,
-        cycleTime: machine.currentCycleTime || 0,
-        claimedAt: machine.lastChangeTime || new Date(),
+        cycleTime: machine.claim.cycleTime || 0,
+        claimedAt: machine.claim.claimedAt || new Date(),
       },
     ];
   } else {
@@ -255,10 +229,10 @@ export const getClaimants = async (
 
 };
 
-export const sendNotificationToClaimants = async (machine: Machine) => {
-  const claimants = await getClaimants(machine.machineId.toString());
+export const sendNotificationToClaimants = async (machineId: number) => {
+  const claimants = await getClaimants(machineId);
   console.log(
-    `Sending notifications to ${claimants.length} claimants for machine ${machine.machineId}`,
+    `Sending notifications to ${claimants.length} claimants for machine ${machineId}`,
   );
 
   for (const claimant of claimants) {
@@ -266,17 +240,15 @@ export const sendNotificationToClaimants = async (machine: Machine) => {
       () =>
         sendClaimedMachineStatusChangedNotification({
           fcmToken: claimant.fcmToken,
-          oldStatus: null,
-          newStatus: null,
-          machine,
+          machineId: machineId,
         }),
       claimant.fcmToken,
-      machine.machineId.toString(),
+      machineId,
     );
   }
 };
 
-export const canPoke = async (machineId: string): Promise<boolean> => {
+export const canPoke = async (machineId: number): Promise<boolean> => {
   const lastPokeRepository = AppDataSource.getRepository(LastPoke);
 
   const lastPokeRecord = await lastPokeRepository.findOne({

@@ -30,7 +30,11 @@ export const claimMachine = expressAsyncHandler(
     res: Response,
   ) => {
     try {
-      const { machineId } = req.params;
+      const { machineId: _machineId } = req.params;
+      const machineId = parseInt(_machineId, 10);
+      if (isNaN(machineId)) {
+        return sendErrorResponse(res, "Invalid machine ID", 400);
+      }
       const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
 
       console.log("Claim request received:", {
@@ -44,8 +48,9 @@ export const claimMachine = expressAsyncHandler(
         .createQueryBuilder("machine")
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area")
-        .addSelect("machine.currentClaimantToken") // alert(sanity): REMEMBER TO SANTIZE THIS
-        .where("machine.machineId = :id", { id: parseInt(machineId, 10) })
+        .leftJoinAndSelect("machine.claim", "claim") // join with Claim to check existing claimants
+        .addSelect("claim.fcmToken") // alert(sanity): REMEMBER TO SANTIZE THIS
+        .where("machine.machineId = :id", { id: machineId })
         .getOne();
 
       if (!machine) {
@@ -53,8 +58,8 @@ export const claimMachine = expressAsyncHandler(
       }
 
       if (
-        machine.currentClaimantToken &&
-        machine.currentClaimantToken !== fcmToken &&
+        machine.claim &&
+        machine.claim.fcmToken !== fcmToken &&
         machine.currentStatus !== MachineStatus.AVAILABLE
       ) {
         // not allowed to claim if there's already a claimant and it's not the same user, and the machine is not available.
@@ -64,23 +69,22 @@ export const claimMachine = expressAsyncHandler(
           400,
         );
       }
-      // allowed to claim
+      // allowed to claim, aka either there's no claimant, or the claimant is the same user, or the machine is available (claimed but not in use)
 
+      // 1. create an entry in the claim history table
+      const savedClaim = await addToClaimHistory(machineId, fcmToken, cycleTime);
       // 1. update the machine object with the new claimant and cycle time
-      machine.currentClaimantToken = fcmToken;
-      machine.currentCycleTime = cycleTime;
+      machine.claimId = savedClaim.claimId; // associate the machine with the new claim
       await AppDataSource.getRepository(Machine).save(machine);
 
       // 2. update the claims table with the new claim
-      await addToClaimHistory(machineId, fcmToken, cycleTime);
 
       // if the machine is manual mode, we also need to set the status
-      console.log({ machine });
       if (machine.isManualEntry) {
         try {
           console.log("Setting initial IN_USE status for manual machine claim");
 
-          
+
 
           await setMachineManualStatus({
             machineId: machine.machineId,
@@ -95,7 +99,7 @@ export const claimMachine = expressAsyncHandler(
           sendAndCleanupInvalidToken(
             () =>
               sendClaimedMachineStatusChangedNotification({
-                machine,
+                machineId: machineId,
                 fcmToken,
               }),
             fcmToken,
@@ -104,9 +108,9 @@ export const claimMachine = expressAsyncHandler(
 
           // notify all listeners
           sendMachineGroupStatusChangedNotification({
-            machine,
+            machineId: machineId,
           })
-          
+
 
         } catch (error: any) {
           console.error(error);
@@ -132,12 +136,16 @@ interface UnclaimMachineRequest {
 export const unclaimMachine = expressAsyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { machineId } = req.params;
+      const { machineId: _machineId } = req.params;
+      const machineId = parseInt(_machineId, 10);
+      if (isNaN(machineId)) {
+        return sendErrorResponse(res, "Invalid machine ID", 400);
+      }
       const { fcmToken } = req.body as UnclaimMachineRequest;
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository("Machine").findOneBy({
-        machineId: parseInt(machineId),
+      const machine = await AppDataSource.getRepository(Machine).findOneBy({
+        machineId: machineId,
       });
 
       if (!machine) {
@@ -157,11 +165,15 @@ export const unclaimMachine = expressAsyncHandler(
 export const pokeClaimant = expressAsyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { machineId } = req.params;
+      const { machineId: _machineId } = req.params;
+      const machineId = parseInt(_machineId, 10);
 
+      if (isNaN(machineId)) {
+        return sendErrorResponse(res, "Invalid machine ID", 400);
+      }
       // first, check for valid machineId in DB
       const machine = await AppDataSource.getRepository(Machine).findOne({
-        where: { machineId: parseInt(machineId) },
+        where: { machineId: machineId },
         relations: ["room", "room.area"],
       });
 
@@ -203,12 +215,16 @@ export const pokeClaimant = expressAsyncHandler(
 export const updateClaimCycle = expressAsyncHandler(
   async (req: Request, res: Response) => {
     try {
-      const { machineId } = req.params;
+      const { machineId: _machineId } = req.params;
+      const machineId = parseInt(_machineId, 10);
+      if (isNaN(machineId)) {
+        return sendErrorResponse(res, "Invalid machine ID", 400);
+      }
       const { fcmToken, cycleTime } = req.body as ClaimMachineRequest;
 
       // first, check for valid machineId in DB
-      const machine = await AppDataSource.getRepository("Machine").findOneBy({
-        machineId: parseInt(machineId),
+      const machine = await AppDataSource.getRepository(Machine).findOneBy({
+        machineId: machineId,
       });
 
       if (!machine) {

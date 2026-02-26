@@ -31,66 +31,68 @@ type CustomMulticastMessage = MulticastMessage & { data: CustomDataPayload };
  *
  * @param machine Machine object with `room` and `area` joined !!important
  */
-export const sendMachineStatusChangedNotification = async ({
-  machine,
-  oldStatus,
-  newStatus,
-}: {
-  machine: Machine;
-  oldStatus: MachineStatus;
-  newStatus: MachineStatus;
-}) => {
-  const message: CustomMessage = {
-    topic: getTopicNameForMachine(machine),
-    notification: {
-      title: `${machine.name} now ${getReadableMachineStatus(
-        machine.currentStatus,
-      )}`,
-      body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
-    },
-    android: {
-      notification: {
-        channelId: "claimed",
-      },
-    },
-    data: {
-      machineId: machine.machineId.toString(),
-      channel: "subscribed",
-      // metadata for interaction
-    },
-  };
+// export const sendMachineStatusChangedNotification = async ({
+//   machine,
+// }: {
+//   machine: Machine;
+// }) => {
+//   const message: CustomMessage = {
+//     topic: getTopicNameForMachine(machine),
+//     notification: {
+//       title: `${machine.name} now ${getReadableMachineStatus(
+//         machine.currentStatus,
+//       )}`,
+//       body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
+//     },
+//     android: {
+//       notification: {
+//         channelId: "claimed",
+//       },
+//     },
+//     data: {
+//       machineId: machine.machineId.toString(),
+//       channel: "subscribed",
+//       // metadata for interaction
+//     },
+//   };
 
-  console.log("[🔥🏠] Sending message to topic:", message.topic);
-  try {
-    const response = await getMessaging().send(message);
-    console.log("[🔥🏠] Successfully sent message:", response);
+//   console.log("[🔥🏠] Sending message to topic:", message.topic);
+//   try {
+//     const response = await getMessaging().send(message);
+//     console.log("[🔥🏠] Successfully sent message:", response);
 
-    return response;
-  } catch (e) {
-    console.error("[🔥🏠] Error sending message:", e);
-    throw e;
-  }
-};
+//     return response;
+//   } catch (e) {
+//     console.error("[🔥🏠] Error sending message:", e);
+//     throw e;
+//   }
+// };
 
 /**
  * Send a data-only notification to the device, prompting it to handle the status change on-device.
  * https://firebase.flutter.dev/docs/messaging/usage
  *
- * @param machine Machine object with `room` and `area` joined !!important
+ * @param machine Machine object with `room` and `area` and `claim` joined !!important
  */
 export const sendClaimedMachineStatusChangedNotification = async ({
-  machine,
+  machineId,
   fcmToken,
 }: {
-  machine: Machine;
-  oldStatus?: MachineStatus;
-  newStatus?: MachineStatus;
+  machineId: number;
   fcmToken: string;
 }) => {
   if (fcmToken.startsWith("web_")) {
     // just return as we use web_ prefix to indicate web clients, which don't need this notification
     return;
   }
+
+  const machine = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.room", "room")
+    .leftJoinAndSelect("room.area", "area")
+    .leftJoinAndSelect("machine.claim", "claim") // join with Claim to get cycle time for notification
+    .where("machine.machineId = :id", { id: machineId })
+    .getOne();
 
   let title = "";
   let body = "";
@@ -104,7 +106,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
     title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} running...`;
     const expectedEndTime =
       machine.lastAvailableTime!.getTime() +
-      (machine.currentCycleTime ? machine.currentCycleTime * 60000 : 0);
+      (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
     body = `Expected to finish by [[ expectedEndTime ]].`;
     secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
   } else if (machine.currentStatus === MachineStatus.FINISHING) {
@@ -230,19 +232,28 @@ export const sendClaimedMachineStatusChangedNotification = async ({
  * @param machine Machine object with `room` and `area` joined !!important
  */
 export const sendMachineGroupStatusChangedNotification = async ({
-  machine,
+  machineId
 }: {
-  machine: Machine;
+  machineId: number;
 }) => {
+
+  const machine = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.room", "room")
+    .leftJoinAndSelect("room.area", "area")
+    .leftJoinAndSelect("machine.claim", "claim") // join with Claim to get cycle time for notification. Don't need FCM token
+    .where("machine.machineId = :id", { id: machineId })
+    .getOne();
   let cycleTimeInfo = "";
-  if (machine.currentCycleTime) {
+  if (machine.claim && machine.claim.cycleTime) { // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
     cycleTimeInfo = ` Expected to finish by ${new Date(
-      machine.lastAvailableTime!.getTime() + machine.currentCycleTime * 60000,
+      machine.lastAvailableTime!.getTime() + machine.claim.cycleTime * 60000,
     ).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-    })} (${machine.currentCycleTime}m cycle). `;
+    })} (${machine.claim.cycleTime}m cycle). `;
   }
+
   const message: CustomMessage = {
     topic: getTopicNameForBulkSubscription(machine),
     notification: {

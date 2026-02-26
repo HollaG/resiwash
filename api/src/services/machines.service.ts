@@ -63,11 +63,11 @@ export async function setMachineManualStatus(
     // asynchronously send notification
     // note: we do not care if it succeeds or fails
     sendMachineGroupStatusChangedNotification({
-      machine: machine,
+      machineId: machine.machineId,
     });
 
     // send notification to claimant if applicable
-    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+    sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
     return;
   }
 
@@ -89,17 +89,18 @@ export async function setMachineManualStatus(
     machine.previousStatusActiveTime =
       machine.lastChangeTime && machine.lastUpdated
         ? Math.floor(
-            (machine.lastChangeTime?.getTime() -
-              machine.lastUpdated?.getTime()) /
-              1000,
-          )
+          (machine.lastChangeTime?.getTime() -
+            machine.lastUpdated?.getTime()) /
+          1000,
+        )
         : 0; // calculate how long the machine was in the previous status in seconds
     machine.lastAvailableTime = now;
     machine.lastChangeTime = now;
     machine.previousStatus = machine.currentStatus;
     machine.currentStatus = status;
     machine.lastUpdated = now;
-    machine.currentCycleTime = cycleTime;
+
+    // note that claimId should have already been set, this function purely manages the status
 
     await machineRepository.save(machine);
 
@@ -119,11 +120,11 @@ export async function setMachineManualStatus(
     // asynchronously send notification
     // note: we do not care if it succeeds or fails
     sendMachineGroupStatusChangedNotification({
-      machine: machine,
+      machineId: machine.machineId,
     });
 
     // send notification to claimant if applicable
-    sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+    sendNotificationToClaimants(machineId).catch((e) => { }); // do nothing
   } else if (status === MachineStatus.IN_USE) {
     // invalid cycleTime
     throw new Error("Cycle time must be provided and greater than 5");
@@ -164,9 +165,9 @@ export async function resetMachineStatusToAvailable(
 
     machine.previousStatusActiveTime = machine.lastChangeTime
       ? Math.floor(
-          (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
-            1000,
-        )
+        (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+        1000,
+      )
       : 0; // calculate how long the machine was in the previous status in seconds
     machine.previousStatus = machine.currentStatus;
     machine.currentStatus = MachineStatus.AVAILABLE;
@@ -174,7 +175,6 @@ export async function resetMachineStatusToAvailable(
     machine.lastUpdated = new Date();
 
     machine.lastAvailableTime = new Date(); // if machine now available, update lastAvailableTime, if its finishing, keep it the same
-    machine.currentCycleTime = null;
 
     await machineRepository.save(machine);
 
@@ -193,11 +193,11 @@ export async function resetMachineStatusToAvailable(
  */
 export const updateMachineStatusAfterTime = async (
   status: MachineStatus,
-  machineId: string
+  machineId: number
 ) => {
   const machineRepository = AppDataSource.getRepository(Machine);
   const machine = await machineRepository.findOne({
-    where: { machineId: parseInt(machineId, 10) },
+    where: { machineId: machineId },
     relations: ["room", "room.area"],
   });
 
@@ -207,9 +207,9 @@ export const updateMachineStatusAfterTime = async (
 
   machine.previousStatusActiveTime = machine.lastChangeTime
     ? Math.floor(
-        (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
-          1000,
-      )
+      (machine.lastChangeTime.getTime() - machine.lastUpdated!.getTime()) /
+      1000,
+    )
     : 0; // calculate how long the machine was in the previous status in seconds
   machine.previousStatus = machine.currentStatus;
   machine.currentStatus = status;
@@ -217,7 +217,6 @@ export const updateMachineStatusAfterTime = async (
   machine.lastUpdated = new Date();
   if (status === MachineStatus.AVAILABLE) {
     machine.lastAvailableTime = new Date(); // if machine now available, update lastAvailableTime, if its finishing, keep it the same
-    machine.currentCycleTime = null;
   }
 
   const updateEvent = new UpdateEvent();
@@ -236,11 +235,11 @@ export const updateMachineStatusAfterTime = async (
   // asynchronously send notification
   // note: we do not care if it succeeds or fails
   sendMachineGroupStatusChangedNotification({
-    machine: machine,
+    machineId: machine.machineId,
   });
 
   // send notification to claimant if applicable
-  sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+  sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
 
   // if (status === MachineStatus.FINISHING) {
   //   const timeout = setTimeout(

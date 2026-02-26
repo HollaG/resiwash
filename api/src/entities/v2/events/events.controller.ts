@@ -525,15 +525,15 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-              (machine.lastChangeTime.getTime() -
-                machine.lastUpdated!.getTime()) /
-                1000,
-            )
+            (machine.lastChangeTime.getTime() -
+              machine.lastUpdated!.getTime()) /
+            1000,
+          )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (machine.currentStatus === MachineStatus.AVAILABLE) {
           machine.lastAvailableTime = now; // the machine is now available, so update lastAvailableTime to now. in a sense, this is more of "firstAvailableTime" but we'll run with it
-          machine.currentCycleTime = null;
+          // but, keep the claim Id
         } else if (machine.previousStatus === MachineStatus.AVAILABLE) {
           machine.lastAvailableTime = now; // the machine has now become not available, so NOW is the last available time
         }
@@ -541,11 +541,11 @@ export const createMultipleEvents = asyncHandler(
         // asynchronously send notification
         // note: we do not care if it succeeds or fails
         sendMachineGroupStatusChangedNotification({
-          machine: machine,
+          machineId: machine.machineId,
         });
 
         // send notification to claimant if applicable
-        sendNotificationToClaimants(machine).catch((e) => {}); // do nothing
+        sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
       }
     });
     await machineRepository.save(machinesToUpdate);

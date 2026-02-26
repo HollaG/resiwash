@@ -16,7 +16,13 @@ type DebugNotificationRequest = {
 export const sendDebugNotification = asyncHandler(async (req: Request<{}, {}, DebugNotificationRequest>, res: Response) => {
   // return empty for now, not implemented
 
-  const { machineId, oldStatus, newStatus, password } = req.body;
+  const { machineId: _machineId, oldStatus, newStatus, password } = req.body;
+
+  const machineId = parseInt(_machineId.toString(), 10);
+  if (isNaN(machineId)) {
+    return sendErrorResponse(res, "Invalid machine ID", 400);
+  }
+
 
   if (password !== process.env.DEBUG_PASSWORD) {
     return sendErrorResponse(res, "Unauthorized", 401);
@@ -35,7 +41,7 @@ export const sendDebugNotification = asyncHandler(async (req: Request<{}, {}, De
 
   console.log({ machine })
   const result = await sendMachineGroupStatusChangedNotification({
-    machine,
+    machineId,
 
   });
 

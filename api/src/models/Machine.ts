@@ -85,16 +85,10 @@ export class Machine {
   @Column({ default: true })
   isManualEntry: boolean; // Whether this machine can be manually updated e.g. by QR code
 
-  // The current cycle time, if available
-  // Note that if `isManualEntry` is true, this field will always be set.
+  @OneToOne(() => Claim, (claim) => claim.machine)
+  @JoinColumn({ name: "claimId" })
+  claim: Claim;
+
   @Column({ nullable: true })
-  currentCycleTime: number; // in minutes. calculate the end time by taking lastAvailableTime + currentCycleTime
-
-  // Note that currentClaimantToken & currentCycleTime will be set together.
-  @Column({ nullable: true, select: false }) // this is a PRIVATE field. do NOT leak to frontend
-  currentClaimantToken: string;
-
-  // @OneToOne(() => Claim, (claim) => claim.machine)
-  // @JoinColumn({name: "claimId"})
-  // claim: Claim;
+  claimId: number; // Foreign key to Claim
 }

@@ -33,11 +33,12 @@ export const startMachineCycleEndChecker = () => {
         .createQueryBuilder("machine")
         .leftJoinAndSelect("machine.room", "room")
         .leftJoinAndSelect("room.area", "area")
+        .leftJoinAndSelect("machine.claim", "claim")
         .where("machine.currentStatus IN (:...statuses)", {
           statuses: [MachineStatus.IN_USE, MachineStatus.FINISHING],
         })
         .andWhere("machine.isManualEntry = :isManual", { isManual: true })
-        .andWhere("machine.currentCycleTime IS NOT NULL")
+        .andWhere("claim.cycleTime IS NOT NULL")
         .andWhere("machine.lastAvailableTime IS NOT NULL")
         .getMany();
 
@@ -52,18 +53,18 @@ export const startMachineCycleEndChecker = () => {
         // change back to available if it's been more than cycleTime + 30 seconds since last available time
         const elapsedMilliseconds =
           now.getTime() - machine.lastAvailableTime.getTime();
-        const cycleTimeMilliseconds = machine.currentCycleTime! * 60 * 1000;
+        const cycleTimeMilliseconds = machine.claim.cycleTime * 60 * 1000;
         const bufferMilliseconds = 30 * 1000; // 30 seconds buffer
 
         if (elapsedMilliseconds > cycleTimeMilliseconds + bufferMilliseconds) {
           console.log(
             `[Job] Resetting endable machine ${machine.machineId} (${machine.name}) - ` +
-              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.currentCycleTime}s`,
+            `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
           );
           try {
             await updateMachineStatusAfterTime(
               MachineStatus.AVAILABLE,
-              machine.machineId.toString(),
+              machine.machineId,
             );
             resetCount++;
           } catch (error) {
@@ -78,12 +79,12 @@ export const startMachineCycleEndChecker = () => {
         ) {
           console.log(
             `[Job] Setting machine ${machine.machineId} (${machine.name}) to FINISHING - ` +
-              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.currentCycleTime}s`,
+            `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
           );
           try {
             await updateMachineStatusAfterTime(
               MachineStatus.FINISHING,
-              machine.machineId.toString(),
+              machine.machineId,
             );
             resetCount++;
           } catch (error) {

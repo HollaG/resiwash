@@ -13,7 +13,7 @@ export class Claim {
   @PrimaryGeneratedColumn()
   claimId: number;
 
-  @Column()
+  @Column({ select: false }) // this is a PRIVATE field. do NOT leak to frontend
   fcmToken: string;
 
   @Column()
