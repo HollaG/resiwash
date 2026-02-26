@@ -236,12 +236,14 @@ export const sendClaimedMachineStatusChangedNotification = async ({
  * @param machine Machine object with `room` and `area` joined !!important
  */
 export const sendMachineGroupStatusChangedNotification = async ({
-  machineId
+  machineId,
+  machine: _machine
 }: {
   machineId: number;
+  machine?: Machine; // Must have room, area, and claim joined.
 }) => {
 
-  const machine = await AppDataSource.getRepository(Machine)
+  const machine = _machine || await AppDataSource.getRepository(Machine)
     .createQueryBuilder("machine")
     .leftJoinAndSelect("machine.room", "room")
     .leftJoinAndSelect("room.area", "area")

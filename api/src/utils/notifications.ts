@@ -180,7 +180,7 @@ export const updateCycleTime = async (
 
   console.log(
     "Updated cycle time for",
-    claim.fcmToken,
+    claim.fcmToken, // hidden so undefined
     "on machine",
     claim.machineId,
     "to",

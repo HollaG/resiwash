@@ -500,7 +500,7 @@ export const createMultipleEvents = asyncHandler(
     const machinesToUpdate = await machineRepository.find({
       where: { machineId: In(machineIdsToUpdate) },
       // join with the room and area data as well
-      relations: ["room", "room.area"],
+      relations: ["room", "room.area", "claim"],
     });
 
     machinesToUpdate.forEach((machine) => {
@@ -514,8 +514,8 @@ export const createMultipleEvents = asyncHandler(
     // for all actual events, update the machine's lastChangeTime timestamp,
     // copy the currentStatus to previousStatus,
     // set the currentStatus to the new status
-    await machineRepository.save(machinesToUpdate);
 
+    const machinesToSave = []
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
         (m) => m.machineId === event.machine.machineId,
@@ -540,16 +540,23 @@ export const createMultipleEvents = asyncHandler(
           machine.lastAvailableTime = now; // the machine has now become not available, so NOW is the last available time
         }
 
-        // asynchronously send notification
-        // note: we do not care if it succeeds or fails
-        sendMachineGroupStatusChangedNotification({
-          machineId: machine.machineId,
-        });
-
-        // send notification to claimant if applicable
-        sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
+        machinesToSave.push(machine);
       }
     });
+    await machineRepository.save(machinesToSave);
+
+    for (const machine of machinesToSave) {
+      // asynchronously send notification
+      // note: we do not care if it succeeds or fails
+      sendMachineGroupStatusChangedNotification({
+        machineId: machine.machineId,
+        machine,
+      });
+
+      // send notification to claimant if applicable
+      sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
+    }
+
 
     sendOkResponse(res, savedRawEvents);
 
