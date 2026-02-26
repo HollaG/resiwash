@@ -99,23 +99,19 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                             duration: Duration(milliseconds: 500),
                             curve: Curves.easeInOut,
                             alignment: Alignment.topCenter,
-                            child: SizedBox(
-                              // full height minus top bar and nav bar
-                              // top bar height:
-                              height: hasCompletedMachines
-                                  ? MediaQuery.of(context).size.height -
-                                        kToolbarHeight
-                                  : 0,
-
-                              child: Container(
-                                child: hasCompletedMachines
-                                    ? Padding(
-                                        padding: const EdgeInsets.all(24),
-                                        child: CompletedSection(),
-                                      )
-                                    : Container(),
-                              ),
-                            ),
+                            child: hasCompletedMachines
+                                ? ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minHeight:
+                                          MediaQuery.of(context).size.height -
+                                          kToolbarHeight,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: CompletedSection(),
+                                    ),
+                                  )
+                                : SizedBox(height: 0, width: double.infinity),
                           ),
                         ),
 

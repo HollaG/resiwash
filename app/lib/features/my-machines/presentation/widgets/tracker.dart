@@ -229,7 +229,8 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
       key: Key(widget.machine.machineId),
       controller: controller,
       enabled: true,
-      closeOnScroll: true,
+      closeOnScroll:
+          false, // if not, slidables will close when the height of the page changes
       // Left swipe action (Unclaim)
       startActionPane: ActionPane(
         motion: const BehindMotion(),

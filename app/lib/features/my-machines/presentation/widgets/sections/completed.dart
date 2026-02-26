@@ -112,6 +112,7 @@ class _CompletedSectionState extends State<CompletedSection> {
                   children: completedMetadata
                       .map(
                         (claimedMeta) => Tracker(
+                          key: Key(claimedMeta.machineId),
                           showControls: true,
                           claimedMetadata: claimedMeta,
                           machine: (completedMachines).firstWhere(

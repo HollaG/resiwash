@@ -179,8 +179,8 @@ class ClaimCubit extends Cubit<ClaimState> {
         fcmToken: fcmToken,
       );
 
-      myMachinesEither.fold(
-        (failure) {
+      final didClaim = await myMachinesEither.fold(
+        (failure) async {
           appLog.e('Error claiming machine $machineId: ${failure.message}');
 
           if (isClosed) return false;
@@ -223,13 +223,20 @@ class ClaimCubit extends Cubit<ClaimState> {
             params: params,
           );
 
-          updatedMachineEither.fold(
+          return updatedMachineEither.fold(
             (failure) {
               // If refresh fails, still show notification with old machine data
               appLog.w('Failed to refresh machine data: ${failure.message}');
               // TODO: show error notif
-
-              return false;
+              emit(
+                ClaimOperationError(
+                  claimedMachineMetadata: currentClaimedMachineMetadata,
+                  claimedMachines: currentClaimedMachines,
+                  operatingMachine: machine,
+                  message: "Claim succeeded. Please refresh the page manually.",
+                ),
+              );
+              return true;
             },
             (updatedMachine) {
               // Show notification with refreshed machine data
@@ -239,16 +246,17 @@ class ClaimCubit extends Cubit<ClaimState> {
               // );
 
               // TODO: update all machine data in state when claimed
+              appLog.i(
+                'Claimed machine: $machineId with cycleTime: $cycleTime',
+              );
 
               return true;
             },
           );
-
-          appLog.i('Claimed machine: $machineId with cycleTime: $cycleTime');
         },
       );
 
-      return false;
+      return didClaim;
     } catch (e) {
       appLog.e('Error claiming machine $machineId: $e');
 

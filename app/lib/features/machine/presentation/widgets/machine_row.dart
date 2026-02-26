@@ -520,6 +520,8 @@ class _MachineRowState extends State<MachineRow>
                               cycleTime: cycleTime,
                             );
 
+                            print("debug didClaim is $didClaim");
+
                             // final completer = Completer<void>();
                             // // Wait for the claim operation to complete before closing the slidable
                             // final subscription = context
