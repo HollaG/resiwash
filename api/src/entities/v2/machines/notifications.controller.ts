@@ -102,10 +102,15 @@ export const claimMachine = expressAsyncHandler(
           console.error(error);
           return sendErrorResponse(res, error.message, 400);
         }
+      } else {
+        // notify the user
+        await sendAndCleanupInvalidToken(
+          () => sendClaimedMachineStatusChangedNotification({ machineId, fcmToken }),
+          fcmToken,
+          machineId,
+        );
       }
 
-      // now, send a notification to the user
-      // sendClaimedMachineStatusChangedNotification({ machine, fcmToken });
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
