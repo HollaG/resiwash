@@ -100,11 +100,11 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
       case AppLifecycleState.paused:
         return;
       case AppLifecycleState.resumed:
-        // Restart the scanner when the app is resumed.
+        // Restart the scanner when the app is resumed AND this is the current active page (although we can be in different nav stacks, we only want the current page)
         // Don't forget to resume listening to the barcode events.
         _subscription = controller.barcodes.listen(_handleBarcode);
-        if (!controller.value.isRunning) {
-          print("debug qr restarting scanner from didChangeAppLifecycleState");
+        final shell = StatefulNavigationShell.of(context);
+        if (!controller.value.isRunning && shell.currentIndex == 3) {
           unawaited(controller.start());
         }
       // unawaited(controller.start());
