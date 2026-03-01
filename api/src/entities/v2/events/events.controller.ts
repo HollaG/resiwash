@@ -515,7 +515,7 @@ export const createMultipleEvents = asyncHandler(
     // copy the currentStatus to previousStatus,
     // set the currentStatus to the new status
 
-    const machinesToSave = []
+    const machinesToSave: Machine[] = []
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
         (m) => m.machineId === event.machine.machineId,
