@@ -235,14 +235,10 @@ export const sendClaimedMachineStatusChangedNotification = async ({
 };
 
 /**
- * Send a data-only notification to the device.
- * This handles the case where a user claims a "available" machine, before they press Start. They should recieve the notification once it starts. 
- * A timer should still be set.
- * 
- * Note that this case will only occur for non manual machines, as manual machines are set to IN_USE immediately upon claim, so the normal notification flow will handle it.
+ * Send a claim notification and also tell the device to start the timer* 
  * 
  */
-export const sendNewlyClaimedMachineButStillAvailableNotification = async ({
+export const sendNewlyClaimedMachineNotification = async ({
   machineId,
   fcmToken,
 }) => {
@@ -259,9 +255,7 @@ export const sendNewlyClaimedMachineButStillAvailableNotification = async ({
     .where("machine.machineId = :id", { id: machineId })
     .getOne();
 
-  if (!machine || machine.currentStatus === MachineStatus.IN_USE || machine.currentStatus === MachineStatus.FINISHING) {
-    return
-  }
+
 
   let title = "";
   let body = "";
@@ -278,8 +272,42 @@ export const sendNewlyClaimedMachineButStillAvailableNotification = async ({
     secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
 
 
-  } else {
-    return;
+  } else if (machine.currentStatus === MachineStatus.IN_USE) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} running...`;
+    const expectedEndTime =
+      machine.lastAvailableTime!.getTime() +
+      (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+    body = `Expected to finish by [[ expectedEndTime ]].`;
+    secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
+
+
+  } else if (machine.currentStatus === MachineStatus.FINISHING) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} finishing in approx. 5 - 10 minutes...`;
+    body = `Please be ready to collect your clothes soon!`;
+    const expectedEndTime =
+      machine.lastAvailableTime!.getTime() +
+      (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+    secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
+
+    if (machine.type === MachineType.WASHER) {
+      // search for nearby available dryers in the same room and add to notification body
+      // this is to encourage users to switch to dryer right after washing cycle ends, reducing the chance of them forgetting about the machine
+      const nearbyAvailableDryers = await AppDataSource.getRepository(
+        Machine,
+      ).find({
+        where: {
+          roomId: machine.roomId,
+          type: MachineType.DRYER,
+          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
+        },
+      });
+      if (nearbyAvailableDryers.length > 0) {
+        body += ` Dryers available / finishing: ${nearbyAvailableDryers.map((dryer) => dryer.name).join(", ")}.`;
+      } else {
+        body += ` Unfortunately, there is no available dryer at the moment.`;
+      }
+    }
+
   }
 
   const message: CustomMessage = {
@@ -322,6 +350,7 @@ export const sendNewlyClaimedMachineButStillAvailableNotification = async ({
       machinePreviousStatus: machine.previousStatus,
 
       channel: "claimed",
+      forceShowTimer: "true",
 
       title,
       body,
@@ -490,6 +519,19 @@ export const sendPokeNotification = async (
     //     priority: "high",
     //   },
     // },
+
+    notification: {
+      title: `Reminder: ${machine.name}`,
+      body: `Please clear your clothes from ${machine.name} (${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name})`,
+    },
+
+    android: {
+      priority: "high",
+      notification: {
+        channelId: "poke",
+        priority: "high",
+      },
+    },
 
     apns: {
       payload: {
