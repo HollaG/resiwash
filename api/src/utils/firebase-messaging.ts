@@ -10,6 +10,7 @@ import {
 } from "firebase-admin/messaging";
 import { Machine } from "../models/Machine";
 import { AppDataSource } from "../data-source";
+import { In } from "typeorm";
 
 const getTopicNameForMachine = (machine: Machine): string => {
   return `machine_${machine.machineId}`;
@@ -18,6 +19,8 @@ const getTopicNameForMachine = (machine: Machine): string => {
 const getTopicNameForBulkSubscription = (machine: Machine): string => {
   return `group_${machine.roomId}_${machine.type.toLowerCase()}`;
 };
+
+const IOS_APP_BUNDLE_ID = "com.resiwash.app";
 
 type CustomDataPayload = {
   [key: string]: string;
@@ -126,7 +129,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         where: {
           roomId: machine.roomId,
           type: MachineType.DRYER,
-          currentStatus: MachineStatus.AVAILABLE || MachineStatus.FINISHING, // also include finishing dryers since they might be finishing before the washer and become available right after
+          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
         },
       });
       if (nearbyAvailableDryers.length > 0) {
@@ -148,7 +151,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         where: {
           roomId: machine.roomId,
           type: MachineType.DRYER,
-          currentStatus: MachineStatus.AVAILABLE || MachineStatus.FINISHING, // also include finishing dryers since they might be finishing before the washer and become available right after
+          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
         },
       });
       if (nearbyAvailableDryers.length > 0) {
@@ -186,7 +189,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
       headers: {
         "apns-push-type": "background",
         "apns-priority": "5", // Must be `5` when `contentAvailable` is set to true.
-        "apns-topic": "io.flutter.plugins.firebase.messaging", // bundle identifier
+        "apns-topic": IOS_APP_BUNDLE_ID,
       },
     },
     data: {
@@ -230,6 +233,126 @@ export const sendClaimedMachineStatusChangedNotification = async ({
     throw e;
   }
 };
+
+/**
+ * Send a data-only notification to the device.
+ * This handles the case where a user claims a "available" machine, before they press Start. They should recieve the notification once it starts. 
+ * A timer should still be set.
+ * 
+ * Note that this case will only occur for non manual machines, as manual machines are set to IN_USE immediately upon claim, so the normal notification flow will handle it.
+ * 
+ */
+export const sendNewlyClaimedMachineButStillAvailableNotification = async ({
+  machineId,
+  fcmToken,
+}) => {
+  if (fcmToken.startsWith("web_")) {
+    // just return as we use web_ prefix to indicate web clients, which don't need this notification
+    return;
+  }
+
+  const machine = await AppDataSource.getRepository(Machine)
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.room", "room")
+    .leftJoinAndSelect("room.area", "area")
+    .leftJoinAndSelect("machine.claim", "claim") // join with Claim to get cycle time for notification
+    .where("machine.machineId = :id", { id: machineId })
+    .getOne();
+
+  if (!machine || machine.currentStatus === MachineStatus.IN_USE || machine.currentStatus === MachineStatus.FINISHING) {
+    return
+  }
+
+  let title = "";
+  let body = "";
+  let secondsTillCompletion = null;
+
+  if (machine.currentStatus === MachineStatus.AVAILABLE) {
+    title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} claimed.`;
+    body = `Machine status on app will update once you start the machine.`;
+
+    const expectedEndTime =
+      Date.now() +
+      (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+    body = `Expected to finish by [[ expectedEndTime ]].`;
+    secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
+
+
+  } else {
+    return;
+  }
+
+  const message: CustomMessage = {
+    token: fcmToken,
+
+    // notification: {
+    //   title: `${machine.name} now ${getReadableMachineStatus(
+    //     machine.currentStatus
+    //   )}`,
+    //   body: `${machine.room.name} @ ${machine.room.area.shortName || machine.room.area.name}`,
+    // },
+    // android: {
+    //   notification: {
+    //     channelId: "claimed",
+    //   },
+    // },
+    android: {
+      priority: "high",
+    },
+    // Add APNS (Apple) config
+    apns: {
+      payload: {
+        aps: {
+          contentAvailable: true,
+        },
+      },
+      headers: {
+        "apns-push-type": "background",
+        "apns-priority": "5", // Must be `5` when `contentAvailable` is set to true.
+        "apns-topic": IOS_APP_BUNDLE_ID,
+      },
+    },
+    data: {
+      machineId: machine.machineId.toString(),
+      machineName: machine.name,
+      machineRoomName: machine.room.name,
+      machineAreaShortName:
+        machine.room.area.shortName || machine.room.area.name,
+      machineCurrentStatus: machine.currentStatus,
+      machinePreviousStatus: machine.previousStatus,
+
+      channel: "claimed",
+
+      title,
+      body,
+      secondsTillCompletion: secondsTillCompletion
+        ? secondsTillCompletion.toString()
+        : "",
+    },
+  };
+
+  console.log("[🔥🏠] Sending message to token:", fcmToken);
+  try {
+    const response = await getMessaging().send(message);
+    console.log("[🔥🏠] Successfully sent message:", response);
+
+    return response;
+  } catch (e: any) {
+    console.error("[🔥🏠] Error sending message:", e);
+
+    // Check if the error is due to an invalid/unregistered token
+    if (e.code === "messaging/registration-token-not-registered") {
+      console.log(
+        "[🔥🏠] Token no longer registered, will be cleaned up:",
+        fcmToken,
+      );
+      // Return the error info so the caller can handle cleanup
+      return { error: "token-not-registered", fcmToken };
+    }
+
+    throw e;
+  }
+}
 
 /**
  *
@@ -369,8 +492,15 @@ export const sendPokeNotification = async (
     // },
 
     apns: {
+      payload: {
+        aps: {
+          sound: "default",
+        },
+      },
       headers: {
-        "apns-priority": "5",
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "apns-topic": IOS_APP_BUNDLE_ID,
       },
     },
     data: {

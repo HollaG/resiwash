@@ -16,6 +16,7 @@ import {
 import {
   sendClaimedMachineStatusChangedNotification,
   sendMachineGroupStatusChangedNotification,
+  sendNewlyClaimedMachineButStillAvailableNotification,
   sendPokeNotification,
 } from "../../../utils/firebase-messaging";
 import { Machine } from "../../../models/Machine";
@@ -105,11 +106,20 @@ export const claimMachine = expressAsyncHandler(
         }
       } else {
         // notify the user
-        await sendAndCleanupInvalidToken(
-          () => sendClaimedMachineStatusChangedNotification({ machineId, fcmToken }),
-          fcmToken,
-          machineId,
-        );
+        if (machine.currentStatus === MachineStatus.AVAILABLE) { // TODO: do we want to abstract this?
+          await sendAndCleanupInvalidToken(
+            () => sendNewlyClaimedMachineButStillAvailableNotification({ machineId, fcmToken }),
+            fcmToken,
+            machineId,
+          )
+        } else {
+          await sendAndCleanupInvalidToken(
+            () => sendClaimedMachineStatusChangedNotification({ machineId, fcmToken }),
+            fcmToken,
+            machineId,
+          )
+        }
+
       }
 
 
