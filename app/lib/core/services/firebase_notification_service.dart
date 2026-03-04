@@ -89,6 +89,9 @@ class FirebaseNotificationService {
               message.data['body'] as String? ??
               'Tap to view details about your machine progress.';
 
+          final showTimer =
+              (message.data['forceShowTimer'] as String?) == 'true';
+
           // if secondsTillCompletion is not null, calculate expected end time and replace "[[ expectedEndTime ]]" in both title and body
           if (secondsTillCompletion != null) {
             final expectedEndTime = DateTime.now().add(
@@ -114,18 +117,26 @@ class FirebaseNotificationService {
             }
           }
 
+          if (showTimer) {
+            sl<LocalNotificationService>().showNotificationAndStartTimer(
+              title,
+              body,
+              secondsTillCompletion ?? 0,
+            );
+            return;
+          }
+
           switch (currentMachineStatus) {
             case MachineStatus.available:
               sl<LocalNotificationService>()
                   .showClaimedMachineNowAvailableNotification(title, body);
               break;
             case MachineStatus.inUse:
-              sl<LocalNotificationService>()
-                  .showClaimedMachineNowInUseNotification(
-                    title,
-                    body,
-                    secondsTillCompletion ?? 0,
-                  );
+              sl<LocalNotificationService>().showNotificationAndStartTimer(
+                title,
+                body,
+                secondsTillCompletion ?? 0,
+              );
               break;
             case MachineStatus.finishing:
               sl<LocalNotificationService>()

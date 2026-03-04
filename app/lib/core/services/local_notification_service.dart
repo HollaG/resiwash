@@ -377,7 +377,10 @@ class LocalNotificationService {
     );
   }
 
-  void showClaimedMachineNowInUseNotification(
+  // This method has two uses:
+  // 1. to show timer when claim machine when in use
+  // 2. to show timer when machine is available, before going in use
+  void showNotificationAndStartTimer(
     String title,
     String body,
     int secondsTillCompletion,
