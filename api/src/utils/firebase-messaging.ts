@@ -263,12 +263,13 @@ export const sendNewlyClaimedMachineNotification = async ({
 
   if (machine.currentStatus === MachineStatus.AVAILABLE) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} claimed.`;
-    body = `Machine status on app will update once you start the machine.`;
 
     const expectedEndTime =
       Date.now() +
       (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
     body = `Expected to finish by [[ expectedEndTime ]].`;
+    body = `Remember to start your machine! Expected to finish around [[ expectedEndTime ]].`
+
     secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
 
 
