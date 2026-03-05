@@ -232,7 +232,7 @@ Future<void> main() async {
   // 4) INITIALIZE YOUR SERVICES
   // ------------------------------------------------------------
   await sl<FirebaseNotificationService>().initialize();
-  await sl<LiveNotificationService>().initialize();
+  // await sl<LiveNotificationService>().initialize();
 
   // ------------------------------------------------------------
   // 5) RUN THE APP

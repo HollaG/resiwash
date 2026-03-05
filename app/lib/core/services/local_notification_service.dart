@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:live_activities/live_activities.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
@@ -27,6 +28,8 @@ class LocalNotificationService {
   late AndroidNotificationChannel pokeChannel;
   late AndroidNotificationChannel channelCountdown;
 
+  final _liveActivitiesPlugin = LiveActivities();
+
   // iOS categories
   late DarwinNotificationCategory subscriptionCategory;
   late DarwinNotificationCategory claimedCategory;
@@ -43,6 +46,9 @@ class LocalNotificationService {
   Future<void> initialize() async {
     await _setupAndroidChannels();
     await _setupIOSCategories();
+    if (Platform.isIOS) {
+      await _liveActivitiesPlugin.init(appGroupId: 'group.com.resiwash.app');
+    }
   }
 
   Future<void> _setupAndroidChannels() async {
@@ -381,11 +387,12 @@ class LocalNotificationService {
   // This method has two uses:
   // 1. to show timer when claim machine when in use
   // 2. to show timer when machine is available, before going in use
-  void showNotificationAndStartTimer(
+  Future<void> showNotificationAndStartTimer(
     String title,
     String body,
     int secondsTillCompletion,
-  ) {
+    String machineId,
+  ) async {
     appLog.i("Showing claimed machine in use notification: $title");
     // 1. start a system timer (TODO)
 
@@ -395,6 +402,23 @@ class LocalNotificationService {
         title: title,
         skipUi: false,
       );
+    } else {
+      try {
+        final startDate = DateTime.now();
+        final endDate = startDate.add(Duration(seconds: secondsTillCompletion));
+
+        // Ensure no stale activities are blocking the queue (Apple rate limits to max 5 around same time)
+        await _liveActivitiesPlugin.endAllActivities();
+
+        final result = await _liveActivitiesPlugin.createActivity(machineId, {
+          'machineName': title,
+          'startDate': startDate.millisecondsSinceEpoch.toString(),
+          'endDate': endDate.millisecondsSinceEpoch.toString(),
+        });
+        appLog.i("Live activity created successfully: $result");
+      } catch (e) {
+        appLog.e("Error creating live activity: $e");
+      }
     }
     // 2. Show a normal notification saying machine is in use
     try {

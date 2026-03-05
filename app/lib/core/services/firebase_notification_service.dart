@@ -114,6 +114,8 @@ class FirebaseNotificationService {
           final showTimer =
               (message.data['forceShowTimer'] as String?) == 'true';
 
+          final machineId = message.data['machineId'] as String;
+
           // if secondsTillCompletion is not null, calculate expected end time and replace "[[ expectedEndTime ]]" in both title and body
           if (secondsTillCompletion != null) {
             final expectedEndTime = DateTime.now().add(
@@ -144,6 +146,7 @@ class FirebaseNotificationService {
               title,
               body,
               secondsTillCompletion ?? 0,
+              machineId,
             );
             return;
           }
@@ -158,6 +161,7 @@ class FirebaseNotificationService {
                 title,
                 body,
                 secondsTillCompletion ?? 0,
+                machineId,
               );
               break;
             case MachineStatus.finishing:

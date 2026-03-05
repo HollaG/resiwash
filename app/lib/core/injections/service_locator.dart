@@ -37,5 +37,5 @@ Future<void> setupServiceLocator() async {
 
   setupMyMachinesServiceLocator();
 
-  sl.registerSingleton<LiveNotificationService>(LiveNotificationService());
+  // sl.registerSingleton<LiveNotificationService>(LiveNotificationService());
 }
