@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyA7Aq4NMnEme3iSXZ9LSpNVgv_Uc8w1ggQ</string>
+	<key>GCM_SENDER_ID</key>
+	<string>339208394757</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.resiwash.app</string>
+	<key>PROJECT_ID</key>
+	<string>resiwash-ed0c2</string>
+	<key>STORAGE_BUCKET</key>
+	<string>resiwash-ed0c2.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:339208394757:ios:b4426d00da7d06898ae46c</string>
+</dict>
+</plist>

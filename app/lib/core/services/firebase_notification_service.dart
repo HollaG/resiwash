@@ -23,7 +23,29 @@ class FirebaseNotificationService {
 
   Future<String> _getPermission() async {
     await _firebaseMessaging.requestPermission();
-    return await _firebaseMessaging.getToken() ?? "";
+
+    if (Platform.isIOS) {
+      String? apnsToken = await _firebaseMessaging.getAPNSToken();
+      int retries = 0;
+      while (apnsToken == null && retries < 5) {
+        await Future.delayed(const Duration(seconds: 1));
+        apnsToken = await _firebaseMessaging.getAPNSToken();
+        retries++;
+      }
+      if (apnsToken == null) {
+        appLog.e(
+          "[FirebaseNotificationService] APNS token not received after 5 seconds",
+        );
+        return "";
+      }
+    }
+
+    try {
+      return await _firebaseMessaging.getToken() ?? "";
+    } catch (e) {
+      appLog.e("[FirebaseNotificationService] Error getting FCM token: $e");
+      return "";
+    }
   }
 
   /// When the app is opened from a FIREBASE notification, NOT a local notification
@@ -232,8 +254,16 @@ class FirebaseNotificationService {
       // https://firebase.flutter.dev/docs/messaging/notifications/
 
       // print the token for debug
-      final fcmToken = await _firebaseMessaging.getToken();
-      print('FCM Token: $fcmToken');
+      try {
+        if (Platform.isIOS) {
+          // wait briefly just in case, though _getPermission handles the main wait
+          await Future.delayed(const Duration(seconds: 2));
+        }
+        final fcmToken = await _firebaseMessaging.getToken();
+        print('FCM Token: $fcmToken');
+      } catch (e) {
+        print("Could not get FCM token during initialization: $e");
+      }
     } catch (e) {
       print("Error initializing permissions: $e");
     }
