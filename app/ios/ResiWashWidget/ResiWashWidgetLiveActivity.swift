@@ -112,7 +112,7 @@ struct ResiWashWidgetLiveActivity: Widget {
                 if !isFinished {
                 
                     Text(timerInterval: Date()...endDate, countsDown: true)
-                        .frame(maxWidth: 32)
+                        .frame()
                     
                 } else {
                     Text("Done")

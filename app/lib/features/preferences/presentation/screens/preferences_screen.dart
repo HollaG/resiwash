@@ -50,23 +50,62 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                         child: Column(
                           spacing: 20,
                           children: [
-                            // default cycle time (washer)
-                            MachineDefaultCycle(
-                              machineType: MachineType.washer,
-                            ),
-
-                            MachineDefaultCycle(machineType: MachineType.dryer),
-
-                            // default cycle time (dryer)
-                            Divider(),
-                            Text(
-                              "Current build version: ${buildVersion}",
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Set claim defaults",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.headlineSmall,
+                                      ),
+                                      RichText(
+                                        text: TextSpan(
+                                          text:
+                                              "When marking a machine as in use, you can bypass the cycle time selection screen by enabling the switch and choosing your typical cycle time. Note that you can still edit the cycle time after marking.",
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              child: Column(
+                                spacing: 8,
+                                children: [
+                                  // default cycle time (washer)
+                                  MachineDefaultCycle(
+                                    machineType: MachineType.washer,
+                                  ),
+
+                                  MachineDefaultCycle(
+                                    machineType: MachineType.dryer,
+                                  ),
+
+                                  // default cycle time (dryer)
+                                  Divider(),
+                                  Text(
+                                    "Current build version: ${buildVersion}",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),

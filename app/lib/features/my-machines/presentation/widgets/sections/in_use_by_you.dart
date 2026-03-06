@@ -217,9 +217,39 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                         "You have not marked any machines as in use. ",
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      Text(
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: "Swipe right",
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            TextSpan(text: " on a machine, "),
+                            TextSpan(
+                              text: "scan a QR code",
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            TextSpan(text: ", or "),
+                            TextSpan(
+                              text: "tap your phone",
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            TextSpan(
+                              text:
+                                  " on the NFC tag to mark a machine as in use by you.",
+                            ),
+                          ],
+                        ),
                         textAlign: TextAlign.center,
-                        "Swipe right on a machine, scan a QR code, or tap your phone on the NFC tag to mark a machine as in use by you.",
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       MachineRowSlidableExplanation(

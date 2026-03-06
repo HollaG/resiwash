@@ -103,7 +103,7 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
               color: Theme.of(context).colorScheme.secondary,
             ),
           ),
-          subtitle: Text("Bypass the cycle time selection screen"),
+          // subtitle: Text("Bypass the cycle time selection screen"),
         ),
 
         AnimatedSize(

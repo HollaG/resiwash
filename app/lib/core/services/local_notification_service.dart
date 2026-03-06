@@ -42,6 +42,9 @@ class LocalNotificationService {
   // static Notification IDs
   static const int claimedTimerNotificationId = 0;
 
+  // Map machine IDs to the Live Activity notification ID
+  static final Map<String, String> notificationIds = {};
+
   // Initialize notification channels and categories
   Future<void> initialize() async {
     await _setupAndroidChannels();
@@ -433,6 +436,8 @@ class LocalNotificationService {
         }
         appLog.i("Live activity created successfully: $activityId");
 
+        notificationIds[machineId] = activityId;
+
         // Set a timer to update the activity to "finished" state when it completes
         Timer(Duration(seconds: secondsTillCompletion), () {
           appLog.i("Live activity finished: $machineId for id $activityId");
@@ -518,5 +523,17 @@ class LocalNotificationService {
   /// Cancel all notifications
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  // Only for iOS!
+  Future<void> cancelLiveActivity(String machineId) async {
+    final activityId = notificationIds[machineId];
+    if (activityId != null) {
+      try {
+        await _liveActivitiesPlugin.endActivity(activityId);
+      } catch (e) {
+        appLog.i(e);
+      }
+    }
   }
 }

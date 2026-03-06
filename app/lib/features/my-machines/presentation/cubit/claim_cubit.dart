@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
@@ -325,6 +327,10 @@ class ClaimCubit extends Cubit<ClaimState> {
           // Cancel claimed notification
           sl<LocalNotificationService>().cancelClaimedNotification();
 
+          if (Platform.isIOS) {
+            sl<LocalNotificationService>().cancelLiveActivity(machineId);
+          }
+
           // Reload state to reflect changes
           final updatedClaimedMetadata = _sharedPreferencesService
               .getClaimedMachinesMetadata();
@@ -478,7 +484,7 @@ class ClaimCubit extends Cubit<ClaimState> {
       return didUpdate;
     } catch (e) {
       appLog.e('Error updating cycle time for machine $machineId: $e');
-      
+
       return false;
     }
   }
