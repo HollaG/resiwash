@@ -28,24 +28,36 @@ struct ResiWashWidgetLiveActivity: Widget {
             
             let endDate = Date(timeIntervalSince1970: endDateDouble / 1000.0)
             let startDate = Date(timeIntervalSince1970: startDateDouble / 1000.0)
+            let isFinished = Date() >= endDate
             
             VStack {
                 HStack {
                     Text(machineName)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .lineLimit(1)
                     Spacer()
-                    Text(timerInterval: Date()...endDate, countsDown: true)
-                        .font(.headline)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundColor(.primary)
+                    if !isFinished {
+                        Text(timerInterval: Date()...endDate, countsDown: true)
+                            .font(.headline)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
                 .padding(.bottom, 4)
                 
-                ProgressView(timerInterval: startDate...endDate, countsDown: false)
-                    .tint(.cyan)
+                if isFinished {
+                    Text("Your machine is complete! Please collect ASAP")
+                        .font(.subheadline)
+                        .bold()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ProgressView(timerInterval: startDate...endDate, countsDown: false)
+                        .tint(.cyan)
+                }
             }
             .padding(16)
+            .foregroundColor(.white)
+            .activityBackgroundTint(isFinished ? Color(red: 0x51/255.0, green: 0xCF/255.0, blue: 0x66/255.0) : Color(red: 0x51/255.0, green: 0x5B/255.0, blue: 0x92/255.0))
+            .activitySystemActionForegroundColor(.white)
 
         } dynamicIsland: { context in
             let machineName = sharedDefault.string(forKey: context.attributes.prefixedKey("machineName")) ?? "ResiWash"
@@ -55,6 +67,7 @@ struct ResiWashWidgetLiveActivity: Widget {
             let startDateDouble = Double(startDateString) ?? 0.0
             let endDate = Date(timeIntervalSince1970: endDateDouble / 1000.0)
             let startDate = Date(timeIntervalSince1970: startDateDouble / 1000.0)
+            let isFinished = Date() >= endDate
 
             return DynamicIsland {
                 // Expanded UI goes here.
@@ -63,24 +76,39 @@ struct ResiWashWidgetLiveActivity: Widget {
                         .font(.headline)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(timerInterval: Date()...endDate, countsDown: true)
-                        .font(.subheadline)
-                        .multilineTextAlignment(.trailing)
+                    if !isFinished {
+                        Text(timerInterval: Date()...endDate, countsDown: true)
+                            .font(.subheadline)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    ProgressView(timerInterval: startDate...endDate, countsDown: false)
-                        .tint(.cyan)
-                        .padding(.top, 4)
+                    if isFinished {
+                        Text("Your machine is complete! Please collect ASAP")
+                            .font(.subheadline)
+                            .bold()
+                            .foregroundColor(.green)
+                            .padding(.top, 4)
+                    } else {
+                        ProgressView(timerInterval: startDate...endDate, countsDown: false)
+                            .tint(.cyan)
+                            .padding(.top, 4)
+                    }
                 }
             } compactLeading: {
-                Image(systemName: "washer")
-                    .foregroundColor(.cyan)
+                Image(systemName: isFinished ? "checkmark.circle.fill" : "washer")
+                    .foregroundColor(isFinished ? .green : .cyan)
             } compactTrailing: {
-                Text(timerInterval: Date()...endDate, countsDown: true)
-                    .frame(maxWidth: 32)
+                if !isFinished {
+                    Text(timerInterval: Date()...endDate, countsDown: true)
+                        .frame(maxWidth: 32)
+                } else {
+                    Text("Done")
+                        .foregroundColor(.green)
+                }
             } minimal: {
-                Image(systemName: "washer")
-                    .foregroundColor(.cyan)
+                Image(systemName: isFinished ? "checkmark.circle.fill" : "washer")
+                    .foregroundColor(isFinished ? .green : .cyan)
             }
             .widgetURL(URL(string: "resiwash://"))
             .keylineTint(Color.cyan)
