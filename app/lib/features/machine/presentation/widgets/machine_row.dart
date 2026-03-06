@@ -526,43 +526,6 @@ class _MachineRowState extends State<MachineRow>
 
                             print("debug didClaim is $didClaim");
 
-                            // final completer = Completer<void>();
-                            // // Wait for the claim operation to complete before closing the slidable
-                            // final subscription = context
-                            //     .read<ClaimCubit>()
-                            //     .stream
-                            //     .where(
-                            //       (state) =>
-                            //           (state is claim_state.Claimed &&
-                            //               state.operatingMachine.machineId ==
-                            //                   widget.machine.machineId) ||
-                            //           (state is claim_state.Unclaimed &&
-                            //               state.operatingMachine.machineId ==
-                            //                   widget.machine.machineId) ||
-                            //           (state is claim_state.ClaimOperationError &&
-                            //               state.operatingMachine.machineId ==
-                            //                   widget.machine.machineId),
-                            //     )
-                            //     .listen((state) {
-                            //       if ((state is claim_state.Claimed &&
-                            //               state.operatingMachine.machineId ==
-                            //                   widget.machine.machineId) ||
-                            //           (state is claim_state.Unclaimed &&
-                            //               state.operatingMachine.machineId ==
-                            //                   widget.machine.machineId)) {
-                            //         completer.complete();
-                            //       }
-
-                            //       if (state
-                            //               is claim_state.ClaimOperationError &&
-                            //           state.operatingMachine.machineId ==
-                            //               widget.machine.machineId) {
-                            //         completer.complete();
-                            //       }
-                            //     });
-
-                            // redirect to MyMachines page after claiming
-                            // completer.future.then((_) {
                             if (mounted && context.mounted && didClaim) {
                               context.goNamed(AppRoutes.myMachinesName);
                             }
@@ -575,7 +538,7 @@ class _MachineRowState extends State<MachineRow>
                     ),
                     children: [
                       CustomSlidableAction(
-                        onPressed: (context) async {
+                        onPressed: (actionContext) async {
                           if (claimState == ClaimState.loading) return;
 
                           if (claimState == ClaimState.claimed) {
@@ -589,14 +552,20 @@ class _MachineRowState extends State<MachineRow>
 
                             // Only claim if user confirmed (didn't cancel)
                             if (cycleTime != null && mounted) {
-                              await _claimCubit.claimMachine(
+                              final didClaim = await _claimCubit.claimMachine(
                                 widget.machine,
                                 cycleTime: cycleTime,
                               );
-                              // redirect to MyMachines page after claiming
-                              if (mounted && context.mounted) {
+
+                              print(
+                                "debug didClaim is $didClaim, mounted is $mounted",
+                              );
+
+                              if (mounted && context.mounted && didClaim) {
+                                print("debug going!");
                                 context.goNamed(AppRoutes.myMachinesName);
                               }
+                              // });
                             }
                           }
                         },
