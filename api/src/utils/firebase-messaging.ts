@@ -350,6 +350,9 @@ export const sendNewlyClaimedMachineNotification = async ({
       machineCurrentStatus: machine.currentStatus,
       machinePreviousStatus: machine.previousStatus,
 
+      machineType: machine.type.toString().toLowerCase(),
+
+
       channel: "claimed",
       forceShowTimer: "true",
 
