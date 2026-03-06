@@ -115,6 +115,14 @@ class FirebaseNotificationService {
               (message.data['forceShowTimer'] as String?) == 'true';
 
           final machineId = message.data['machineId'] as String;
+          final machineName = message.data['machineName'] as String;
+          final machineRoomName = message.data['machineRoomName'] as String;
+
+          print("debug raw machineType is ${message.data['machineType']}");
+          final machineType = MachineType.values.firstWhere(
+            (e) => e.name == message.data['machineType'],
+            orElse: () => MachineType.unknown,
+          );
 
           // if secondsTillCompletion is not null, calculate expected end time and replace "[[ expectedEndTime ]]" in both title and body
           if (secondsTillCompletion != null) {
@@ -147,6 +155,9 @@ class FirebaseNotificationService {
               body,
               secondsTillCompletion ?? 0,
               machineId,
+              machineName,
+              machineRoomName,
+              machineType,
             );
             return;
           }
@@ -162,6 +173,9 @@ class FirebaseNotificationService {
                 body,
                 secondsTillCompletion ?? 0,
                 machineId,
+                machineName,
+                machineRoomName,
+                machineType,
               );
               break;
             case MachineStatus.finishing:

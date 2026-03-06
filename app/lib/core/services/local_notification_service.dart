@@ -387,15 +387,19 @@ class LocalNotificationService {
   // This method has two uses:
   // 1. to show timer when claim machine when in use
   // 2. to show timer when machine is available, before going in use
+  // Special: due to the need to have smaller notifications and customized text,
+  // only this method will require separate names to be passed in
   Future<void> showNotificationAndStartTimer(
     String title,
     String body,
     int secondsTillCompletion,
     String machineId,
+    String machineName,
+    String roomName,
+    MachineType machineType,
   ) async {
     appLog.i("Showing claimed machine in use notification: $title");
     // 1. start a system timer (TODO)
-
     if (Platform.isAndroid) {
       FlutterAlarmClock.createTimer(
         length: secondsTillCompletion,
@@ -405,17 +409,37 @@ class LocalNotificationService {
     } else {
       try {
         final startDate = DateTime.now();
-        final endDate = startDate.add(Duration(seconds: secondsTillCompletion));
+        final endDate = DateTime.now().add(
+          Duration(seconds: secondsTillCompletion),
+        );
 
         // Ensure no stale activities are blocking the queue (Apple rate limits to max 5 around same time)
-        await _liveActivitiesPlugin.endAllActivities();
+        // await _liveActivitiesPlugin.endAllActivities();
 
-        final result = await _liveActivitiesPlugin.createActivity(machineId, {
-          'machineName': title,
-          'startDate': startDate.millisecondsSinceEpoch.toString(),
-          'endDate': endDate.millisecondsSinceEpoch.toString(),
+        print("debug machinetype is $machineType ${machineType.name}");
+
+        final activityId = await _liveActivitiesPlugin
+            .createActivity(machineId, {
+              'machineName': machineName,
+              'roomName': roomName,
+              'startDate': startDate.millisecondsSinceEpoch.toString(),
+              'endDate': endDate.millisecondsSinceEpoch.toString(),
+              'isFinished': false,
+              'machineType': machineType.name,
+            });
+
+        if (activityId == null) {
+          throw Exception("Live activity creation failed: $machineId");
+        }
+        appLog.i("Live activity created successfully: $activityId");
+
+        // Set a timer to update the activity to "finished" state when it completes
+        Timer(Duration(seconds: secondsTillCompletion), () {
+          appLog.i("Live activity finished: $machineId for id $activityId");
+          _liveActivitiesPlugin.updateActivity(activityId, {
+            'isFinished': true,
+          });
         });
-        appLog.i("Live activity created successfully: $result");
       } catch (e) {
         appLog.e("Error creating live activity: $e");
       }

@@ -20,7 +20,7 @@ struct ResiWashWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LiveActivitiesAppAttributes.self) { context in
             // Lock screen/banner UI goes here
-            let machineName = sharedDefault.string(forKey: context.attributes.prefixedKey("machineName")) ?? "ResiWash"
+            let machineName = sharedDefault.string(forKey: context.attributes.prefixedKey("machineName")) ?? "Machine"
             let endDateString = sharedDefault.string(forKey: context.attributes.prefixedKey("endDate")) ?? "0"
             let startDateString = sharedDefault.string(forKey: context.attributes.prefixedKey("startDate")) ?? "0"
             let endDateDouble = Double(endDateString) ?? 0.0
@@ -28,11 +28,15 @@ struct ResiWashWidgetLiveActivity: Widget {
             
             let endDate = Date(timeIntervalSince1970: endDateDouble / 1000.0)
             let startDate = Date(timeIntervalSince1970: startDateDouble / 1000.0)
-            let isFinished = Date() >= endDate
+            let isFinishedExplicit = sharedDefault.bool(forKey: context.attributes.prefixedKey("isFinished"))
+            let isFinished = isFinishedExplicit || Date() >= endDate
+
+            let roomName = sharedDefault.string(forKey: context.attributes.prefixedKey("roomName")) ?? "Room"
+            let headerText = machineName + " @ " + roomName + (isFinished ? " done!" : " running...")
             
             VStack {
                 HStack {
-                    Text(machineName)
+                    Text(headerText)
                         .font(.headline)
                         .lineLimit(1)
                     Spacer()
@@ -45,7 +49,7 @@ struct ResiWashWidgetLiveActivity: Widget {
                 .padding(.bottom, 4)
                 
                 if isFinished {
-                    Text("Your machine is complete! Please collect ASAP")
+                    Text("Your machine is complete! Please collect ASAP.")
                         .font(.subheadline)
                         .bold()
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -61,18 +65,24 @@ struct ResiWashWidgetLiveActivity: Widget {
 
         } dynamicIsland: { context in
             let machineName = sharedDefault.string(forKey: context.attributes.prefixedKey("machineName")) ?? "ResiWash"
+            let roomName = sharedDefault.string(forKey: context.attributes.prefixedKey("roomName")) ?? "Room"
             let endDateString = sharedDefault.string(forKey: context.attributes.prefixedKey("endDate")) ?? "0"
             let startDateString = sharedDefault.string(forKey: context.attributes.prefixedKey("startDate")) ?? "0"
             let endDateDouble = Double(endDateString) ?? 0.0
             let startDateDouble = Double(startDateString) ?? 0.0
             let endDate = Date(timeIntervalSince1970: endDateDouble / 1000.0)
             let startDate = Date(timeIntervalSince1970: startDateDouble / 1000.0)
-            let isFinished = Date() >= endDate
+            let isFinishedExplicit = sharedDefault.bool(forKey: context.attributes.prefixedKey("isFinished"))
+            let isFinished = isFinishedExplicit || Date() >= endDate
+
+            let machineType = sharedDefault.string(forKey: context.attributes.prefixedKey("machineName"))
+
+            let title = machineName + " @ " + roomName + (isFinished ? " done!" : " running...")
 
             return DynamicIsland {
                 // Expanded UI goes here.
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(machineName)
+                    Text(title)
                         .font(.headline)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -100,8 +110,10 @@ struct ResiWashWidgetLiveActivity: Widget {
                     .foregroundColor(isFinished ? .green : .cyan)
             } compactTrailing: {
                 if !isFinished {
+                
                     Text(timerInterval: Date()...endDate, countsDown: true)
                         .frame(maxWidth: 32)
+                    
                 } else {
                     Text("Done")
                         .foregroundColor(.green)
