@@ -83,13 +83,29 @@ class NotClaimedError extends ClaimError {
 export const unclaimMachine = async (machineId: number, fcmToken: string) => {
   const machineRepository = AppDataSource.getRepository(Machine);
 
-  const machine = await machineRepository.findOne({
-    where: { machineId: Number(machineId) },
-
-  });
+  const machine = await machineRepository
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.claim", "claim")
+    .addSelect("claim.fcmToken")
+    .where("machine.machineId = :machineId", { machineId: Number(machineId) })
+    .getOne();
 
   if (machine) {
-    // machine.currentClaimantToken = null;
+    const currentClaimToken = machine.claim?.fcmToken;
+
+    if (!currentClaimToken) {
+      console.log(
+        `Machine ${machineId} has no active claim when trying to unclaim for ${fcmToken}`,
+      );
+      return;
+    }
+
+    if (currentClaimToken !== fcmToken) {
+      console.log(
+        `Skip unclaim for machine ${machineId}: token mismatch (${fcmToken} !== ${currentClaimToken})`,
+      );
+      return;
+    }
 
     machine.claimId = null; // remove the claim association but leave it in the claim history
 
