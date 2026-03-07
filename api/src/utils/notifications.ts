@@ -102,7 +102,10 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
       return;
     }
 
+
+
     machine.claimId = null; // remove the claim association but leave it in the claim history
+    machine.claim = null;
 
     await machineRepository.save(machine);
 
