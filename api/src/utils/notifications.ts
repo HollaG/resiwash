@@ -100,13 +100,6 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
       return;
     }
 
-    if (currentClaimToken !== fcmToken) {
-      console.log(
-        `Skip unclaim for machine ${machineId}: token mismatch (${fcmToken} !== ${currentClaimToken})`,
-      );
-      return;
-    }
-
     machine.claimId = null; // remove the claim association but leave it in the claim history
 
     await machineRepository.save(machine);
