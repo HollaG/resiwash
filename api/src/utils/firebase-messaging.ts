@@ -410,8 +410,11 @@ export const sendMachineGroupStatusChangedNotification = async ({
     .where("machine.machineId = :id", { id: machineId })
     .getOne();
   let cycleTimeInfo = "";
-  if (machine.claim && machine.claim.cycleTime) { // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
-    cycleTimeInfo = `Expected to finish in approx. ${machine.claim.cycleTime} minutes. `;
+  if (machine.claim && machine.claim.cycleTime && (machine.currentStatus === MachineStatus.FINISHING || machine.currentStatus === MachineStatus.IN_USE)) { // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
+    const lastAvailableTime = machine.lastAvailableTime ? machine.lastAvailableTime.getTime() : Date.now();
+    const expectedEndTime = lastAvailableTime + machine.claim.cycleTime * 60000;
+    const minutesLeft = Math.ceil((expectedEndTime - Date.now()) / 60000);
+    cycleTimeInfo = `Expected to finish in approx. ${minutesLeft} minutes. `;
   }
 
   const message: CustomMessage = {
