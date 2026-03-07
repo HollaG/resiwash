@@ -94,9 +94,7 @@ export const claimMachine = expressAsyncHandler(
             cycleTime,
           });
 
-          console.log(
-            `Machine ${machineId} already claimed by ${fcmToken}, not setting status to IN_USE again`,
-          );
+
           // return sendErrorResponse(res, "Machine already claimed by this user", 400);
 
 

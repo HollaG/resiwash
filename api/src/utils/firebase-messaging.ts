@@ -411,12 +411,7 @@ export const sendMachineGroupStatusChangedNotification = async ({
     .getOne();
   let cycleTimeInfo = "";
   if (machine.claim && machine.claim.cycleTime) { // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
-    cycleTimeInfo = ` Expected to finish by ${new Date(
-      machine.lastAvailableTime!.getTime() + machine.claim.cycleTime * 60000,
-    ).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })} (${machine.claim.cycleTime}m cycle). `;
+    cycleTimeInfo = `Expected to finish in approx. ${machine.claim.cycleTime} minutes. `;
   }
 
   const message: CustomMessage = {
