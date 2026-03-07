@@ -59,7 +59,10 @@ class FirebaseNotificationService {
     // handleRemoteMessage(message);
   }
 
-  void handleRemoteMessage(RemoteMessage message) {
+  void handleRemoteMessage(
+    RemoteMessage message, {
+    bool fromBackground = false,
+  }) {
     // Handle the message when the app is in the foreground
     appLog.i(
       "[FirebaseNotificationService] Message received in foreground: $message",
@@ -89,8 +92,10 @@ class FirebaseNotificationService {
       switch (channel) {
         case CustomFirebaseMessageChannel.subscribed:
           // Handle subscribed channel
-          sl<LocalNotificationService>().showSubscribed(message);
-
+          if (!fromBackground) {
+            // only show local notification if the message is received in foreground
+            sl<LocalNotificationService>().showSubscribed(message);
+          }
           break;
 
         case CustomFirebaseMessageChannel.claimed:
@@ -227,7 +232,10 @@ class FirebaseNotificationService {
           break;
         case CustomFirebaseMessageChannel.poke:
           // Handle poke channel
-          sl<LocalNotificationService>().showPoke(message);
+          if (!fromBackground) {
+            // only show local notification if the message is received in foreground
+            sl<LocalNotificationService>().showPoke(message);
+          }
           break;
         default:
           appLog.w("[FirebaseNotificationService] Unhandled channel: $channel");
@@ -253,23 +261,19 @@ class FirebaseNotificationService {
         _handleMessageWhenOpenedFromNotification,
       );
 
-      // When app is minimized but not closed
+      // When app is in foreground
       FirebaseMessaging.onMessage.listen(handleRemoteMessage);
 
       // NOTE: Background message handler must be registered in main.dart as a top-level function
       // Do not register it here to avoid null check errors
 
-      // IOS: display on foreground
+      // IOS: do NOT display on foreground (handled by LocalNotificationService)
       await FirebaseMessaging.instance
           .setForegroundNotificationPresentationOptions(
-            alert: true, // Required to display a heads up notification
+            alert: false, // Required to display a heads up notification
             badge: true,
             sound: true,
           );
-
-      // Android: display on foreground
-      // note: android is handled in android/app/src/main/AndroidManifest.xml:
-      // https://firebase.flutter.dev/docs/messaging/notifications/
 
       // print the token for debug
       try {

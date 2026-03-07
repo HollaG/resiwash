@@ -52,7 +52,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await sl<LocalNotificationService>().ensureInitializedForBackground();
 
   // Handle message
-  sl<FirebaseNotificationService>().handleRemoteMessage(message);
+  sl<FirebaseNotificationService>().handleRemoteMessage(message, fromBackground: true);
 
   return;
 }

@@ -90,22 +90,19 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                   MachineDefaultCycle(
                                     machineType: MachineType.dryer,
                                   ),
-
-                                  // default cycle time (dryer)
-                                  Divider(),
-                                  Text(
-                                    "Current build version: ${buildVersion}",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
-                                  ),
                                 ],
                               ),
+                            ),
+                            // default cycle time (dryer)
+                            Divider(),
+                            Text(
+                              "Current build version: ${buildVersion}",
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ],
                         ),
