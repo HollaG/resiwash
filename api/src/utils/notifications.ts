@@ -93,6 +93,8 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
   if (machine) {
     const currentClaimToken = machine.claim?.fcmToken;
 
+    console.log(`currentClaimToken is ${currentClaimToken}, trying to unclaim with ${fcmToken} for machine ${machineId}`);
+
     if (!currentClaimToken) {
       console.log(
         `Machine ${machineId} has no active claim when trying to unclaim for ${fcmToken}`,
