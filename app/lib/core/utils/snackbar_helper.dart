@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/main.dart';
 
 /// Helper class for showing snackbars throughout the app
@@ -20,7 +21,10 @@ class SnackbarHelper {
     bool isError = false,
   }) {
     final messenger = scaffoldMessengerKey.currentState;
-    if (messenger == null) return;
+    if (messenger == null) {
+      appLog.e("Snackbar messenger is null");
+      return;
+    }
 
     // Clear any existing snackbars
     messenger.clearSnackBars();

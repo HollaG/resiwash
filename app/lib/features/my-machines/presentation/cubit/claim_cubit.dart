@@ -8,6 +8,7 @@ import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
@@ -156,11 +157,19 @@ class ClaimCubit extends Cubit<ClaimState> {
     if (currentState is ClaimLoaded) {
       currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
       currentClaimedMachines = currentState.claimedMachines;
-    }
 
-    final oldClaimedMachineId = currentClaimedMachineMetadata.isNotEmpty
-        ? currentClaimedMachineMetadata.first.machineId
-        : null;
+      print(
+        "debug currentClaimedMachines.length: ${currentClaimedMachines?.length}",
+      );
+
+      // if (currentClaimedMachines != null && currentClaimedMachines.length > 4) {
+      //   SnackbarHelper.showInfo(
+      //     message:
+      //         "You can only claim up to 5 machines at a time. Please unclaim a machine before claiming another one.",
+      //   );
+      //   return false;
+      // }
+    }
 
     if (isClosed) return false;
     emit(

@@ -8,12 +8,14 @@ import 'package:live_activities/live_activities.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'dart:async';
 
 import "package:resiwash/features/machine/data/models/machine_model.dart";
 
 import '../../main.dart'; // import your global flutterLocalNotificationsPlugin
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 
 /// Service for managing local notifications
 ///
@@ -282,6 +284,11 @@ class LocalNotificationService {
         });
       } catch (e) {
         appLog.e("Error creating live activity: $e");
+        // show a snackbar warning saying that machine was claimed but timer could not be shown
+        SnackbarHelper.showInfo(
+          message:
+              "Timer could not be shown as there are already 5 timers (max possible at once)",
+        );
       }
     }
     // 2. Show a normal notification saying machine is in use
