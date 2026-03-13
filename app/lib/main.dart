@@ -14,6 +14,7 @@ import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/onboarding/presentation/screens/OnboardingScreen.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
@@ -52,7 +53,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await sl<LocalNotificationService>().ensureInitializedForBackground();
 
   // Handle message
-  sl<FirebaseNotificationService>().handleRemoteMessage(message, fromBackground: true);
+  sl<FirebaseNotificationService>().handleRemoteMessage(
+    message,
+    fromBackground: true,
+  );
 
   return;
 }
@@ -251,14 +255,24 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
   // late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+
+  late PageController _pageViewController;
+  late TabController _tabController;
+  int _currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     initDeepLinks();
+    _pageViewController = PageController(initialPage: _currentPageIndex);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: _currentPageIndex,
+    );
   }
 
   Future<void> initDeepLinks() async {
@@ -284,15 +298,6 @@ class _MyAppState extends State<MyApp> {
     TextTheme textTheme = createTextTheme(context);
     MaterialTheme theme = MaterialTheme(textTheme);
 
-    final routerApp = MaterialApp.router(
-      routerConfig: router,
-      title: 'ResiWash',
-      theme: theme.light().copyWith(textTheme: textTheme),
-      darkTheme: theme.dark().copyWith(textTheme: textTheme),
-      themeMode: ThemeMode.light,
-      scaffoldMessengerKey: scaffoldMessengerKey,
-    );
-
     return MultiBlocProvider(
       providers: [
         // Subscription cubit for managing machine notifications
@@ -306,7 +311,40 @@ class _MyAppState extends State<MyApp> {
           create: (_) => sl<RoomDetailCubit>(instanceName: 'roomCubit'),
         ),
       ],
-      child: routerApp,
+      child: MaterialApp.router(
+        routerConfig: router,
+        title: 'ResiWash',
+        theme: theme.light().copyWith(textTheme: textTheme),
+        darkTheme: theme.dark().copyWith(textTheme: textTheme),
+        themeMode: ThemeMode.light,
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        builder: (context, child) {
+          return PageView(
+            controller: _pageViewController,
+            onPageChanged: _handlePageViewChanged,
+            children: <Widget>[
+              const OnboardingScreen(),
+              child ?? const SizedBox.shrink(),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _handlePageViewChanged(int currentPageIndex) {
+    _tabController.index = currentPageIndex;
+    setState(() {
+      _currentPageIndex = currentPageIndex;
+    });
+  }
+
+  void _updateCurrentPageIndex(int index) {
+    _tabController.index = index;
+    _pageViewController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
     );
   }
 }
