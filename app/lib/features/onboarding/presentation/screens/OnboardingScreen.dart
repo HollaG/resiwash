@@ -6,7 +6,9 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // Note: all back button presses while in OnboardingScreen should return back to the main view
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+  const OnboardingScreen({super.key, this.onFinished});
+
+  final VoidCallback? onFinished;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -15,28 +17,69 @@ class OnboardingScreen extends StatefulWidget {
 enum OnboardingPage { home, check, claim, contact }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  final GlobalKey<NavigatorState> _onboardingNavigatorKey =
+      GlobalKey<NavigatorState>();
+  static const List<String> _routeNames = [
+    '/overview',
+    '/check',
+    '/claim',
+    '/contact',
+  ];
+
   int _currentPage = 0;
 
-  Widget getCurrentPageWidget() {
-    switch (OnboardingPage.values[_currentPage]) {
-      case OnboardingPage.home:
-        return Overview(); // Show the HomeScreen behind the onboarding overlay
-      case OnboardingPage.check:
-      //   return _buildCheckPage();
-      case OnboardingPage.claim:
-      //   return _buildClaimPage();
-      case OnboardingPage.contact:
-        //   return _buildContactPage();
-
-        return Text("Home");
+  void _goToIndex(int index) {
+    if (index < 0) {
+      widget.onFinished?.call();
+      return;
     }
-  }
 
-  bool get showHomePage => _currentPage == 0;
-  void _handlePageViewChanged(int index) {
+    if (index >= OnboardingPage.values.length) {
+      widget.onFinished?.call();
+      return;
+    }
+
     setState(() {
       _currentPage = index;
     });
+
+    _onboardingNavigatorKey.currentState?.pushNamedAndRemoveUntil(
+      _routeNames[index],
+      (route) => false,
+    );
+  }
+
+  Route<dynamic> _onGenerateOnboardingRoute(RouteSettings settings) {
+    final String routeName = settings.name ?? _routeNames.first;
+
+    Widget page;
+    switch (routeName) {
+      case '/overview':
+        page = Overview(
+          onCheckTap: () => _goToIndex(1),
+          onClaimTap: () => _goToIndex(2),
+          onContactTap: () => _goToIndex(3),
+        );
+        break;
+      case '/check':
+        page = Claim();
+        break;
+      case '/claim':
+        page = const Claim();
+        break;
+      case '/contact':
+        page = const _OnboardingPlaceholder(title: 'Contact');
+        break;
+      default:
+        page = Overview(
+          onCheckTap: () => _goToIndex(1),
+          onClaimTap: () => _goToIndex(2),
+          onContactTap: () => _goToIndex(3),
+        );
+        break;
+    }
+
+    return MaterialPageRoute<void>(settings: settings, builder: (_) => page);
   }
 
   @override
@@ -63,30 +106,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Manage showing the overview home
-              AnimatedSize(
-                duration: Duration(milliseconds: 300),
-                child: SizedBox(
-                  height: showHomePage ? null : 0,
-                  child: Overview(),
+              Expanded(
+                child: Navigator(
+                  key: _onboardingNavigatorKey,
+                  initialRoute: _routeNames.first,
+                  onGenerateRoute: _onGenerateOnboardingRoute,
                 ),
               ),
-
-              // Manage Check view
-              if (_currentPage == 1)
-                const Expanded(child: Claim())
-              else
-                const Spacer(),
-
+              SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // if (_currentPage > 1)
                   IconButton(
                     onPressed: () {
-                      setState(() {
-                        _currentPage--;
-                      });
+                      _goToIndex(_currentPage - 1);
                     },
                     icon: Icon(Icons.arrow_back),
                     color: context.accent.colorContainer,
@@ -103,9 +136,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Expanded(child: SizedBox()),
                   IconButton(
                     onPressed: () {
-                      setState(() {
-                        _currentPage++;
-                      });
+                      _goToIndex(_currentPage + 1);
                     },
                     icon: Icon(Icons.arrow_forward),
                     color: context.accent.colorContainer,
@@ -115,6 +146,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OnboardingPlaceholder extends StatelessWidget {
+  const _OnboardingPlaceholder({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        '$title page',
+        style: Theme.of(
+          context,
+        ).textTheme.headlineSmall?.copyWith(color: Colors.white),
       ),
     );
   }

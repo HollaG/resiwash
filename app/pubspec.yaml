@@ -59,6 +59,7 @@ flutter:
   assets:
     - assets/dryer.svg
     - assets/washer.svg
+    - assets/onboarding/claim_1.mp4
   fonts:
     - family: Open Sans
       fonts:

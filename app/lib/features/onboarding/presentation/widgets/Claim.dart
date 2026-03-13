@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
@@ -15,9 +17,9 @@ class Claim extends StatefulWidget {
 class _ClaimState extends State<Claim> {
   final CarouselController controller = CarouselController(initialItem: 1);
   final HeroMediaInfo mediaInfo = const HeroMediaInfo(
-    url: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
-    title: 'Claim Alerts',
-    subtitle: 'Get notified when your machine is done',
+    assetPath: 'assets/onboarding/claim_1.mp4',
+    title: 'Add rooms',
+    subtitle: '',
   );
 
   @override
@@ -29,71 +31,109 @@ class _ClaimState extends State<Claim> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      spacing: 6,
+      spacing: 16,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        OnboardingInfoCard(
-          title: "Check",
-          titleAccompany: " for availability",
-          body: "Learn how to check and interpret machine statuses",
-          onTap: () {
-            debugPrint('Card tapped.');
-          },
-          actionText: "I got it!",
-        ),
-
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            spacing: 2,
-            children: [
-              Row(
-                children: [
-                  MachineStatusIndicator(status: MachineStatus.available),
-                  SizedBox(width: 8),
-                  Text(
-                    "Available",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.success.colorContainer,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  MachineStatusIndicator(status: MachineStatus.inUse),
-                  SizedBox(width: 8),
-                  Text(
-                    "In Use",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.inUse.colorContainer,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  MachineStatusIndicator(status: MachineStatus.finishing),
-                  SizedBox(width: 8),
-                  Text(
-                    "Finishing (expected to finish in ~10 mins)",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: context.inUse.colorContainer,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+        Center(
+          child: Text(
+            "Claim",
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              color: Colors.white,
+              // fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
           ),
         ),
+        // OnboardingInfoCard(
+        //   id: "claim",
+        //   title: "Claim",
+        //   titleAccompany: " your machine",
+        //   body: Column(
+        //     children: [
+        //       Text(
+        //         "Learn how to claim machines & get timers on your phone",
+        //         style: Theme.of(
+        //           context,
+        //         ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+        //       ),
+        //     ],
+        //   ),
+        //   onTap: () {
+        //     // go back up
+        //     Navigator.of(context).pop();
+        //   },
+        //   actionText: "I got it!",
+        // ),
 
+        // Padding(
+        //   padding: const EdgeInsets.all(8.0),
+        //   child: Column(
+        //     spacing: 2,
+        //     children: [
+        //       Row(
+        //         children: [
+        //           MachineStatusIndicator(status: MachineStatus.available),
+        //           SizedBox(width: 8),
+        //           Text(
+        //             "Available",
+        //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        //               color: context.success.colorContainer,
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //       Row(
+        //         children: [
+        //           MachineStatusIndicator(status: MachineStatus.inUse),
+        //           SizedBox(width: 8),
+        //           Text(
+        //             "In Use",
+        //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        //               color: context.inUse.colorContainer,
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //       Row(
+        //         children: [
+        //           MachineStatusIndicator(status: MachineStatus.finishing),
+        //           SizedBox(width: 8),
+        //           Text(
+        //             "Finishing (expected to finish in ~10 mins)",
+        //             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+        //               color: context.inUse.colorContainer,
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //     ],
+        //   ),
+        // ),
+
+        // Expanded(
+        //   child: CarouselView.weighted(
+        //     controller: controller,
+        //     itemSnapping: true,
+        //     flexWeights: const <int>[1, 7, 1],
+        //     children: [HeroLayoutCard(mediaInfo: mediaInfo)],
+        //   ),
+        // ),
         Expanded(
-          child: CarouselView.weighted(
-            controller: controller,
-            itemSnapping: true,
-            flexWeights: const <int>[1, 7, 1],
-            children: [HeroLayoutCard(mediaInfo: mediaInfo)],
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: AspectRatio(
+                aspectRatio: 1080 / 2340,
+                child: HeroLayoutCard(mediaInfo: mediaInfo),
+              ),
+            ),
           ),
+        ),
+        Text(
+          "You can tap or scan the QR code pasted at the machines to activate the automatic timer.",
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.white),
         ),
       ],
     );
@@ -102,16 +142,25 @@ class _ClaimState extends State<Claim> {
 
 class HeroMediaInfo {
   const HeroMediaInfo({
-    required this.url,
+    this.url,
+    this.assetPath,
     required this.title,
     required this.subtitle,
-  });
+  }) : assert(
+         (url != null && url != '') || (assetPath != null && assetPath != ''),
+         'Either url or assetPath must be provided.',
+       );
 
-  final String url;
+  final String? url;
+  final String? assetPath;
   final String title;
   final String subtitle;
 
-  bool get isMp4 => url.toLowerCase().endsWith('.mp4');
+  bool get isAsset => assetPath != null && assetPath!.isNotEmpty;
+
+  String get source => isAsset ? assetPath! : url!;
+
+  bool get isMp4 => source.toLowerCase().endsWith('.mp4');
 }
 
 class HeroLayoutCard extends StatefulWidget {
@@ -135,7 +184,7 @@ class _HeroLayoutCardState extends State<HeroLayoutCard> {
   @override
   void didUpdateWidget(covariant HeroLayoutCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.mediaInfo.url != widget.mediaInfo.url) {
+    if (oldWidget.mediaInfo.source != widget.mediaInfo.source) {
       _disposeVideoController();
       _initializeMedia();
     }
@@ -146,9 +195,9 @@ class _HeroLayoutCardState extends State<HeroLayoutCard> {
       return;
     }
 
-    final controller = VideoPlayerController.networkUrl(
-      Uri.parse(widget.mediaInfo.url),
-    );
+    final controller = widget.mediaInfo.isAsset
+        ? VideoPlayerController.asset(widget.mediaInfo.source)
+        : VideoPlayerController.networkUrl(Uri.parse(widget.mediaInfo.source));
     _videoController = controller;
     controller
       ..setLooping(true)
@@ -174,7 +223,9 @@ class _HeroLayoutCardState extends State<HeroLayoutCard> {
 
   Widget _buildMedia() {
     if (!widget.mediaInfo.isMp4) {
-      return Image.network(widget.mediaInfo.url, fit: BoxFit.cover);
+      return widget.mediaInfo.isAsset
+          ? Image.asset(widget.mediaInfo.source, fit: BoxFit.cover)
+          : Image.network(widget.mediaInfo.source, fit: BoxFit.cover);
     }
 
     final controller = _videoController;
@@ -182,6 +233,7 @@ class _HeroLayoutCardState extends State<HeroLayoutCard> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    print("Video initialized with size: ${controller.value.size}");
     return FittedBox(
       fit: BoxFit.cover,
       child: SizedBox(
@@ -194,44 +246,64 @@ class _HeroLayoutCardState extends State<HeroLayoutCard> {
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.sizeOf(context).width;
-    return Stack(
-      alignment: AlignmentDirectional.bottomStart,
-      children: <Widget>[
-        ClipRect(
-          child: OverflowBox(
-            maxWidth: width * 7 / 8,
-            minWidth: width * 7 / 8,
-            child: _buildMedia(),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(18.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Text(
-                widget.mediaInfo.title,
-                overflow: TextOverflow.clip,
-                softWrap: false,
-                style: Theme.of(
-                  context,
-                ).textTheme.headlineLarge?.copyWith(color: Colors.white),
+    return Center(
+      child: AspectRatio(
+        aspectRatio: 1080 / 2340,
+        child: Stack(
+          fit: StackFit.expand,
+          alignment: AlignmentDirectional.bottomStart,
+          children: <Widget>[
+            ClipRect(child: _buildMedia()),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  Text(
+                    widget.mediaInfo.title,
+                    overflow: TextOverflow.clip,
+                    softWrap: false,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.headlineSmall?.copyWith(color: Colors.black),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    widget.mediaInfo.subtitle,
+                    overflow: TextOverflow.clip,
+                    softWrap: false,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                widget.mediaInfo.subtitle,
-                overflow: TextOverflow.clip,
-                softWrap: false,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.white),
+            ),
+            Positioned.fill(
+              child: ClipRect(
+                child: ShaderMask(
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black12,
+                      Colors.black54,
+                    ],
+                    stops: [0.45, 0.7, 1.0],
+                  ).createShader(rect),
+                  blendMode: BlendMode.dstIn,
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                    child: Container(color: Colors.black26),
+                  ),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

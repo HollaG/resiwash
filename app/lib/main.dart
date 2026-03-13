@@ -323,7 +323,7 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
             controller: _pageViewController,
             onPageChanged: _handlePageViewChanged,
             children: <Widget>[
-              const OnboardingScreen(),
+              OnboardingScreen(onFinished: () => _updateCurrentPageIndex(1)),
               child ?? const SizedBox.shrink(),
             ],
           );

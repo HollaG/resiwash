@@ -3,7 +3,16 @@ import 'package:resiwash/features/onboarding/presentation/widgets/OnboardingInfo
 import 'package:resiwash/theme.dart';
 
 class Overview extends StatelessWidget {
-  const Overview({Key? key}) : super(key: key);
+  const Overview({
+    Key? key,
+    required this.onCheckTap,
+    required this.onClaimTap,
+    required this.onContactTap,
+  }) : super(key: key);
+
+  final VoidCallback onCheckTap;
+  final VoidCallback onClaimTap;
+  final VoidCallback onContactTap;
 
   @override
   Widget build(BuildContext context) {
@@ -38,32 +47,42 @@ class Overview extends StatelessWidget {
           spacing: 16,
           children: [
             OnboardingInfoCard(
+              id: "check",
               title: "Check",
               titleAccompany: " for availability",
-              body: "Learn how to check and interpret machine statuses",
-              onTap: () {
-                debugPrint('Card tapped.');
-              },
+              body: Text(
+                "Learn how to check and interpret machine statuses",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+              ),
+              onTap: onCheckTap,
               actionText: "View",
             ),
             OnboardingInfoCard(
+              id: "claim",
               title: "Claim",
               titleAccompany: " your machine",
-              body:
-                  "See how ResiWash supports you with automatic timers & reminders.",
-              onTap: () {
-                debugPrint('Card tapped.');
-              },
+              body: Text(
+                "See how ResiWash supports you with automatic timers & reminders.",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+              ),
+              onTap: onClaimTap,
               actionText: "View",
             ),
             OnboardingInfoCard(
+              id: "contact",
               title: "Contact",
               titleAccompany: " previous users",
-              body:
-                  "Something left in the machine? Get in touch with the last user to sort it out.",
-              onTap: () {
-                debugPrint('Card tapped.');
-              },
+              body: Text(
+                "Something left in the machine? Get in touch with the last user to sort it out.",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+              ),
+              onTap: onContactTap,
               actionText: "View",
             ),
           ],
