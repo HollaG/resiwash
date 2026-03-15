@@ -27,7 +27,7 @@ class MobileScannerSimple extends StatefulWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Scan the QR code pasted on the machines to mark them as in use by you.',
+              'Scan the QR code pasted on the machines to claim & mark them as in use by you.',
             ),
             const Text(
               "A timer will be set automatically on your phone and you will be notified once your machine is done.",
@@ -38,7 +38,7 @@ class MobileScannerSimple extends StatefulWidget {
             ),
             Divider(),
             const Text(
-              "Please note that QR codes are only available in select locations. If you don't see a QR code on your machine, you can still mark it as in use by you through the app and receive notifications as normal.",
+              "Please note that QR codes are only available in select locations. If you don't see a QR code on your machine, you can still claim it through the app and receive notifications as normal.",
             ),
           ],
         ),
@@ -270,7 +270,7 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
                               ),
                         ),
                       Text(
-                        "Scan a ResiWash QR code to mark a machine as in use by you.",
+                        "Scan a ResiWash QR code to claim & mark a machine as in use by you.",
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),

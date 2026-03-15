@@ -446,7 +446,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                                             ),
                                           ),
                                           title: Text(
-                                            "In use by you",
+                                            "Claimed as yours",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .labelLarge

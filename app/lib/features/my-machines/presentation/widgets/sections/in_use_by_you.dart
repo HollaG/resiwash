@@ -163,7 +163,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "In use by you",
+                          "Claimed machines",
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         RichText(
@@ -214,7 +214,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                     children: [
                       Text(
                         textAlign: TextAlign.center,
-                        "You have not marked any machines as in use. ",
+                        "You have not claimed any machines yet. ",
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       Text.rich(
@@ -245,7 +245,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                             ),
                             TextSpan(
                               text:
-                                  " on the NFC tag to mark a machine as in use by you.",
+                                  " on the NFC tag to claim a machine & mark it as in use by you.",
                             ),
                           ],
                         ),

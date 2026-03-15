@@ -66,7 +66,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                       RichText(
                                         text: TextSpan(
                                           text:
-                                              "When marking a machine as in use, you can bypass the cycle time selection screen by enabling the switch and choosing your typical cycle time. Note that you can still edit the cycle time after marking.",
+                                              "When claiming a machine, you can bypass the cycle time selection screen by enabling the switch and choosing your typical cycle time. Note that you can still edit the cycle time after marking.",
                                           style: Theme.of(
                                             context,
                                           ).textTheme.bodySmall,

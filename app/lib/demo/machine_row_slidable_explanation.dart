@@ -259,7 +259,7 @@ class _MachineRowSlidableExplanationState
             ],
           ),
           subtitle: Text(
-            "Swipe to mark as in use by you",
+            "Swipe to claim & get notifications",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: MachineStatusIndicator.getTextColor(
                 context,
