@@ -8,86 +8,98 @@ class Overview extends StatelessWidget {
     required this.onCheckTap,
     required this.onClaimTap,
     required this.onContactTap,
+    required this.onDismiss,
   }) : super(key: key);
 
   final VoidCallback onCheckTap;
   final VoidCallback onClaimTap;
   final VoidCallback onContactTap;
+  final VoidCallback onDismiss;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 16,
-      children: [
-        Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 2,
-          children: [
-            Text(
-              "Knowledge base",
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 16,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 2,
+            children: [
+              Text(
+                "Knowledge base",
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "What do you want to know?",
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onPrimary,
+              const SizedBox(height: 8),
+              Text(
+                "What do you want to know?",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: Colors.white),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
 
-        Column(
-          spacing: 16,
-          children: [
-            OnboardingInfoCard(
-              id: "check",
-              title: "Check",
-              titleAccompany: " for availability",
-              body: Text(
-                "Learn how to check and interpret machine statuses",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+          Column(
+            spacing: 16,
+            children: [
+              OnboardingInfoCard(
+                id: "check",
+                title: "Check",
+                titleAccompany: " for availability",
+                body: Text(
+                  "Learn how to check and interpret machine statuses",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                ),
+                onTap: onCheckTap,
+                actionText: "View",
               ),
-              onTap: onCheckTap,
-              actionText: "View",
-            ),
-            OnboardingInfoCard(
-              id: "claim",
-              title: "Claim",
-              titleAccompany: " your machine",
-              body: Text(
-                "See how ResiWash supports you with automatic timers & reminders.",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+              OnboardingInfoCard(
+                id: "claim",
+                title: "Claim",
+                titleAccompany: " your machine",
+                body: Text(
+                  "See how ResiWash supports you with automatic timers & reminders.",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                ),
+                onTap: onClaimTap,
+                actionText: "View",
               ),
-              onTap: onClaimTap,
-              actionText: "View",
-            ),
-            OnboardingInfoCard(
-              id: "contact",
-              title: "Contact",
-              titleAccompany: " previous users",
-              body: Text(
-                "Something left in the machine? Get in touch with the last user to sort it out.",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+              OnboardingInfoCard(
+                id: "contact",
+                title: "Contact",
+                titleAccompany: " previous users",
+                body: Text(
+                  "Something left in the machine? Get in touch with the last user to sort it out.",
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black),
+                ),
+                onTap: onContactTap,
+                actionText: "Feature coming soon!",
               ),
-              onTap: onContactTap,
-              actionText: "View",
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+
+          Text(
+            "Swipe right on any page to access this knowledge base again.",
+            textAlign: TextAlign.center,
+          ),
+          Center(
+            child: FilledButton(onPressed: onDismiss, child: Text("I got it!")),
+          ),
+        ],
+      ),
     );
   }
 }

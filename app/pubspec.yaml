@@ -38,6 +38,7 @@ dependencies:
   flutter_alarm_clock: ^0.1.2
   smooth_page_indicator: ^2.0.1
   video_player: ^2.9.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:
@@ -59,7 +60,10 @@ flutter:
   assets:
     - assets/dryer.svg
     - assets/washer.svg
-    - assets/onboarding/claim_1.mp4
+    - assets/onboarding/add_rooms.mp4
+    - assets/onboarding/claim_help.jpg
+    - assets/onboarding/claim_help_nfc.jpg
+    - assets/onboarding/nfc_info.png
   fonts:
     - family: Open Sans
       fonts:

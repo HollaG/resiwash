@@ -600,6 +600,111 @@ class _MachineRowState extends State<MachineRow>
                   )
                 : null,
 
+            endActionPane: widget.allowSwipe
+                ? ActionPane(
+                    motion: const BehindMotion(),
+                    extentRatio: 0.3,
+                    dismissible: DismissiblePane(
+                      dismissThreshold: 0.4,
+                      // never ever dismiss
+                      onDismissed: () => {},
+                      confirmDismiss: () async {
+                        if (claimState == ClaimState.loading) {
+                          controller.close();
+                          return false;
+                        }
+
+                        if (claimState == ClaimState.claimed) {
+                          await _claimCubit.unclaimMachine(widget.machine);
+                        } else if (claimState == ClaimState.notClaimed) {
+                          // Show dialog and get selected cycle time
+                          final cycleTime = await _dialogBuilder(
+                            context,
+                            widget.machine,
+                          );
+
+                          // Only claim if user confirmed (didn't cancel)
+                          if (cycleTime != null && mounted) {
+                            final didClaim = await _claimCubit.claimMachine(
+                              widget.machine,
+                              cycleTime: cycleTime,
+                            );
+
+                            print("debug didClaim is $didClaim");
+
+                            if (mounted && context.mounted && didClaim) {
+                              context.goNamed(AppRoutes.myMachinesName);
+                            }
+                            // });
+                          }
+                        }
+                        closeControllerAfterDelay();
+                        return false;
+                      },
+                    ),
+                    children: [
+                      CustomSlidableAction(
+                        onPressed: (actionContext) async {
+                          if (claimState == ClaimState.loading) return;
+
+                          if (claimState == ClaimState.claimed) {
+                            await _claimCubit.unclaimMachine(widget.machine);
+                          } else if (claimState == ClaimState.notClaimed) {
+                            // Show dialog and get selected cycle time
+                            final cycleTime = await _dialogBuilder(
+                              context,
+                              widget.machine,
+                            );
+
+                            // Only claim if user confirmed (didn't cancel)
+                            if (cycleTime != null && mounted) {
+                              final didClaim = await _claimCubit.claimMachine(
+                                widget.machine,
+                                cycleTime: cycleTime,
+                              );
+
+                              print(
+                                "debug didClaim is $didClaim, mounted is $mounted",
+                              );
+
+                              if (mounted && context.mounted && didClaim) {
+                                print("debug going!");
+                                context.goNamed(AppRoutes.myMachinesName);
+                              }
+                              // });
+                            }
+                          }
+                        },
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                        autoClose: true,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            claimIcon,
+                            const SizedBox(height: 4),
+                            Text(
+                              claimText,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : null,
             // Right swipe action (subscribe/unsubscribe)
             // endActionPane: widget.allowSwipe
             //     ? ActionPane(

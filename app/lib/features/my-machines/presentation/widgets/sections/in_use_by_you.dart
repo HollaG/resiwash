@@ -221,13 +221,13 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: "Swipe right",
+                              text: "Swipe",
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            TextSpan(text: " on a machine, "),
+                            TextSpan(text: " a machine left/right, "),
                             TextSpan(
                               text: "scan a QR code",
                               style: TextStyle(

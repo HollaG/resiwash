@@ -21,13 +21,17 @@ class OnboardingInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = MaterialTheme(
+      Theme.of(context).textTheme,
+    ).light().colorScheme;
+
     return Hero(
       tag: id,
       child: Card(
         color: context.accent.colorContainer,
         clipBehavior: Clip.hardEdge,
         child: InkWell(
-          splashColor: Theme.of(context).colorScheme.primary.withAlpha(26),
+          splashColor: colorScheme.primary.withAlpha(26),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -41,14 +45,16 @@ class OnboardingInfoCard extends StatelessWidget {
                   RichText(
                     text: TextSpan(
                       text: title,
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                       children: [
                         TextSpan(
                           text: titleAccompany,
                           style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                color: context.accent.onColorContainer,
-                              ),
+                              ?.copyWith(color: colorScheme.secondary),
                         ),
                       ],
                     ),
@@ -60,7 +66,7 @@ class OnboardingInfoCard extends StatelessWidget {
                     child: Text(
                       actionText,
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                       textAlign: TextAlign.end,

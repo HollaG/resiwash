@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:resiwash/features/onboarding/presentation/widgets/Claim.dart';
+import 'package:resiwash/features/onboarding/presentation/sections/Check.dart';
+import 'package:resiwash/features/onboarding/presentation/sections/Claim.dart';
+import 'package:resiwash/features/onboarding/presentation/sections/Claim_2.dart';
 import 'package:resiwash/features/onboarding/presentation/widgets/Overview.dart';
 import 'package:resiwash/theme.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // Note: all back button presses while in OnboardingScreen should return back to the main view
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key, this.onFinished});
+  const OnboardingScreen({super.key, required this.onDismiss});
 
-  final VoidCallback? onFinished;
+  final VoidCallback onDismiss;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -16,74 +18,33 @@ class OnboardingScreen extends StatefulWidget {
 
 enum OnboardingPage { home, check, claim, contact }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final GlobalKey<NavigatorState> _onboardingNavigatorKey =
-      GlobalKey<NavigatorState>();
-  static const List<String> _routeNames = [
-    '/overview',
-    '/check',
-    '/claim',
-    '/contact',
-  ];
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
+  final PageController _pageViewController = PageController();
+  static const int _lastPageIndex = 3;
   int _currentPage = 0;
 
-  void _goToIndex(int index) {
-    if (index < 0) {
-      widget.onFinished?.call();
-      return;
-    }
-
-    if (index >= OnboardingPage.values.length) {
-      widget.onFinished?.call();
-      return;
-    }
-
-    setState(() {
-      _currentPage = index;
-    });
-
-    _onboardingNavigatorKey.currentState?.pushNamedAndRemoveUntil(
-      _routeNames[index],
-      (route) => false,
-    );
+  @override
+  void dispose() {
+    _pageViewController.dispose();
+    super.dispose();
   }
 
-  Route<dynamic> _onGenerateOnboardingRoute(RouteSettings settings) {
-    final String routeName = settings.name ?? _routeNames.first;
-
-    Widget page;
-    switch (routeName) {
-      case '/overview':
-        page = Overview(
-          onCheckTap: () => _goToIndex(1),
-          onClaimTap: () => _goToIndex(2),
-          onContactTap: () => _goToIndex(3),
-        );
-        break;
-      case '/check':
-        page = Claim();
-        break;
-      case '/claim':
-        page = const Claim();
-        break;
-      case '/contact':
-        page = const _OnboardingPlaceholder(title: 'Contact');
-        break;
-      default:
-        page = Overview(
-          onCheckTap: () => _goToIndex(1),
-          onClaimTap: () => _goToIndex(2),
-          onContactTap: () => _goToIndex(3),
-        );
-        break;
-    }
-
-    return MaterialPageRoute<void>(settings: settings, builder: (_) => page);
+  void _goToSection(OnboardingPage page) {
+    int pageIndex = page.index;
+    _pageViewController.animateToPage(
+      pageIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     return Scaffold(
       body: Container(
         padding: const EdgeInsets.all(32),
@@ -94,11 +55,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             stops: [0.0, 0.6, 1.0],
-            colors: [
-              Theme.of(context).colorScheme.secondary,
-              Color(0xCC384171),
-              Theme.of(context).colorScheme.primary,
-            ],
+            colors: [Color(0xff000220), Color(0xCC384171), Color(0xff394379)],
           ),
         ),
         child: SafeArea(
@@ -107,63 +64,113 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Navigator(
-                  key: _onboardingNavigatorKey,
-                  initialRoute: _routeNames.first,
-                  onGenerateRoute: _onGenerateOnboardingRoute,
+                child: PageView(
+                  controller: _pageViewController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                  },
+                  children: [
+                    Overview(
+                      onCheckTap: () {
+                        _goToSection(OnboardingPage.check);
+                      },
+                      onClaimTap: () {
+                        _goToSection(OnboardingPage.claim);
+                      },
+                      onContactTap: () {
+                        // _goToSection(OnboardingPage.contact);
+                      },
+                      onDismiss: widget.onDismiss,
+                    ),
+
+                    Check(),
+                    Claim(),
+                    Claim2(),
+                    // Center(child: Text("Hey3!!")),
+                    // Contact(),
+                  ],
                 ),
               ),
               SizedBox(height: 32),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      _goToIndex(_currentPage - 1);
-                    },
-                    icon: Icon(Icons.arrow_back),
-                    color: context.accent.colorContainer,
+                  SizedBox(
+                    width: 75,
+                    child: _currentPage != 0
+                        ? IconButton(
+                            onPressed: () {
+                              if (_currentPage > 0) {
+                                _pageViewController.previousPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.arrow_back),
+                            color: context.accent.colorContainer,
+                          )
+                        : null,
                   ),
                   Expanded(child: SizedBox()),
-                  AnimatedSmoothIndicator(
-                    activeIndex: _currentPage,
+                  // AnimatedSmoothIndicator(
+                  //   activeIndex: _currentPage,
+                  //   count: 4,
+                  //   effect: WormEffect(
+                  //     dotColor: context.accent.colorContainer,
+                  //     activeDotColor: Theme.of(context).colorScheme.primary,
+                  //   ),
+                  // ),
+                  SmoothPageIndicator(
+                    controller: _pageViewController, // PageController
                     count: 4,
                     effect: WormEffect(
-                      dotColor: context.accent.colorContainer,
-                      activeDotColor: Theme.of(context).colorScheme.primary,
+                      dotColor: context.accent.onColor,
+                      activeDotColor: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer,
                     ),
                   ),
                   Expanded(child: SizedBox()),
-                  IconButton(
-                    onPressed: () {
-                      _goToIndex(_currentPage + 1);
-                    },
-                    icon: Icon(Icons.arrow_forward),
-                    color: context.accent.colorContainer,
+                  SizedBox(
+                    width: 75,
+                    child: _currentPage == _lastPageIndex
+                        ? IconButton(
+                            onPressed: () {
+                              widget.onDismiss();
+                            },
+                            icon: Icon(Icons.home),
+                            color: context.accent.colorContainer,
+                          )
+                        //  ElevatedButton(
+                        //     style: ButtonStyle(
+                        //       backgroundColor: WidgetStateProperty.all(
+                        //         Theme.of(context).colorScheme.primaryContainer,
+                        //       ),
+                        //     ),
+                        //     onPressed: widget.onDismiss,
+                        //     child: Text("Home"),
+                        //   )
+                        : IconButton(
+                            onPressed: () {
+                              if (_currentPage < _lastPageIndex) {
+                                _pageViewController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.arrow_forward),
+                            color: context.accent.colorContainer,
+                          ),
                   ),
                 ],
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _OnboardingPlaceholder extends StatelessWidget {
-  const _OnboardingPlaceholder({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        '$title page',
-        style: Theme.of(
-          context,
-        ).textTheme.headlineSmall?.copyWith(color: Colors.white),
       ),
     );
   }

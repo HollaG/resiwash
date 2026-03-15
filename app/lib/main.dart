@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_links/app_links.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -260,18 +262,55 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
   StreamSubscription<Uri>? _linkSubscription;
 
   late PageController _pageViewController;
-  late TabController _tabController;
-  int _currentPageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     initDeepLinks();
-    _pageViewController = PageController(initialPage: _currentPageIndex);
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: _currentPageIndex,
+    _pageViewController = PageController(initialPage: 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorialIfNew());
+  }
+
+  Future<void> _showTutorialIfNew() async {
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('has_seen_tutorial') ?? false;
+    if (seen) return;
+    await prefs.setBool('has_seen_tutorial', true);
+
+    final context = navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('👋 Hi there!'),
+        content: const Text(
+          "Looks like you're new here! Would you like a quick tutorial on how to use ResiWash?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              SnackbarHelper.showInfo(
+                message:
+                    "You can access the tutorial anytime by swiping to the right.",
+              );
+            },
+            child: const Text('Maybe later'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _pageViewController.animateToPage(
+                0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: const Text('Show me!'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -321,30 +360,23 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
         builder: (context, child) {
           return PageView(
             controller: _pageViewController,
-            onPageChanged: _handlePageViewChanged,
+
             children: <Widget>[
-              OnboardingScreen(onFinished: () => _updateCurrentPageIndex(1)),
+              Theme(
+                data: theme.dark(),
+                child: OnboardingScreen(
+                  onDismiss: () => _pageViewController.animateToPage(
+                    1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
+                ),
+              ),
               child ?? const SizedBox.shrink(),
             ],
           );
         },
       ),
-    );
-  }
-
-  void _handlePageViewChanged(int currentPageIndex) {
-    _tabController.index = currentPageIndex;
-    setState(() {
-      _currentPageIndex = currentPageIndex;
-    });
-  }
-
-  void _updateCurrentPageIndex(int index) {
-    _tabController.index = index;
-    _pageViewController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
     );
   }
 }

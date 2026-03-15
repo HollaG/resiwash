@@ -118,6 +118,58 @@ class _MachineRowSlidableExplanationState
         ],
       ),
 
+      endActionPane: ActionPane(
+        motion: const BehindMotion(),
+        extentRatio: 0.6,
+        dismissible: DismissiblePane(
+          dismissThreshold: 0.4,
+          onDismissed: () {},
+          confirmDismiss: () async {
+            // Demo action
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Demo: Claim action triggered'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+            closeControllerAfterDelay();
+            return false;
+          },
+        ),
+        children: [
+          CustomSlidableAction(
+            onPressed: (context) async {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Demo: Claim action triggered'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+            foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+            borderRadius: BorderRadius.circular(8),
+            autoClose: true,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.person_add_alt_rounded,
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Use this machine',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+
       // Right swipe action (Subscribe)
       // endActionPane: ActionPane(
       //   motion: const BehindMotion(),
@@ -207,11 +259,7 @@ class _MachineRowSlidableExplanationState
             ],
           ),
           subtitle: Text(
-            widget.initialPeekState == PeekState.left
-                ? 'Swipe right to mark as in use by you'
-                : widget.initialPeekState == PeekState.right
-                ? 'Swipe left to subscribe to notifications'
-                : 'Swipe left or right for actions',
+            "Swipe to mark as in use by you",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: MachineStatusIndicator.getTextColor(
                 context,

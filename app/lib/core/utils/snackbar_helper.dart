@@ -86,7 +86,9 @@ class SnackbarHelper {
       message: message,
       actionLabel: actionLabel,
       onAction: onAction,
-      backgroundColor: Colors.blue.shade700,
+      backgroundColor: Theme.of(
+        scaffoldMessengerKey.currentContext!,
+      ).colorScheme.primaryContainer,
     );
   }
 

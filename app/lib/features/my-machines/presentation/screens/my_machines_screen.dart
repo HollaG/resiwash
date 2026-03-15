@@ -51,7 +51,9 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
         builder: (context) {
           return Scaffold(
             appBar: AppBarComponent(
-              actions: [],
+              actions: [
+                // IconButton(onPressed: () {}, icon: Icon(Icons.help_outline)),
+              ],
               title: "My Machines",
               backgroundColor: hasCompletedMachines
                   ? MachineStatusIndicator.getBackgroundColor(
