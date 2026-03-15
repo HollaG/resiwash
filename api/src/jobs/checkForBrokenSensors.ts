@@ -3,6 +3,7 @@ import { AppDataSource } from "../data-source";
 import { Machine } from "../models/Machine";
 import { UpdateEvent } from "../models/UpdateEvent";
 import { MachineStatus } from "../core/types";
+import { Not } from "typeorm";
 
 /**
  * Logs machines whose sensors appear stale.
@@ -14,7 +15,10 @@ const runBrokenSensorCheck = async () => {
 
     // Pull all machines where data should come from sensors.
     const machines = await machineRepo.find({
-      where: { isManualEntry: false },
+      where: {
+        isManualEntry: false,
+        currentStatus: Not(MachineStatus.UNKNOWN),
+      },
     });
 
     const now = new Date();
