@@ -67,7 +67,7 @@ class MachineDisplayUtils {
       case MachineStatus.finishing:
         return 'Finishing${timePart.replaceFirst(" ago", "")}';
       case MachineStatus.finished:
-        return 'Finished$timePart ago, waiting for pickup';
+        return 'Finished${timePart.replaceFirst("since ", "")}, waiting for pickup';
       case null:
         return 'Unknown status';
       default:
