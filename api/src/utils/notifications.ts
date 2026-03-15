@@ -115,9 +115,12 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
     // see events.controller.ts@496, `effectiveStatus` will become available (cos no more claimId),
     // and lastEvent will also be available (cos of updateMachineStatusAfterTime), so there
     // will be no double-events.
-    if (!isAvailableLike(machine.currentStatus)) {
+    if (machine.isManualEntry) {
+      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    } else if (isAvailableLike(machine.currentStatus)) {
       await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
     }
+
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   } else {
     console.log(
