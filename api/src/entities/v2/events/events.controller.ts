@@ -371,7 +371,7 @@ export const createMultipleEvents = asyncHandler(
     const sensorToMachineRepository =
       AppDataSource.getRepository(SensorToMachine);
     const sensorLinks = await sensorToMachineRepository.find({
-      where: { sensorId: sensor.sensorId },
+      where: { sensorId: sensor.sensorId, machine: { isManualEntry: false } },
       relations: ["machine"],
     });
 
@@ -394,6 +394,8 @@ export const createMultipleEvents = asyncHandler(
       .leftJoinAndSelect("event.machine", "machine")
       .distinctOn(["event.machineId"])
       .where("event.machineId IN (:...machineIds)", { machineIds }) // <-- add this line
+      .andWhere("event.isManualEntry = false")
+
       .orderBy("event.machineId", "ASC")
       .addOrderBy("event.timestamp", "DESC")
       .getMany();
@@ -410,6 +412,12 @@ export const createMultipleEvents = asyncHandler(
       });
 
       if (!machine) {
+        console.log(
+          "No machine link found for source:",
+          espEvent.source,
+          "and localId:",
+          espEvent.localId,
+        );
         // return sendErrorResponse(res, `No machine link found for source: ${espEvent.source} and localId: ${espEvent.localId}`, 404);
       } else {
         const rawEvent = new RawEvent();
@@ -493,6 +501,14 @@ export const createMultipleEvents = asyncHandler(
            * Using the raw `status` for the guard but saving FINISHED leads to an infinite flood:
            *   latestEvent.status=FINISHED vs status=AVAILABLE → always different → new FINISHED event every 10s.
            */
+          // if we
+          // a) detect available
+          // b) machine is currently available
+          // c) there is a claimant
+          // d) previous status was NOT in_use or finishing
+          //  then we know that this is a special case whereby the user claimed the machine
+          //  but didn't start
+          //
           const effectiveStatus =
             machine.machine.claimId && status === MachineStatus.AVAILABLE
               ? MachineStatus.FINISHED
@@ -528,7 +544,7 @@ export const createMultipleEvents = asyncHandler(
 
     // machinesToUpdate contains all machines that were sent an event
     const machinesToUpdate = await machineRepository.find({
-      where: { machineId: In(machineIdsToUpdate) },
+      where: { machineId: In(machineIdsToUpdate), isManualEntry: false },
       // join with the room and area data as well
       relations: ["room", "room.area", "claim"],
     });
