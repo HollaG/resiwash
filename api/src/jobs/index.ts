@@ -1,4 +1,5 @@
 import { startMachineCycleEndChecker } from "./automaticallySetManualMachineStatus";
+import { startBrokenSensorChecker } from "./checkForBrokenSensors";
 
 /**
  * Initialize all scheduled jobs
@@ -9,6 +10,8 @@ export const initializeJobs = () => {
 
   // Start the stuck machines checker (runs every minute)
   startMachineCycleEndChecker();
+
+  startBrokenSensorChecker();
 
   // Add more jobs here as needed
   // Example: startOtherJob();
