@@ -4,7 +4,7 @@ import { LastPoke } from "../models/LastPoke";
 import { AppDataSource } from "../data-source";
 import { sendClaimedMachineStatusChangedNotification } from "./firebase-messaging";
 import { updateMachineStatusAfterTime } from "../services/machines.service";
-import { MachineStatus } from "../core/types";
+import { isAvailableLike, MachineStatus } from "../core/types";
 
 /**
  * Helper function to send notifications and automatically clean up invalid tokens
@@ -115,7 +115,9 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
     // see events.controller.ts@496, `effectiveStatus` will become available (cos no more claimId),
     // and lastEvent will also be available (cos of updateMachineStatusAfterTime), so there
     // will be no double-events.
-    await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    if (!isAvailableLike(machine.currentStatus)) {
+      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    }
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   } else {
     console.log(
