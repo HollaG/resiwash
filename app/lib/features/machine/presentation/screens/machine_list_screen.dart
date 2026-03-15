@@ -101,7 +101,7 @@ class _MachineListScreenState extends State<MachineListScreen>
                   .toList();
 
               return Container(
-                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                 child: RefreshIndicator(
                   onRefresh: () {
                     final completer = Completer<void>();

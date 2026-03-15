@@ -213,6 +213,20 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                   widget.initialAction == InitialPageAction.claim) {
                 _hasHandledInitialAction = true;
                 final machine = state.machine;
+
+                bool isClaimed = context.read<ClaimCubit>().isMachineClaimed(
+                  widget.machineId,
+                );
+
+                print(
+                  "debug Handling initial claim action for machine ${widget.machineId}, isClaimed: $isClaimed",
+                );
+
+                if (isClaimed) {
+                  // unclaim
+                  context.read<ClaimCubit>().unclaimMachine(machine);
+                  return;
+                }
                 int? cycleTime = await _dialogBuilder(context, machine);
                 if (cycleTime != null && mounted && context.mounted) {
                   context.read<ClaimCubit>().claimMachine(

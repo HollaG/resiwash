@@ -115,6 +115,10 @@ class _ClaimState extends State<Claim> {
               ),
             ],
           ),
+
+          Text(
+            "Remember to release the machine once you've collected your clothes! Simply repeat the actions below to release.",
+          ),
           DefaultTabController(
             length: 3,
             child: Column(
@@ -159,10 +163,12 @@ class PhoneApp extends StatelessWidget {
       spacing: 8,
       children: [
         Text(
-          "Claim with Phone",
+          "Claim/Release with Phone",
           style: Theme.of(context).textTheme.headlineSmall,
         ),
-        Text("Swipe a machine to claim it. Try it on the test machine below!"),
+        Text(
+          "Swipe a machine to claim or release it. Try it on the test machine below!",
+        ),
         Theme(
           data: MaterialTheme(Theme.of(context).textTheme).light(),
           child: MachineRowSlidableExplanation(),
@@ -183,7 +189,7 @@ class ScanQr extends StatelessWidget {
       spacing: 8,
       children: [
         Text(
-          "Claim with QR Code",
+          "Claim/Release with QR Code",
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         Text(
@@ -217,7 +223,7 @@ class ScanNfc extends StatelessWidget {
       spacing: 8,
       children: [
         Text(
-          "Claim with NFC",
+          "Claim/Release with NFC",
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         RichText(
