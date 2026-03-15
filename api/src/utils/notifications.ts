@@ -109,11 +109,9 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
 
     await machineRepository.save(machine);
 
-    // Always set machine to available when unclaiming.
-    // This is because claimed machines will now transition to FINISHED, for both manual and automatic sensors.
-    // if (machine.isManualEntry) {
-    await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
-    // }
+    if (machine.isManualEntry) {
+      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    }
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   } else {
     console.log(

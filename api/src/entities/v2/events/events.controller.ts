@@ -467,7 +467,37 @@ export const createMultipleEvents = asyncHandler(
 
           // const debouncedStatus =
           //   debounceMachineMap[machine.machineId].update(rawStatus);
-          actualEvent.status = status;
+
+          /**
+           * Important notice: In order to support extra states e.g. Finished state
+           * which do NOT directly map to sensor readings,
+           * we need to compute the effective status BEFORE the state-change check.
+           *
+           * Here are the conditions checked thus far:
+           * 1. [is the machine claimed?]
+           *   If machine is claimed and status transits to AVAILABLE,
+           *     then we should set the status to FINISHED instead, since the machine has finished its cycle and is waiting for clothes to be cleared.
+           *
+           * A few cases can occur:
+           * 1. user claims machine while machine sensor still reads available
+           *   No actual event is generated as status = activeMachine.update(readings) will still read AVAILABLE, `status` is still AVAILABLE. Thus, the `if` statement
+           *   below will not even run.
+           * 2. machine is in use, user claims machine, machine finishes cycle and transits to AVAILABLE
+           *   The latestEvent.status will be FINISHING (or IN_USE), while the `effectiveStatus` will be FINISHED. This passes the `if` block.
+           *   On the NEXT sensor tick, latestEvent.status = FINISHED and effectiveStatus = FINISHED → NO new event. Loop stops.
+           *   Once the user unclaims, the `unclaim` method inserts a dummy AVAILABLE event, so latestEvent.status becomes AVAILABLE.
+           *     This is good for us as it is the same for both manual and automatic machine methods.
+           *
+           * NOTE: effectiveStatus must be used for BOTH the state-change guard and actualEvent.status.
+           * Using the raw `status` for the guard but saving FINISHED leads to an infinite flood:
+           *   latestEvent.status=FINISHED vs status=AVAILABLE → always different → new FINISHED event every 10s.
+           */
+          const effectiveStatus =
+            machine.machine.claimId && status === MachineStatus.AVAILABLE
+              ? MachineStatus.FINISHED
+              : status;
+
+          actualEvent.status = effectiveStatus;
           actualEvent.readings = readings;
           actualEvent.machine = { machineId: Number(machine.machineId) } as any; // type assertion to satisfy TypeScript
 
@@ -476,35 +506,8 @@ export const createMultipleEvents = asyncHandler(
             (event) => event.machine.machineId === machine.machineId,
           );
 
-          if (!latestEvent || latestEvent.status !== status) {
+          if (!latestEvent || latestEvent.status !== effectiveStatus) {
             // if there is a state change detected
-
-            /**
-             * Important notice: In order to support extra states e.g. Finished state
-             * which do NOT directly map to sensor readings,
-             * we need to process some conditional logic BEFORE making an actual event.
-             *
-             * Here are the conditions checked thus far:
-             * 1. [is the machine claimed?]
-             *   If machine is claimed and status transits to AVAILABLE,
-             *     then we should set the status to FINISHED instead, since the machine has finished its cycle and is waiting for clothes to be cleared.
-             *
-             * A few cases can occur:
-             * 1. user claims machine while machine sensor still reads available
-             *   No actual event is generated as status = activeMachine.update(readings) will still read AVAILABLE, `status` is still AVAILABLE. Thus, the `if` statement
-             *   below will not even run.
-             * 2. machine is in use, user claims machine, machine finishes cycle and transits to AVAILABLE
-             *   The latestEvent.status will be FINISHING (or IN_USE), while the `status` will be AVAILABLE. This passes the first `if` block.
-             *   Then, this will also pass the second `if` block, so the status will be set to FINISHED.
-             *   Once the user unclaims, note that the below `if` block will STILL not run.
-             *     ** It is important to remember that the sensors are constantly generating data, so this code runs every 10 seconds.
-             *   So, it is IMPORTANT that the `unclaim` method inserts a dummy available event.
-             *     This is good for us as it is the same for both manual and automatic machine methods.
-             */
-
-            if (machine.machine.claimId && status === MachineStatus.AVAILABLE) {
-              actualEvent.status = MachineStatus.FINISHED;
-            }
             actualEvents.push(actualEvent);
           } else {
             // NO STATE CHANGE
