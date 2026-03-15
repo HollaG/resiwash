@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD || undefined,
     database: process.env.DB_NAME,
-    synchronize: true,
+    synchronize: false,
     logging: false,
     entities: [Area, Machine, Room, Sensor, UpdateEvent, User, RawEvent, SensorToMachine, Claim, LastPoke],
     migrations: [],

@@ -213,12 +213,15 @@ export const updateMachineStatusAfterTime = async (
       )
     : 0; // calculate how long the machine was in the previous status in seconds
 
-  if (
-    status === MachineStatus.AVAILABLE &&
-    machine.previousStatus !== MachineStatus.AVAILABLE &&
-    machine.previousStatus !== MachineStatus.FINISHED
-  ) {
-    machine.lastAvailableTime = new Date(); // if machine transitioned to available from a use state, update lastAvailableTime, if its finishing, keep it the same
+  // if machine is now availableLike, update lastAvailableTime
+  if (status === MachineStatus.AVAILABLE) {
+    if (machine.previousStatus === MachineStatus.FINISHED) {
+      // don't update as the machine's still available, this status didnt change that status
+    } else {
+      machine.lastAvailableTime = new Date(); // if machine transitioned to available from a use state, update lastAvailableTime, if its finishing, keep it the same
+    }
+  } else if (status === MachineStatus.FINISHED) {
+    machine.lastAvailableTime = new Date(); // if machine is finished, reset lastAvailableTime, as the machine is no longer available
   }
   machine.previousStatus = machine.currentStatus;
   machine.currentStatus = status;
