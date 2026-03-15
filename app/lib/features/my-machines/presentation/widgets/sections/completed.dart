@@ -92,9 +92,10 @@ class _CompletedSectionState extends State<CompletedSection> {
                             ),
                       ),
                       TextSpan(text: " finished machines.\n"),
+
                       TextSpan(
                         text:
-                            "Please do collect your laundry as soon as possible!",
+                            "\nPlease do collect your laundry as soon as possible! Remember to release this machine once you've collected.",
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: Theme.of(context).colorScheme.onTertiary,
                         ),

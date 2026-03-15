@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -7,6 +9,7 @@ import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/sections/machine_default_cycle.dart';
+import 'package:resiwash/features/preferences/presentation/widgets/sections/open_timer_default.dart';
 
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
@@ -93,7 +96,45 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                 ],
                               ),
                             ),
+
                             // default cycle time (dryer)
+                            if (Platform.isAndroid)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Open timer after claiming",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall,
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      text:
+                                          "By default, ResiWash will open your phone's system timer app after you claim a machine. You can disable this behavior here. ResiWash will set the timer for you in the background.",
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (Platform.isAndroid)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  8,
+                                  16,
+                                  8,
+                                ),
+                                child: Column(
+                                  spacing: 8,
+                                  children: [
+                                    // default cycle time (washer)
+                                    OpenTimerDefaultSwitch(),
+                                  ],
+                                ),
+                              ),
                             Divider(),
                             Text(
                               "Current build version: ${buildVersion}",

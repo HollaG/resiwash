@@ -224,6 +224,14 @@ class SharedPreferencesService {
     setPreferredCycleTime(machineType, null);
   }
 
+  bool shouldOpenTimerAfterClaiming() {
+    return _prefs.getBool('openTimerAfterClaiming') ?? true;
+  }
+
+  void setOpenTimerAfterClaiming(bool value) {
+    _prefs.setBool('openTimerAfterClaiming', value);
+  }
+
   // // Save a list of room IDs
   // Future<void> setRoomIds(Set<String> roomIds) async {
   //   await _prefs.setStringList(roomIdsKey, roomIds);

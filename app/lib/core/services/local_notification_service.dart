@@ -5,7 +5,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:live_activities/live_activities.dart';
+import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
@@ -241,10 +243,12 @@ class LocalNotificationService {
     appLog.i("Showing claimed machine in use notification: $title");
     // 1. start a system timer (TODO)
     if (Platform.isAndroid) {
+      bool skipUi = !sl<SharedPreferencesService>()
+          .shouldOpenTimerAfterClaiming();
       FlutterAlarmClock.createTimer(
         length: secondsTillCompletion,
         title: title,
-        skipUi: false,
+        skipUi: skipUi,
       );
     } else {
       try {
