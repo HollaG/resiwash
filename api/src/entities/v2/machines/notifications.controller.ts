@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { setMachineManualStatusAndNotify } from "../../../services/machines.service";
-import { MachineStatus } from "../../../core/types";
+import { isAvailableLike, MachineStatus } from "../../../core/types";
 
 import {
   addToClaimHistory,
@@ -62,7 +62,7 @@ export const claimMachine = expressAsyncHandler(
       if (
         machine.claim &&
         machine.claim.fcmToken !== fcmToken &&
-        machine.currentStatus !== MachineStatus.AVAILABLE
+        !isAvailableLike(machine.currentStatus)
       ) {
         // not allowed to claim if there's already a claimant and it's not the same user, and the machine is not available.
         return sendErrorResponse(
@@ -74,7 +74,11 @@ export const claimMachine = expressAsyncHandler(
       // allowed to claim, aka either there's no claimant, or the claimant is the same user, or the machine is available (claimed but not in use)
 
       // 1. create an entry in the claim history table
-      const savedClaim = await addToClaimHistory(machineId, fcmToken, cycleTime);
+      const savedClaim = await addToClaimHistory(
+        machineId,
+        fcmToken,
+        cycleTime,
+      );
       // 1. update the machine object with the new claimant and cycle time
       machine.claimId = savedClaim.claimId; // associate the machine with the new claim
       await AppDataSource.getRepository(Machine).save(machine);
@@ -86,18 +90,13 @@ export const claimMachine = expressAsyncHandler(
         try {
           console.log("Setting initial IN_USE status for manual machine claim");
 
-
-
           await setMachineManualStatusAndNotify({
             machineId: machine.machineId,
             status: MachineStatus.IN_USE,
             cycleTime,
           });
 
-
           // return sendErrorResponse(res, "Machine already claimed by this user", 400);
-
-
         } catch (error: any) {
           console.error(error);
           return sendErrorResponse(res, error.message, 400);
@@ -109,11 +108,8 @@ export const claimMachine = expressAsyncHandler(
           () => sendNewlyClaimedMachineNotification({ machineId, fcmToken }),
           fcmToken,
           machineId,
-        )
-
-
+        );
       }
-
 
       sendOkResponse(res, { message: "Machine claimed successfully" });
     } catch (error) {
@@ -228,7 +224,11 @@ export const updateClaimCycleHandler = expressAsyncHandler(
         .getOne();
 
       if (!machine) {
-        return sendErrorResponse(res, "Machine not found or you have not claimed this machine", 404);
+        return sendErrorResponse(
+          res,
+          "Machine not found or you have not claimed this machine",
+          404,
+        );
       }
 
       // update the claim cycle time in the claim history table
@@ -239,7 +239,11 @@ export const updateClaimCycleHandler = expressAsyncHandler(
 
       for (const claimant of claimants) {
         await sendAndCleanupInvalidToken(
-          () => sendClaimedMachineStatusChangedNotification({ machineId, fcmToken: claimant.fcmToken }),
+          () =>
+            sendClaimedMachineStatusChangedNotification({
+              machineId,
+              fcmToken: claimant.fcmToken,
+            }),
           claimant.fcmToken,
           machineId,
         );

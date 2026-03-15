@@ -14,6 +14,12 @@ export enum MachineStatus {
   FINISHED = "FINISHED",
 }
 
+export const isAvailableLike = (status: MachineStatus): boolean => {
+  return (
+    status === MachineStatus.AVAILABLE || status === MachineStatus.FINISHED
+  );
+};
+
 export const getReadableMachineStatus = (status: MachineStatus): string => {
   switch (status) {
     case MachineStatus.AVAILABLE:

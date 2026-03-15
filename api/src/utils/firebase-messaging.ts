@@ -1,5 +1,6 @@
 import {
   getReadableMachineStatus,
+  isAvailableLike,
   MachineStatus,
   MachineType,
 } from "../core/types";
@@ -129,7 +130,11 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         where: {
           roomId: machine.roomId,
           type: MachineType.DRYER,
-          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
+          currentStatus: In([
+            MachineStatus.AVAILABLE,
+            MachineStatus.FINISHED,
+            MachineStatus.FINISHING,
+          ]), // special case: available-like and finishing
         },
       });
       if (nearbyAvailableDryers.length > 0) {
@@ -138,7 +143,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         body += ` Unfortunately, there is no available dryer at the moment.`;
       }
     }
-  } else if (machine.currentStatus === MachineStatus.AVAILABLE) {
+  } else if (isAvailableLike(machine.currentStatus)) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} has finished!`;
     body = `Please collect your clothes as soon as possible.`;
 
@@ -151,7 +156,11 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         where: {
           roomId: machine.roomId,
           type: MachineType.DRYER,
-          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
+          currentStatus: In([
+            MachineStatus.AVAILABLE,
+            MachineStatus.FINISHED,
+            MachineStatus.FINISHING,
+          ]), // special case: available-like and finishing
         },
       });
       if (nearbyAvailableDryers.length > 0) {
@@ -202,7 +211,6 @@ export const sendClaimedMachineStatusChangedNotification = async ({
       machinePreviousStatus: machine.previousStatus,
 
       machineType: machine.type.toString().toLowerCase(),
-
 
       channel: "claimed",
 
@@ -238,8 +246,8 @@ export const sendClaimedMachineStatusChangedNotification = async ({
 };
 
 /**
- * Send a claim notification and also tell the device to start the timer* 
- * 
+ * Send a claim notification and also tell the device to start the timer*
+ *
  */
 export const sendNewlyClaimedMachineNotification = async ({
   machineId,
@@ -258,24 +266,20 @@ export const sendNewlyClaimedMachineNotification = async ({
     .where("machine.machineId = :id", { id: machineId })
     .getOne();
 
-
-
   let title = "";
   let body = "";
   let secondsTillCompletion = null;
 
-  if (machine.currentStatus === MachineStatus.AVAILABLE) {
+  if (isAvailableLike(machine.currentStatus)) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} claimed.`;
 
     const expectedEndTime =
       Date.now() +
       (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
     body = `Expected to finish by [[ expectedEndTime ]].`;
-    body = `Remember to start your machine! Expected to finish around [[ expectedEndTime ]].`
+    body = `Remember to start your machine! Expected to finish around [[ expectedEndTime ]].`;
 
     secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
-
-
   } else if (machine.currentStatus === MachineStatus.IN_USE) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} running...`;
     const expectedEndTime =
@@ -283,8 +287,6 @@ export const sendNewlyClaimedMachineNotification = async ({
       (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
     body = `Expected to finish by [[ expectedEndTime ]].`;
     secondsTillCompletion = Math.floor((expectedEndTime - Date.now()) / 1000);
-
-
   } else if (machine.currentStatus === MachineStatus.FINISHING) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room.name} finishing in approx. 5 - 10 minutes...`;
     body = `Please be ready to collect your clothes soon!`;
@@ -302,7 +304,11 @@ export const sendNewlyClaimedMachineNotification = async ({
         where: {
           roomId: machine.roomId,
           type: MachineType.DRYER,
-          currentStatus: In([MachineStatus.AVAILABLE, MachineStatus.FINISHING]), // also include finishing dryers since they might be finishing before the washer and become available right after
+          currentStatus: In([
+            MachineStatus.AVAILABLE,
+            MachineStatus.FINISHED,
+            MachineStatus.FINISHING,
+          ]), // special case: available-like and finishing
         },
       });
       if (nearbyAvailableDryers.length > 0) {
@@ -311,7 +317,6 @@ export const sendNewlyClaimedMachineNotification = async ({
         body += ` Unfortunately, there is no available dryer at the moment.`;
       }
     }
-
   }
 
   const message: CustomMessage = {
@@ -355,7 +360,6 @@ export const sendNewlyClaimedMachineNotification = async ({
 
       machineType: machine.type.toString().toLowerCase(),
 
-
       channel: "claimed",
       forceShowTimer: "true",
 
@@ -388,7 +392,7 @@ export const sendNewlyClaimedMachineNotification = async ({
 
     throw e;
   }
-}
+};
 
 /**
  *
@@ -396,22 +400,31 @@ export const sendNewlyClaimedMachineNotification = async ({
  */
 export const sendMachineGroupStatusChangedNotification = async ({
   machineId,
-  machine: _machine
+  machine: _machine,
 }: {
   machineId: number;
   machine?: Machine; // Must have room, area, and claim joined.
 }) => {
-
-  const machine = _machine || await AppDataSource.getRepository(Machine)
-    .createQueryBuilder("machine")
-    .leftJoinAndSelect("machine.room", "room")
-    .leftJoinAndSelect("room.area", "area")
-    .leftJoinAndSelect("machine.claim", "claim") // join with Claim to get cycle time for notification. Don't need FCM token
-    .where("machine.machineId = :id", { id: machineId })
-    .getOne();
+  const machine =
+    _machine ||
+    (await AppDataSource.getRepository(Machine)
+      .createQueryBuilder("machine")
+      .leftJoinAndSelect("machine.room", "room")
+      .leftJoinAndSelect("room.area", "area")
+      .leftJoinAndSelect("machine.claim", "claim") // join with Claim to get cycle time for notification. Don't need FCM token
+      .where("machine.machineId = :id", { id: machineId })
+      .getOne());
   let cycleTimeInfo = "";
-  if (machine.claim && machine.claim.cycleTime && (machine.currentStatus === MachineStatus.FINISHING || machine.currentStatus === MachineStatus.IN_USE)) { // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
-    const lastAvailableTime = machine.lastAvailableTime ? machine.lastAvailableTime.getTime() : Date.now();
+  if (
+    machine.claim &&
+    machine.claim.cycleTime &&
+    (machine.currentStatus === MachineStatus.FINISHING ||
+      machine.currentStatus === MachineStatus.IN_USE)
+  ) {
+    // If there is a claim associated with this machine & a cycleTime exists, let the subscription users know about the timing
+    const lastAvailableTime = machine.lastAvailableTime
+      ? machine.lastAvailableTime.getTime()
+      : Date.now();
     const expectedEndTime = lastAvailableTime + machine.claim.cycleTime * 60000;
     const minutesLeft = Math.ceil((expectedEndTime - Date.now()) / 60000);
     cycleTimeInfo = `Expected to finish in approx. ${minutesLeft} minutes. `;

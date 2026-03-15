@@ -11,6 +11,7 @@ import { SensorToMachine } from "../../../models/SensorToMachine";
 import { In, MoreThanOrEqual } from "typeorm";
 import {
   GetQueryBoolean,
+  isAvailableLike,
   MachineStatus,
   MachineType,
   STATUS_CODE_MAP,
@@ -562,16 +563,10 @@ export const createMultipleEvents = asyncHandler(
             )
           : 0; // calculate how long the machine was in the previous status in seconds
 
-        if (
-          machine.currentStatus === MachineStatus.AVAILABLE ||
-          machine.currentStatus === MachineStatus.FINISHED
-        ) {
+        if (isAvailableLike(machine.currentStatus)) {
           machine.lastAvailableTime = now; // the machine is now available, so update lastAvailableTime to now. in a sense, this is more of "firstAvailableTime" but we'll run with it
           // but, keep the claim Id
-        } else if (
-          machine.previousStatus === MachineStatus.AVAILABLE ||
-          machine.previousStatus === MachineStatus.FINISHED
-        ) {
+        } else if (isAvailableLike(machine.previousStatus)) {
           machine.lastAvailableTime = now; // the machine has now become not available, so NOW is the last available time
         }
 

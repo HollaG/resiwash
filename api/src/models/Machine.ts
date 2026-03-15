@@ -74,9 +74,10 @@ export class Machine {
   previousStatusActiveTime: number; // How long the machine was in the previous status (in seconds)
 
   /**
-   * The last time the machine was available (i.e. matching machineStatus === MachineStatus.AVAILABLE)
+   * The last time the machine was available-like
+   * (i.e. matching AVAILABLE or FINISHED)
    * So,
-   *   if machineStatus == MachineStatus.AVAILABLE, lastAvailableTime is updated to now (same as lastChangeTime)
+   *   if machineStatus is available-like, lastAvailableTime is updated to now (same as lastChangeTime)
    *   else lastAvailableTime remains unchanged
    */
   @Column({ type: "timestamp", nullable: true })
