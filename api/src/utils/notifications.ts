@@ -109,9 +109,13 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
 
     await machineRepository.save(machine);
 
-    if (machine.isManualEntry) {
-      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
-    }
+    // note: non manual entry machines CAN automatically transition to available
+    // when the next sensor event comes in.
+    // however, we can speed this up.
+    // see events.controller.ts@496, `effectiveStatus` will become available (cos no more claimId),
+    // and lastEvent will also be available (cos of updateMachineStatusAfterTime), so there
+    // will be no double-events.
+    await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   } else {
     console.log(
