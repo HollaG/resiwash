@@ -394,7 +394,7 @@ export const createMultipleEvents = asyncHandler(
       .leftJoinAndSelect("event.machine", "machine")
       .distinctOn(["event.machineId"])
       .where("event.machineId IN (:...machineIds)", { machineIds }) // <-- add this line
-      .andWhere("event.isManualEntry = false")
+      .andWhere("machine.isManualEntry = false")
 
       .orderBy("event.machineId", "ASC")
       .addOrderBy("event.timestamp", "DESC")
