@@ -30,6 +30,8 @@ function getStatusColor(status: MachineStatus) {
       return 'var(--color-status-inUse)';
     case MachineStatus.FINISHING:
       return 'var(--color-status-finishing)';
+    case MachineStatus.FINISHED:
+      return 'var(--color-status-available)';
     case MachineStatus.HAS_ISSUES:
       return 'var(--color-status-issues)';
     case MachineStatus.UNKNOWN:
@@ -47,6 +49,17 @@ function TimelineMarker({ status }: { status: MachineStatus }) {
   const color = getStatusColor(status);
 
   if (status === MachineStatus.FINISHING) {
+    return (
+      <div
+        className={styles.markerFinishing}
+        style={{ borderColor: color }}
+        aria-label="Finishing"
+        role="img"
+      />
+    );
+  }
+
+  if (status === MachineStatus.FINISHED) {
     return (
       <div
         className={styles.markerFinishing}

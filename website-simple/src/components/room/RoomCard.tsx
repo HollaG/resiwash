@@ -90,13 +90,14 @@ export function RoomCard({
     : 'Never';
 
   // Check if data is stale (older than 30 minutes)
-  const oldestDataTime = machines.reduce((oldest, machine) => {
-    if (machine.isManualEntry) return oldest;
-    const machineTime = new Date(machine.lastUpdated).getTime();
-    return machineTime < oldest ? machineTime : oldest;
-  }, Date.now());
+  // const oldestDataTime = machines.reduce((oldest, machine) => {
+  //   if (machine.isManualEntry) return oldest;
+  //   const machineTime = new Date(machine.lastUpdated).getTime();
+  //   return machineTime < oldest ? machineTime : oldest;
+  // }, Date.now());
 
-  const isStale = Date.now() - oldestDataTime > 30 * 60 * 1000;
+  // const isStale = Date.now() - oldestDataTime > 30 * 60 * 1000;
+  const isStale = false; // TODO: fix manual override now that we handle stale state from the Backend
 
   return (
     <Card className={cn('overflow-hidden', isPinned && 'border-accent-dark dark:border-accent-light', className)}>

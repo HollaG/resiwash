@@ -21,7 +21,8 @@ interface MachineCellProps {
  * │ 2m      │  ← Time since update
  * └─────────┘
  */
-export function MachineCell({ machine, onClick, className, isStale = false }: MachineCellProps) {
+export function MachineCell({ machine, onClick, className, isStale: _isStale }: MachineCellProps) {
+  const isStale = false; // TODO: fix manual override now that we handle stale state from the Backend
   const since = machine.lastChangeTime || machine.lastUpdated;
   const timeAgo = formatDistanceToNow(new Date(since), {
     addSuffix: false,
