@@ -32,6 +32,16 @@ class MachineStatusIndicator extends StatelessWidget {
         break;
     }
 
+    Border finishingBorder = Border.all(
+      color: getConnectorColor(context, MachineStatus.inUse),
+      width: 2,
+    );
+
+    Border finishedBorder = Border.all(
+      color: getConnectorColor(context, MachineStatus.finished),
+      width: 2,
+    );
+
     return Container(
       width: dimension,
       height: dimension,
@@ -40,10 +50,9 @@ class MachineStatusIndicator extends StatelessWidget {
         // color: context.success.color,
         borderRadius: BorderRadius.circular(4),
         border: status == MachineStatus.finishing
-            ? Border.all(
-                color: getIndicatorColor(context, MachineStatus.inUse),
-                width: 2,
-              )
+            ? finishingBorder
+            : status == MachineStatus.finished
+            ? finishedBorder
             : null,
       ),
     );
@@ -52,6 +61,7 @@ class MachineStatusIndicator extends StatelessWidget {
   static Color getIndicatorColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
+
         // Use theme.success color
         return context.success.colorContainer;
 
@@ -63,6 +73,7 @@ class MachineStatusIndicator extends StatelessWidget {
         return const Color(0xff495057);
 
       case MachineStatus.finishing:
+      case MachineStatus.finished:
         // transparent
         return Colors.transparent;
       case null:
@@ -75,6 +86,7 @@ class MachineStatusIndicator extends StatelessWidget {
   static Color getConnectorColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
+      case MachineStatus.finished:
         // Use theme.success color
         return context.success.colorContainer;
       case MachineStatus.finishing:
@@ -95,6 +107,7 @@ class MachineStatusIndicator extends StatelessWidget {
   static Color getTextColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
+      case MachineStatus.finished:
         return context.success.color;
       case MachineStatus.finishing:
       case MachineStatus.inUse:
@@ -111,6 +124,7 @@ class MachineStatusIndicator extends StatelessWidget {
   static Color getBackgroundColor(BuildContext context, MachineStatus? status) {
     switch (status) {
       case MachineStatus.available:
+      case MachineStatus.finished:
         return context.success.color;
       case MachineStatus.finishing:
       case MachineStatus.inUse:
@@ -131,6 +145,7 @@ class MachineStatusIndicator extends StatelessWidget {
   ) {
     switch (status) {
       case MachineStatus.available:
+      case MachineStatus.finished:
         return context.success.onColor;
       case MachineStatus.finishing:
       case MachineStatus.inUse:

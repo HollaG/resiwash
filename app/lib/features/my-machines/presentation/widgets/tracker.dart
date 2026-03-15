@@ -10,6 +10,7 @@ import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/router.dart';
 import 'package:resiwash/theme.dart';
@@ -68,7 +69,7 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
   }
 
   Widget _calculateTimeLeftText(BuildContext context) {
-    if (widget.machine.currentStatus == MachineStatus.available) {
+    if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
       // cancel the refresh timer
       _refreshTimer.cancel();
 
@@ -138,7 +139,7 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
   }
 
   Widget _calculateTimeSinceText(BuildContext context) {
-    if (widget.machine.currentStatus == MachineStatus.available) {
+    if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
       final lastAvailableTime = widget.machine.lastAvailableTime;
       if (lastAvailableTime != null) {
         final timeSinceAvailable = DateTime.now().difference(lastAvailableTime);
@@ -187,7 +188,7 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
   }
 
   int _calculatePercentDone(BuildContext context) {
-    if (widget.machine.currentStatus == MachineStatus.available) {
+    if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
       return 100;
     }
     final cycleTime = widget.claimedMetadata.cycleTime;
@@ -427,7 +428,8 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(0),
         child: InkWell(
-          onTap: widget.machine.currentStatus == MachineStatus.available
+          onTap:
+              MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)
               ? null
               : () {
                   _dialogBuilder(context, widget.machine).then((

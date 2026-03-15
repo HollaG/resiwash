@@ -7,13 +7,16 @@ import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/location_tree_select.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:resiwash/theme.dart';
 
 class RoomOverviewWrapper extends StatefulWidget {
   final List<String> roomIds;
@@ -169,11 +172,123 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
                     return RoomOverview(roomId: roomId);
                   },
                 ),
+                Text(
+                  "Legend",
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: Row(
+                        children: [
+                          MachineStatusIndicator(
+                            status: MachineStatus.available,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Available",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: MachineStatusIndicator.getTextColor(
+                                      context,
+                                      MachineStatus.available,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          MachineStatusIndicator(
+                            status: MachineStatus.finished,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Finished (waiting for pickup)",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: MachineStatusIndicator.getTextColor(
+                                      context,
+                                      MachineStatus.finished,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  spacing: 8,
+                  children: [
+                    SizedBox(
+                      width: 90,
+                      child: Row(
+                        children: [
+                          MachineStatusIndicator(status: MachineStatus.inUse),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "In Use",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: MachineStatusIndicator.getTextColor(
+                                      context,
+                                      MachineStatus.inUse,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          MachineStatusIndicator(
+                            status: MachineStatus.finishing,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Finishing (~10mins left)",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: MachineStatusIndicator.getTextColor(
+                                      context,
+                                      MachineStatus.finishing,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
                 // Column(
                 //   children: loadedLocations.getAllRoomIds().map((roomId) {
                 //     return RoomOverview(roomId: roomId);
                 //   }).toList(),
                 // ),
+                if (numberOfRooms > 0) Divider(),
                 if (numberOfRooms > 0)
                   Center(
                     child: Text(

@@ -27,7 +27,9 @@ enum MachineStatus {
   @JsonValue('UNKNOWN')
   unknown('UNKNOWN'),
   @JsonValue('FINISHING')
-  finishing('FINISHING');
+  finishing('FINISHING'),
+  @JsonValue("FINISHED")
+  finished('FINISHED');
 
   final String value;
   const MachineStatus(this.value);
@@ -60,6 +62,8 @@ class MachineModel {
   final int? previousStatusActiveTime;
   final DateTime? lastAvailableTime;
 
+  final int? claimId;
+
   const MachineModel({
     required this.machineId,
     required this.name,
@@ -79,6 +83,7 @@ class MachineModel {
     this.previousStatus,
     this.previousStatusActiveTime,
     this.lastAvailableTime,
+    this.claimId,
   });
 
   factory MachineModel.fromJson(Map<String, dynamic> json) =>
@@ -105,5 +110,6 @@ class MachineModel {
     previousStatus: previousStatus,
     previousStatusActiveTime: previousStatusActiveTime,
     lastAvailableTime: lastAvailableTime,
+    claimId: claimId,
   );
 }

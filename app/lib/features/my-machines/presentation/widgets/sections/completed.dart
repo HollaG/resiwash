@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/demo/machine_row_slidable_explanation.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
@@ -30,7 +31,8 @@ class _CompletedSectionState extends State<CompletedSection> {
           // filter out to only have avaailble machines
           final completedMachines = state.claimedMachines!
               .where(
-                (machine) => machine.currentStatus == MachineStatus.available,
+                (machine) =>
+                    MachineDisplayUtils.isAvailableLike(machine.currentStatus),
               )
               .toList();
 

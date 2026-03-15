@@ -4,6 +4,11 @@ import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
 /// Utility class for machine-related formatting and display logic
 class MachineDisplayUtils {
+  static bool isAvailableLike(MachineStatus? status) {
+    return status == MachineStatus.available ||
+        status == MachineStatus.finished;
+  }
+
   /// Generates a descriptive status label for a machine including relative time
   ///
   /// Examples:
@@ -23,7 +28,7 @@ class MachineDisplayUtils {
       final relativeTime = DateTimeUtils.formatRelativeTime(
         machine.lastChangeTime,
       );
-      if (status == MachineStatus.available) {
+      if (isAvailableLike(status)) {
         timePart = ' since $relativeTime';
       } else if (status == MachineStatus.inUse ||
           status == MachineStatus.finishing) {
@@ -41,6 +46,8 @@ class MachineDisplayUtils {
         return 'Has issues';
       case MachineStatus.finishing:
         return 'Finishing${timePart.replaceFirst(" ago", "")}';
+      case MachineStatus.finished:
+        return 'Finished$timePart ago, waiting for pickup';
       case null:
         return 'Unknown status';
       default:

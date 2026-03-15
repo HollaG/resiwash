@@ -4,6 +4,7 @@ import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
@@ -29,7 +30,8 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
         // if there are, show the demo explanation
         final completedMachines = (state.claimedMachines ?? [])
             .where(
-              (machine) => machine.currentStatus == MachineStatus.available,
+              (machine) =>
+                  MachineDisplayUtils.isAvailableLike(machine.currentStatus),
             )
             .toList();
 

@@ -27,6 +27,9 @@ class MachineEntity {
   final int? previousStatusActiveTime;
   final DateTime? lastAvailableTime;
 
+  final int? claimId;
+  // final Claim? claim;
+
   MachineEntity({
     required this.machineId,
     required this.name,
@@ -46,6 +49,7 @@ class MachineEntity {
     this.previousStatus,
     this.previousStatusActiveTime,
     this.lastAvailableTime,
+    this.claimId,
   });
 
   @override
@@ -54,5 +58,6 @@ class MachineEntity {
       other is MachineEntity &&
           runtimeType == other.runtimeType &&
           machineId == other.machineId &&
-          lastChangeTime == other.lastChangeTime;
+          lastChangeTime == other.lastChangeTime &&
+          claimId == other.claimId;
 }

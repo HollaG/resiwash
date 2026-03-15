@@ -1,5 +1,6 @@
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:equatable/equatable.dart';
 import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
@@ -34,7 +35,9 @@ class OverviewLoaded extends OverviewState {
       CountKey.total: machines.where((m) => m.type == type).length,
       CountKey.available: machines
           .where(
-            (m) => m.type == type && m.currentStatus == MachineStatus.available,
+            (m) =>
+                m.type == type &&
+                MachineDisplayUtils.isAvailableLike(m.currentStatus),
           )
           .length,
     });

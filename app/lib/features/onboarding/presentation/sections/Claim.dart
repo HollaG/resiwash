@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:resiwash/demo/machine_row_slidable_explanation.dart';
 import 'package:resiwash/features/onboarding/presentation/widgets/hero_layout_card.dart';
 import 'package:resiwash/theme.dart';
@@ -240,36 +242,58 @@ class ScanNfc extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const TextSpan(text: ' in the center of the QR code to claim.'),
+              const TextSpan(
+                text:
+                    ' in the center of the QR code with your phone to claim or release the machine.',
+              ),
             ],
           ),
         ),
         // Text(
         //   "Remember to tap where the NFC reader on your phone is! For most Androids, it's near the back camera, while for iPhones, it's near the top edge.",
         // ),
-        Center(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              'assets/onboarding/nfc_info.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        Center(
-          child: SizedBox(
-            height: 200,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'assets/onboarding/claim_help_nfc.jpg',
-                fit: BoxFit.cover,
+        Row(
+          spacing: 12,
+          children: [
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  if (Platform.isIOS) {
+                    return Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/onboarding/ios.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  } else if (Platform.isAndroid) {
+                    return Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/onboarding/android.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  }
+                  return Container();
+                },
               ),
             ),
-          ),
-        ),
-        Row(children: [
-            
+            Expanded(
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/onboarding/claim_help_nfc.jpg',
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ],

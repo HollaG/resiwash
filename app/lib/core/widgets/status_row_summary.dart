@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
-import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 
 class StatusRowSummary extends StatelessWidget {
   // a subset of machines to display
@@ -14,7 +14,10 @@ class StatusRowSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     int totalCount = machines.length;
     int availableCount = machines
-        .where((machine) => machine.currentStatus == MachineStatus.available)
+        .where(
+          (machine) =>
+              MachineDisplayUtils.isAvailableLike(machine.currentStatus),
+        )
         .length;
 
     int width = (16 + 2) * totalCount;

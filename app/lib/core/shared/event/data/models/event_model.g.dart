@@ -36,4 +36,5 @@ const _$MachineStatusEnumMap = {
   MachineStatus.hasIssues: 'HAS_ISSUES',
   MachineStatus.unknown: 'UNKNOWN',
   MachineStatus.finishing: 'FINISHING',
+  MachineStatus.finished: 'FINISHED',
 };

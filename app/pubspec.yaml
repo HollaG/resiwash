@@ -64,6 +64,8 @@ flutter:
     - assets/onboarding/claim_help.jpg
     - assets/onboarding/claim_help_nfc.jpg
     - assets/onboarding/nfc_info.png
+    - assets/onboarding/android.png
+    - assets/onboarding/ios.png
   fonts:
     - family: Open Sans
       fonts:

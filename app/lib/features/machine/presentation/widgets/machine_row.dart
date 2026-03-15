@@ -808,10 +808,18 @@ class _MachineRowState extends State<MachineRow>
                         Row(
                           spacing: 4,
                           children: [
-                            if (subscriptionState ==
-                                SubscriptionState.subscribed)
+                            // if (subscriptionState ==
+                            //     SubscriptionState.subscribed)
+                            //   Icon(
+                            //     Icons.notifications,
+                            //     size: 14,
+                            //     // color: Theme.of(
+                            //     //   context,
+                            //     // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                            //   ),
+                            if (widget.machine.claimId != null)
                               Icon(
-                                Icons.notifications,
+                                Icons.sensor_occupied_rounded,
                                 size: 14,
                                 // color: Theme.of(
                                 //   context,
