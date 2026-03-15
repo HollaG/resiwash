@@ -9,6 +9,10 @@ class MachineDisplayUtils {
         status == MachineStatus.finished;
   }
 
+  static bool isInUseLike(MachineStatus? status) {
+    return status == MachineStatus.inUse || status == MachineStatus.finishing;
+  }
+
   /// Generates a descriptive status label for a machine including relative time
   ///
   /// Examples:
@@ -20,6 +24,22 @@ class MachineDisplayUtils {
   ///
 
   static String getStatusLabel(MachineEntity machine) {
+    if (machine.claimId != null) {
+      int? cycleTime = machine.claim?.cycleTime;
+      if (cycleTime != null) {
+        if (!MachineDisplayUtils.isAvailableLike(machine.currentStatus)) {
+          final relativeTime = DateTimeUtils.formatRelativeTimeTo(
+            machine.lastAvailableTime?.add(Duration(minutes: cycleTime)),
+          );
+
+          if (relativeTime != null) {
+            if (isInUseLike(machine.currentStatus)) {
+              return relativeTime;
+            }
+          }
+        }
+      }
+    }
     final status = machine.currentStatus;
     final lastChangeTime = machine.lastChangeTime;
 

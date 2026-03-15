@@ -17,6 +17,24 @@ class DateTimeUtils {
     return timeago.format(dateTime);
   }
 
+  static String? formatRelativeTimeTo(DateTime? endTime) {
+    // minutes between now and endTime
+    if (endTime == null) return null;
+    final now = DateTime.now();
+    int minutes = endTime.difference(now).inMinutes;
+    if (minutes > 0) {
+      return '$minutes minutes left';
+    } else if (minutes < 0) {
+      return 'Almost done...';
+    } else {
+      return 'Almost done...';
+    }
+
+    // if (endTime == null) return null;
+    // final now = DateTime.now();
+    // return timeago.format(endTime, clock: now);
+  }
+
   /// Returns a human-readable relative time string with custom locale
   static String? formatRelativeTimeWithLocale(
     DateTime? dateTime,

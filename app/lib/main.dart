@@ -370,6 +370,11 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                   ),
+                  onSwipePastEnd: () => _pageViewController.animateToPage(
+                    1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
                 ),
               ),
               child ?? const SizedBox.shrink(),

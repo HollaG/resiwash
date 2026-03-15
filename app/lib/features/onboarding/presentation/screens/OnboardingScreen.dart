@@ -8,9 +8,14 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 // Note: all back button presses while in OnboardingScreen should return back to the main view
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key, required this.onDismiss});
+  const OnboardingScreen({
+    super.key,
+    required this.onDismiss,
+    this.onSwipePastEnd,
+  });
 
   final VoidCallback onDismiss;
+  final VoidCallback? onSwipePastEnd;
 
   @override
   State<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -26,6 +31,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final PageController _pageViewController = PageController();
   static const int _lastPageIndex = 3;
   int _currentPage = 0;
+  bool _didHandleEndOverscroll = false;
 
   @override
   void dispose() {
@@ -40,6 +46,34 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+
+  bool _onPageScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollStartNotification) {
+      _didHandleEndOverscroll = false;
+      return false;
+    }
+
+    if (notification is OverscrollNotification) {
+      final metrics = notification.metrics;
+      final isHorizontal = metrics.axis == Axis.horizontal;
+      final isAtEnd = metrics.pixels >= metrics.maxScrollExtent;
+      final draggingForward = notification.overscroll > 0;
+
+      if (isHorizontal &&
+          isAtEnd &&
+          draggingForward &&
+          !_didHandleEndOverscroll) {
+        _didHandleEndOverscroll = true;
+        widget.onSwipePastEnd?.call();
+      }
+    }
+
+    if (notification is ScrollEndNotification) {
+      _didHandleEndOverscroll = false;
+    }
+
+    return false;
   }
 
   @override
@@ -63,34 +97,45 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Align(
+              //   alignment: Alignment.centerRight,
+              //   child: IconButton(
+              //     onPressed: widget.onDismiss,
+              //     icon: Icon(Icons.close),
+              //     color: context.accent.colorContainer,
+              //   ),
+              // ),
               Expanded(
-                child: PageView(
-                  controller: _pageViewController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  children: [
-                    Overview(
-                      onCheckTap: () {
-                        _goToSection(OnboardingPage.check);
-                      },
-                      onClaimTap: () {
-                        _goToSection(OnboardingPage.claim);
-                      },
-                      onContactTap: () {
-                        // _goToSection(OnboardingPage.contact);
-                      },
-                      onDismiss: widget.onDismiss,
-                    ),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: _onPageScrollNotification,
+                  child: PageView(
+                    controller: _pageViewController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    children: [
+                      Overview(
+                        onCheckTap: () {
+                          _goToSection(OnboardingPage.check);
+                        },
+                        onClaimTap: () {
+                          _goToSection(OnboardingPage.claim);
+                        },
+                        onContactTap: () {
+                          // _goToSection(OnboardingPage.contact);
+                        },
+                        onDismiss: widget.onDismiss,
+                      ),
 
-                    Check(),
-                    Claim(),
-                    Claim2(),
-                    // Center(child: Text("Hey3!!")),
-                    // Contact(),
-                  ],
+                      Check(),
+                      Claim(),
+                      Claim2(),
+                      // Center(child: Text("Hey3!!")),
+                      // Contact(),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(height: 32),
@@ -137,12 +182,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   SizedBox(
                     width: 75,
                     child: _currentPage == _lastPageIndex
-                        ? IconButton(
+                        ? ElevatedButton(
                             onPressed: () {
                               widget.onDismiss();
                             },
-                            icon: Icon(Icons.home),
-                            color: context.accent.colorContainer,
+                            child: Icon(Icons.home),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                            ),
                           )
                         //  ElevatedButton(
                         //     style: ButtonStyle(

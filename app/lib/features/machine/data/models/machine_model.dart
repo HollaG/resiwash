@@ -1,5 +1,6 @@
 // Enums ----------------------------------------------------------------------
 
+import 'package:resiwash/features/machine/data/models/claim_model.dart';
 import 'package:resiwash/features/machine/data/models/event_model.dart';
 import 'package:resiwash/features/machine/domain/entities/event_entity.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -63,6 +64,7 @@ class MachineModel {
   final DateTime? lastAvailableTime;
 
   final int? claimId;
+  final ClaimModel? claim;
 
   const MachineModel({
     required this.machineId,
@@ -84,6 +86,7 @@ class MachineModel {
     this.previousStatusActiveTime,
     this.lastAvailableTime,
     this.claimId,
+    this.claim,
   });
 
   factory MachineModel.fromJson(Map<String, dynamic> json) =>
@@ -111,5 +114,6 @@ class MachineModel {
     previousStatusActiveTime: previousStatusActiveTime,
     lastAvailableTime: lastAvailableTime,
     claimId: claimId,
+    claim: claim?.toEntity(),
   );
 }
