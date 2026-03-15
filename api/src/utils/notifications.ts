@@ -93,7 +93,9 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
   if (machine) {
     const currentClaimToken = machine.claim?.fcmToken;
 
-    console.log(`currentClaimToken is ${currentClaimToken}, trying to unclaim with ${fcmToken} for machine ${machineId}`);
+    console.log(
+      `currentClaimToken is ${currentClaimToken}, trying to unclaim with ${fcmToken} for machine ${machineId}`,
+    );
 
     if (!currentClaimToken) {
       console.log(
@@ -102,19 +104,21 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
       return;
     }
 
-
-
     machine.claimId = null; // remove the claim association but leave it in the claim history
     machine.claim = null;
 
     await machineRepository.save(machine);
 
-    if (machine.isManualEntry) {
-      await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
-    }
+    // Always set machine to available when unclaiming.
+    // This is because claimed machines will now transition to FINISHED, for both manual and automatic sensors.
+    // if (machine.isManualEntry) {
+    await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
+    // }
     console.log(`Unclaimed machine ${machineId} for ${fcmToken}`);
   } else {
-    console.log(`Machine ${machineId} not found when trying to unclaim for ${fcmToken}`);
+    console.log(
+      `Machine ${machineId} not found when trying to unclaim for ${fcmToken}`,
+    );
   }
 };
 
@@ -169,14 +173,9 @@ export const addToClaimHistory = async (
   //   // unclaim previous machine
   //   await unclaimMachine(previousClaim.machineId.toString(), fcmToken);
   // }
-
-
 };
 
-export const updateCycleTime = async (
-  claimId: number,
-  cycleTime: number,
-) => {
+export const updateCycleTime = async (claimId: number, cycleTime: number) => {
   const claimRepository = AppDataSource.getRepository(Claim);
 
   const claim = await claimRepository.findOne({
@@ -208,8 +207,6 @@ export const updateCycleTime = async (
 export const getClaimants = async (
   machineId: number,
 ): Promise<IClaimMapEntry[]> => {
-
-
   // remember to add the FCM token
   // first, check for valid machineId in DB
   const machine = await AppDataSource.getRepository(Machine)
@@ -238,7 +235,6 @@ export const getClaimants = async (
   } else {
     return [];
   }
-
 };
 
 export const sendNotificationToClaimants = async (machineId: number) => {

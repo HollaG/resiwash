@@ -37,6 +37,7 @@ export const startMachineCycleEndChecker = () => {
         .where("machine.currentStatus IN (:...statuses)", {
           statuses: [MachineStatus.IN_USE, MachineStatus.FINISHING],
         })
+        .addSelect("claim.fcmToken") // we need the fcmToken to check if it's a web claim or a mobile claim
         .andWhere("machine.isManualEntry = :isManual", { isManual: true })
         .andWhere("claim.cycleTime IS NOT NULL")
         .andWhere("machine.lastAvailableTime IS NOT NULL")
@@ -59,13 +60,28 @@ export const startMachineCycleEndChecker = () => {
         if (elapsedMilliseconds > cycleTimeMilliseconds + bufferMilliseconds) {
           console.log(
             `[Job] Resetting endable machine ${machine.machineId} (${machine.name}) - ` +
-            `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
+              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
           );
           try {
-            await updateMachineStatusAfterTime(
-              MachineStatus.AVAILABLE,
-              machine.machineId,
-            );
+            /**
+             * Set all manual machines to FINISHED EXCEPT if it is a web claim.
+             * This is because web claimaints have no way to release.
+             */
+            if (
+              machine.claim.fcmToken &&
+              machine.claim.fcmToken.startsWith("web_")
+            ) {
+              await updateMachineStatusAfterTime(
+                MachineStatus.AVAILABLE,
+                machine.machineId,
+              );
+            } else {
+              await updateMachineStatusAfterTime(
+                MachineStatus.FINISHED,
+                machine.machineId,
+              );
+            }
+
             resetCount++;
           } catch (error) {
             console.error(
@@ -79,7 +95,7 @@ export const startMachineCycleEndChecker = () => {
         ) {
           console.log(
             `[Job] Setting machine ${machine.machineId} (${machine.name}) to FINISHING - ` +
-            `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
+              `elapsed: ${Math.round(elapsedMilliseconds / 1000)}s, cycle time: ${machine.claim.cycleTime}s`,
           );
           try {
             await updateMachineStatusAfterTime(

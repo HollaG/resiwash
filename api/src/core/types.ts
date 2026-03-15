@@ -11,6 +11,7 @@ export enum MachineStatus {
   FINISHING = "FINISHING",
   HAS_ISSUES = "HAS_ISSUES",
   UNKNOWN = "UNKNOWN",
+  FINISHED = "FINISHED",
 }
 
 export const getReadableMachineStatus = (status: MachineStatus): string => {
@@ -25,6 +26,8 @@ export const getReadableMachineStatus = (status: MachineStatus): string => {
       return "Has Issues";
     case MachineStatus.UNKNOWN:
       return "Unknown";
+    case MachineStatus.FINISHED:
+      return "Finished";
   }
 };
 
@@ -34,6 +37,7 @@ export const STATUS_CODE_MAP = {
   2: MachineStatus.FINISHING,
   3: MachineStatus.HAS_ISSUES,
   4: MachineStatus.UNKNOWN,
+  5: MachineStatus.FINISHED,
 };
 
 export class GetQueryBoolean {
