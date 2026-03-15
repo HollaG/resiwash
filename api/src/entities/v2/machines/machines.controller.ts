@@ -55,6 +55,7 @@ export const getMachines = asyncHandler(
 
     // Join room if we need to filter by roomIds or if extra info is requested
     const needsRoomJoin = roomIds.length > 0 || GetQueryBoolean.parse(extra);
+    const needsClaimJoin = GetQueryBoolean.parse(extra);
 
     if (needsRoomJoin) {
       if (GetQueryBoolean.parse(extra)) {
@@ -67,6 +68,11 @@ export const getMachines = asyncHandler(
         // just join room without select (for filtering only)
         machines = machines.leftJoin("machine.room", "room");
       }
+    }
+
+    if (needsClaimJoin) {
+      req.log.debug("including claim info");
+      machines = machines.leftJoinAndSelect("machine.claim", "claim");
     }
 
     req.log.debug("SQL Query:", machines.getSql());
@@ -96,21 +102,21 @@ export const getMachines = asyncHandler(
     if (roomIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("room.roomId IN (:...roomIds)", {
-          roomIds: roomIds.map(Number),
-        })
+            roomIds: roomIds.map(Number),
+          })
         : machines.andWhere("room.roomId IN (:...roomIds)", {
-          roomIds: roomIds.map(Number),
-        });
+            roomIds: roomIds.map(Number),
+          });
     }
 
     if (machineIds.length > 0) {
       machines = isFirstCondition
         ? machines.where("machine.machineId IN (:...machineIds)", {
-          machineIds: machineIds.map(Number),
-        })
+            machineIds: machineIds.map(Number),
+          })
         : machines.andWhere("machine.machineId IN (:...machineIds)", {
-          machineIds: machineIds.map(Number),
-        });
+            machineIds: machineIds.map(Number),
+          });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
@@ -206,7 +212,8 @@ export const getMachine = asyncHandler(
     if (GetQueryBoolean.parse(extra)) {
       machineQuery = machineQuery
         .leftJoinAndSelect("machine.room", "room")
-        .leftJoinAndSelect("room.area", "area");
+        .leftJoinAndSelect("room.area", "area")
+        .leftJoinAndSelect("machine.claim", "claim");
     }
 
     const machine = await machineQuery
@@ -357,7 +364,7 @@ export const updateMachine = asyncHandler(
 const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
 
 // TODO: implement getTimeOptions based on possible cycleTimes
-export const getTimeOptions = () => { }; //
+export const getTimeOptions = () => {}; //
 
 interface ManualSetStatusRequest {
   status: MachineStatus;
@@ -390,7 +397,7 @@ export const manualSetStatus = asyncHandler(
         error.message === "Machine not found"
           ? 404
           : error.message ===
-            "Manual status update not allowed for this machine"
+              "Manual status update not allowed for this machine"
             ? 403
             : 400;
       return sendErrorResponse(res, { message: error.message }, statusCode);
