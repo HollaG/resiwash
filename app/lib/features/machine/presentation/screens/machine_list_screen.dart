@@ -130,19 +130,19 @@ class _MachineListScreenState extends State<MachineListScreen>
                                 machines: dryers,
                               ),
                             ),
-                            if (widget.roomIds != null &&
-                                widget.roomIds!.isNotEmpty)
-                              MachineGroupSubscription(
-                                subscriptionKeys: widget.roomIds!
-                                    .map(
-                                      (e) =>
-                                          SubscriptionUtils.getTopicNameForGroup(
-                                            e,
-                                            MachineType.dryer,
-                                          ),
-                                    )
-                                    .toList(),
-                              ),
+                            // if (widget.roomIds != null &&
+                            //     widget.roomIds!.isNotEmpty)
+                            //   MachineGroupSubscription(
+                            //     subscriptionKeys: widget.roomIds!
+                            //         .map(
+                            //           (e) =>
+                            //               SubscriptionUtils.getTopicNameForGroup(
+                            //                 e,
+                            //                 MachineType.dryer,
+                            //               ),
+                            //         )
+                            //         .toList(),
+                            //   ),
                           ],
                         ),
                       ],
@@ -155,19 +155,19 @@ class _MachineListScreenState extends State<MachineListScreen>
                                 machines: washers,
                               ),
                             ),
-                            if (widget.roomIds != null &&
-                                widget.roomIds!.isNotEmpty)
-                              MachineGroupSubscription(
-                                subscriptionKeys: widget.roomIds!
-                                    .map(
-                                      (e) =>
-                                          SubscriptionUtils.getTopicNameForGroup(
-                                            e,
-                                            MachineType.washer,
-                                          ),
-                                    )
-                                    .toList(),
-                              ),
+                            // if (widget.roomIds != null &&
+                            //     widget.roomIds!.isNotEmpty)
+                            //   MachineGroupSubscription(
+                            //     subscriptionKeys: widget.roomIds!
+                            //         .map(
+                            //           (e) =>
+                            //               SubscriptionUtils.getTopicNameForGroup(
+                            //                 e,
+                            //                 MachineType.washer,
+                            //               ),
+                            //         )
+                            //         .toList(),
+                            //   ),
                           ],
                         ),
                       ],

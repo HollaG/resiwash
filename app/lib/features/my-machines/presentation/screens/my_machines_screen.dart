@@ -144,7 +144,7 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                                 // section 2:
                                 // "Subscribed Machines"
                                 // list of subscribed machines
-                                SubscriptionsSection(),
+                                // SubscriptionsSection(),
 
                                 // Divider(),
                                 // section 3:
