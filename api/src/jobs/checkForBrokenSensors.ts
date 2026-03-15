@@ -40,6 +40,12 @@ const runBrokenSensorCheck = async () => {
         brokenEvent.cycleTime = null;
         brokenEvent.readings = null;
         await AppDataSource.getRepository(UpdateEvent).save(brokenEvent);
+
+        // update the machine
+        machine.previousStatus = machine.currentStatus;
+        machine.currentStatus = MachineStatus.UNKNOWN;
+
+        await machineRepo.save(machine);
       }
     }
   } catch (error) {
