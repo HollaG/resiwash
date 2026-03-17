@@ -117,7 +117,8 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
     // will be no double-events.
     if (machine.isManualEntry) {
       await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
-    } else if (isAvailableLike(machine.currentStatus)) {
+    } else if (machine.currentStatus !== MachineStatus.AVAILABLE) {
+      // don't generate an available event if the machine is already available.
       await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
     }
 
