@@ -501,18 +501,23 @@ export const createMultipleEvents = asyncHandler(
            * Using the raw `status` for the guard but saving FINISHED leads to an infinite flood:
            *   latestEvent.status=FINISHED vs status=AVAILABLE → always different → new FINISHED event every 10s.
            */
-          // if we
-          // a) detect available
-          // b) machine is currently available
-          // c) there is a claimant
-          // d) previous status was NOT in_use or finishing
-          //  then we know that this is a special case whereby the user claimed the machine
-          //  but didn't start
-          //
-          const effectiveStatus =
-            machine.machine.claimId && status === MachineStatus.AVAILABLE
-              ? MachineStatus.FINISHED
-              : status;
+
+          // This code presents a problem, because we can't tell when someone has 
+          // either a) claimed a free machine (waiting to start)
+          // or b) machine finished.
+          // If the detected status is now "AVAILABLE" AND there is a claimId AND the curremt machine status is "AVAILABLE", then we know that this machine was claimed from available state.
+          //   Nothing should be done in this state as we should NOT transition to Finished
+          // If the detected status is "AVAILABLE" AND there is a claimId BUT the current machine status is NOT "AVAILABLE", then we know that this sensor has detected the machine has just finished.
+          //   We should transition to FINISHED in this case.
+          // If there is no claimId, no change.
+          let effectiveStatus = status;
+          if (machine.machine.claimId) {
+            if (status === MachineStatus.AVAILABLE && machine.machine.currentStatus === MachineStatus.AVAILABLE) {
+              effectiveStatus = status; // make sure no change
+            } else if (status === MachineStatus.AVAILABLE && machine.machine.currentStatus !== MachineStatus.AVAILABLE) {
+              effectiveStatus = MachineStatus.FINISHED; // machine has just finished, transition to FINISHED
+            }
+          }
 
           actualEvent.status = effectiveStatus;
           actualEvent.readings = readings;
@@ -573,10 +578,10 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-              (machine.lastChangeTime.getTime() -
-                machine.lastUpdated!.getTime()) /
-                1000,
-            )
+            (machine.lastChangeTime.getTime() -
+              machine.lastUpdated!.getTime()) /
+            1000,
+          )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (isAvailableLike(machine.currentStatus)) {
@@ -600,7 +605,7 @@ export const createMultipleEvents = asyncHandler(
       });
 
       // send notification to claimant if applicable
-      sendNotificationToClaimants(machine.machineId).catch((e) => {}); // do nothing
+      sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
     }
 
     sendOkResponse(res, savedRawEvents);

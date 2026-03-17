@@ -270,7 +270,7 @@ export const sendNewlyClaimedMachineNotification = async ({
   let body = "";
   let secondsTillCompletion = null;
 
-  if (isAvailableLike(machine.currentStatus)) {
+  if (isAvailableLike(machine.currentStatus) || machine.currentStatus === MachineStatus.UNKNOWN) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} claimed.`;
 
     const expectedEndTime =
