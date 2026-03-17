@@ -156,14 +156,12 @@ class _CheckState extends State<Check> {
           MachineTimeline(machine: fakeMachine),
           ConstrainedBox(
             constraints: BoxConstraints(maxHeight: 600),
-            child: Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: AspectRatio(
-                    aspectRatio: 1080 / 2340,
-                    child: HeroLayoutCard(mediaInfo: mediaInfo),
-                  ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: AspectRatio(
+                  aspectRatio: 1080 / 2340,
+                  child: HeroLayoutCard(mediaInfo: mediaInfo),
                 ),
               ),
             ),
