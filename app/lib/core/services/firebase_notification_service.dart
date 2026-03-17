@@ -21,7 +21,13 @@ CustomFirebaseMessageChannel getChannelFromString(String channelString) {
 class FirebaseNotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 
-  Future<String> _getPermission() async {
+  Future<bool> hasNotificationPermission() async {
+    final settings = await _firebaseMessaging.getNotificationSettings();
+    return settings.authorizationStatus == AuthorizationStatus.authorized ||
+        settings.authorizationStatus == AuthorizationStatus.provisional;
+  }
+
+  Future<String> getPermission() async {
     await _firebaseMessaging.requestPermission();
 
     if (Platform.isIOS) {
@@ -246,7 +252,7 @@ class FirebaseNotificationService {
   Future<void> initialize() async {
     try {
       // request for permission on app launch
-      await _getPermission();
+      await getPermission();
 
       // check if this app was opened from a notification
       RemoteMessage? initialMessage = await FirebaseMessaging.instance

@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:resiwash/common/views/AppBar.dart';
+import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/services/firebase_notification_service.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/sections/machine_default_cycle.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/sections/open_timer_default.dart';
+import 'package:resiwash/theme.dart';
 
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
@@ -21,12 +25,22 @@ class PreferencesScreen extends StatefulWidget {
 class _PreferencesScreenState extends State<PreferencesScreen> {
   String buildVersion = "Loading...";
 
+  bool _notificationPermissionGranted = true;
+
   @override
   void initState() {
     super.initState();
     PackageInfo.fromPlatform().then((packageInfo) {
       setState(() {
         buildVersion = packageInfo.version;
+      });
+    });
+
+    sl<FirebaseNotificationService>().hasNotificationPermission().then((
+      granted,
+    ) {
+      setState(() {
+        _notificationPermissionGranted = granted;
       });
     });
   }
@@ -53,6 +67,67 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                         child: Column(
                           spacing: 20,
                           children: [
+                            if (!_notificationPermissionGranted)
+                              Container(
+                                decoration: BoxDecoration(
+                                  color:
+                                      context.appColors.reserved.colorContainer,
+
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.all(16),
+
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "Please allow notifications to receive updates on your machine.",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onErrorContainer,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        sl<FirebaseNotificationService>()
+                                            .getPermission()
+                                            .then((_) {
+                                              // After requesting permission, check the status again
+                                              sl<FirebaseNotificationService>()
+                                                  .hasNotificationPermission()
+                                                  .then((granted) {
+                                                    setState(() {
+                                                      _notificationPermissionGranted =
+                                                          granted;
+                                                    });
+                                                    if (!granted) {
+                                                      SnackbarHelper.showWarning(
+                                                        message:
+                                                            "Notification permission denied. You may miss important updates about your machine. Please allow in system settings.",
+                                                      );
+                                                    }
+                                                  });
+                                            });
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        foregroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                      ),
+                                      child: const Text("Allow"),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             Row(
                               children: [
                                 Expanded(
