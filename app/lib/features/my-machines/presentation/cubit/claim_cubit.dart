@@ -356,6 +356,11 @@ class ClaimCubit extends Cubit<ClaimState> {
           );
 
           appLog.i('Unclaimed machine: $machineId');
+
+          // TODO: this general info should be somewhere else, not in the cubit.
+          SnackbarHelper.showSuccess(
+            message: "Machine released. Thanks for using ResiWash!",
+          );
         },
       );
     } catch (e) {
