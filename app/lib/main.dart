@@ -207,6 +207,16 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await setupServiceLocator();
 
+  // Register as early as possible; this is lightweight and avoids missing BG events.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  runApp(const MyApp());
+
+  // Defer non-critical initialization so first frame is shown sooner.
+  unawaited(_initializeForegroundNotificationsAndMessaging());
+}
+
+Future<void> _initializeForegroundNotificationsAndMessaging() async {
   // ------------------------------------------------------------
   // 1) INITIALIZE PLUGIN FIRST
   // ------------------------------------------------------------
@@ -230,20 +240,10 @@ Future<void> main() async {
   await sl<LocalNotificationService>().initialize();
 
   // ------------------------------------------------------------
-  // 3) REGISTER FCM BACKGROUND HANDLER (AFTER CHANNELS!)
-  // ------------------------------------------------------------
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  // ------------------------------------------------------------
-  // 4) INITIALIZE YOUR SERVICES
+  // 3) INITIALIZE YOUR SERVICES
   // ------------------------------------------------------------
   await sl<FirebaseNotificationService>().initialize();
   // await sl<LiveNotificationService>().initialize();
-
-  // ------------------------------------------------------------
-  // 5) RUN THE APP
-  // ------------------------------------------------------------
-  runApp(const MyApp());
 }
 
 /// ------------------------------------------------------------

@@ -76,6 +76,32 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return false;
   }
 
+  Widget _buildPage(int index) {
+    switch (index) {
+      case 0:
+        return Overview(
+          onCheckTap: () {
+            _goToSection(OnboardingPage.check);
+          },
+          onClaimTap: () {
+            _goToSection(OnboardingPage.claim);
+          },
+          onContactTap: () {
+            // _goToSection(OnboardingPage.contact);
+          },
+          onDismiss: widget.onDismiss,
+        );
+      case 1:
+        return Check();
+      case 2:
+        return Claim();
+      case 3:
+        return Claim2();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context); // required by AutomaticKeepAliveClientMixin
@@ -108,33 +134,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               Expanded(
                 child: NotificationListener<ScrollNotification>(
                   onNotification: _onPageScrollNotification,
-                  child: PageView(
+                  child: PageView.builder(
                     controller: _pageViewController,
+                    itemCount: 4,
                     onPageChanged: (index) {
                       setState(() {
                         _currentPage = index;
                       });
                     },
-                    children: [
-                      Overview(
-                        onCheckTap: () {
-                          _goToSection(OnboardingPage.check);
-                        },
-                        onClaimTap: () {
-                          _goToSection(OnboardingPage.claim);
-                        },
-                        onContactTap: () {
-                          // _goToSection(OnboardingPage.contact);
-                        },
-                        onDismiss: widget.onDismiss,
-                      ),
-
-                      Check(),
-                      Claim(),
-                      Claim2(),
-                      // Center(child: Text("Hey3!!")),
-                      // Contact(),
-                    ],
+                    itemBuilder: (context, index) => _buildPage(index),
                   ),
                 ),
               ),
