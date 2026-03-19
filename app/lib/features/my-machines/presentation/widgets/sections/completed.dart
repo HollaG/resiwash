@@ -93,11 +93,13 @@ class _CompletedSectionState extends State<CompletedSection> {
                               color: context.appColors.success.onColor,
                             ),
                       ),
-                      TextSpan(text: " finished machines.\n"),
+                      TextSpan(
+                        text: " finished machines. Please collect ASAP.\n",
+                      ),
 
                       TextSpan(
                         text:
-                            "\nPlease do collect your laundry as soon as possible! Remember to release this machine once you've collected.",
+                            "\nRemember to release this machine once you've collected.",
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: Theme.of(context).colorScheme.onTertiary,
                         ),

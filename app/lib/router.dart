@@ -77,10 +77,21 @@ final router = GoRouter(
 
                     // Check if this is from a deep link (has 'claim' query param)
                     final shouldClaim =
-                        state.uri.queryParameters['claim'] == 'true';
+                        state.uri.queryParameters['claim'] == 'true' ||
+                        extra?['initialAction'] == InitialPageAction.claim;
+
+                    String key = 'machine_$machineId';
+                    if (shouldClaim) {
+                      // NEVER reuse the same key for a machine detail page if we're gonna apply the claim action
+                      // make sure it always rebuilds
+                      key += '_claim_${DateTime.now().millisecondsSinceEpoch}';
+                    }
+                    print(
+                      "debug route hit machine detail key: $key, shouldClaim: $shouldClaim, extra: $extra, ${extra?['initialAction']}, ${InitialPageAction.claim}",
+                    );
 
                     return MachineDetailScreen(
-                      key: ValueKey('machine_$machineId'),
+                      key: ValueKey(key),
                       machineId: machineId,
                       initialAction: shouldClaim
                           ? InitialPageAction.claim

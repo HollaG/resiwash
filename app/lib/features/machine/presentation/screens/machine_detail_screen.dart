@@ -58,6 +58,8 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
 
   @override
   void didChangeDependencies() {
+    print("debug changedep for machinedetailscreen");
+
     super.didChangeDependencies();
     thumbIconClaim =
         WidgetStateProperty<Icon>.fromMap(<WidgetStatesConstraint, Icon>{
@@ -233,6 +235,11 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                     machine,
                     cycleTime: cycleTime,
                   );
+
+                  // redirect to MyMachines page after claiming
+                  if (mounted && context.mounted) {
+                    context.goNamed(AppRoutes.myMachinesName);
+                  }
                 }
               }
             },

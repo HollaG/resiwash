@@ -358,27 +358,30 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
         themeMode: ThemeMode.light,
         scaffoldMessengerKey: scaffoldMessengerKey,
         builder: (context, child) {
-          return PageView(
+          return PageView.builder(
             controller: _pageViewController,
-
-            children: <Widget>[
-              Theme(
-                data: theme.dark(),
-                child: OnboardingScreen(
-                  onDismiss: () => _pageViewController.animateToPage(
-                    1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
+            itemCount: 2,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return Theme(
+                  data: theme.dark(),
+                  child: OnboardingScreen(
+                    onDismiss: () => _pageViewController.animateToPage(
+                      1,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    ),
+                    onSwipePastEnd: () => _pageViewController.animateToPage(
+                      1,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    ),
                   ),
-                  onSwipePastEnd: () => _pageViewController.animateToPage(
-                    1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  ),
-                ),
-              ),
-              child ?? const SizedBox.shrink(),
-            ],
+                );
+              } else {
+                return child ?? const SizedBox.shrink();
+              }
+            },
           );
         },
       ),
