@@ -29,7 +29,7 @@ class _CompletedSectionState extends State<CompletedSection> {
       builder: (context, state) {
         if (state is claim_state.ClaimLoaded) {
           // filter out to only have avaailble machines
-          final completedMachines = state.claimedMachines!
+          final completedMachines = state.claimedMachines
               .where(
                 (machine) =>
                     MachineDisplayUtils.isCompletedLike(machine.currentStatus),

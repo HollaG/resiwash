@@ -152,17 +152,17 @@ class ClaimCubit extends Cubit<ClaimState> {
     final machineId = machine.machineId;
     final currentState = state;
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
-    List<MachineEntity>? currentClaimedMachines;
+    List<MachineEntity> currentClaimedMachines = [];
 
     if (currentState is ClaimLoaded) {
       currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
       currentClaimedMachines = currentState.claimedMachines;
 
       print(
-        "debug currentClaimedMachines.length: ${currentClaimedMachines?.length}",
+        "debug currentClaimedMachines.length: ${currentClaimedMachines.length}",
       );
 
-      // if (currentClaimedMachines != null && currentClaimedMachines.length > 4) {
+      // if (currentClaimedMachines.length > 4) {
       //   SnackbarHelper.showInfo(
       //     message:
       //         "You can only claim up to 5 machines at a time. Please unclaim a machine before claiming another one.",
@@ -290,7 +290,7 @@ class ClaimCubit extends Cubit<ClaimState> {
     final machineId = machine.machineId;
     final currentState = state;
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
-    List<MachineEntity>? currentClaimedMachines;
+    List<MachineEntity> currentClaimedMachines = [];
 
     if (currentState is ClaimLoaded) {
       currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
@@ -349,7 +349,7 @@ class ClaimCubit extends Cubit<ClaimState> {
             Unclaimed(
               claimedMachineMetadata: updatedClaimedMetadata,
               claimedMachines: currentClaimedMachines
-                  ?.where((m) => m.machineId != machineId)
+                  .where((m) => m.machineId != machineId)
                   .toList(),
               operatingMachine: machine,
             ),
@@ -379,7 +379,7 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// Unclaim a machine by ID (when you only have the ID)
   Future<void> unclaimMachineById(String machineId) async {
     final currentState = state;
-    List<MachineEntity>? currentClaimedMachines;
+    List<MachineEntity> currentClaimedMachines = [];
 
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
     MachineEntity? machine;
@@ -389,7 +389,7 @@ class ClaimCubit extends Cubit<ClaimState> {
       currentClaimedMachines = currentState.claimedMachines;
     }
 
-    if (currentClaimedMachines == null) {
+    if (currentClaimedMachines.isEmpty) {
       appLog.e('No claimed machines loaded');
       return;
     }
@@ -427,7 +427,7 @@ class ClaimCubit extends Cubit<ClaimState> {
     try {
       final currentState = state;
       List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
-      List<MachineEntity>? currentClaimedMachines;
+      List<MachineEntity> currentClaimedMachines = [];
 
       if (currentState is ClaimLoaded) {
         currentClaimedMachineMetadata = currentState.claimedMachineMetadata;

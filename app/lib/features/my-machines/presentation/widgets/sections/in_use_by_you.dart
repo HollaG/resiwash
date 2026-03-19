@@ -45,7 +45,7 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
           return Center(child: CircularProgressIndicator());
         if (state is claim_state.ClaimLoaded) {
           // filter out to only have in-use machines
-          final inUseMachines = state.claimedMachines!
+          final inUseMachines = state.claimedMachines
               .where(
                 (machine) =>
                     MachineDisplayUtils.isInUseLike(machine.currentStatus),

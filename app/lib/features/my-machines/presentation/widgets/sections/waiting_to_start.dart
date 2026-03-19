@@ -58,7 +58,7 @@ class _WaitingToStartSectionState extends State<WaitingToStartSection> {
           return Center(child: CircularProgressIndicator());
         if (state is claim_state.ClaimLoaded) {
           // filter out to only have claimed machines that haven't started machines
-          final waitingToStartMachines = state.claimedMachines!
+          final waitingToStartMachines = state.claimedMachines
               .where(
                 (machine) =>
                     machine.currentStatus ==

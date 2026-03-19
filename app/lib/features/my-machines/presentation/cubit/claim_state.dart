@@ -26,7 +26,18 @@ class ClaimLoading extends ClaimState {
 }
 
 /// Claimed machines loaded successfully
-class ClaimLoaded extends ClaimState {
+abstract class ClaimLoadedState extends ClaimState {
+  @override
+  final List<MachineEntity> claimedMachines;
+
+  const ClaimLoadedState({
+    required super.claimedMachineMetadata,
+    required this.claimedMachines,
+  }) : super(claimedMachines: claimedMachines);
+}
+
+/// Claimed machines loaded successfully
+class ClaimLoaded extends ClaimLoadedState {
   const ClaimLoaded({
     required super.claimedMachineMetadata,
     required super.claimedMachines,
