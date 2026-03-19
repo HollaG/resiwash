@@ -31,6 +31,102 @@ class _TrackerWaitingToStartState extends State<TrackerWaitingToStart>
     with SingleTickerProviderStateMixin {
   late final SlidableController controller = SlidableController(this);
 
+  Future<int?> _dialogBuilder(
+    BuildContext context,
+    MachineEntity machine,
+  ) async {
+    int selectedCycleTime = widget.claimedMetadata.cycleTime;
+
+    List<int> cycleTimes = [30, 45, 60];
+    if (machine.type == MachineType.washer) {
+      cycleTimes = [30, 32, 34];
+    }
+
+    return showDialog<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              insetPadding: EdgeInsets.all(12),
+              title: Text(
+                'Update cycle time (now ${widget.claimedMetadata.cycleTime} min)',
+              ),
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                spacing: 12.0,
+                children: [
+                  Text(
+                    'Please choose your cycle time for the machine you are using.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  Center(
+                    child: SegmentedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.primary;
+                            }
+                            return Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHigh;
+                          },
+                        ),
+                        foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return Theme.of(context).colorScheme.onPrimary;
+                            }
+                            return Theme.of(context).colorScheme.onSurface;
+                          },
+                        ),
+                      ),
+                      segments: <ButtonSegment<int>>[
+                        for (int cycleTime in cycleTimes)
+                          ButtonSegment<int>(
+                            value: cycleTime,
+                            label: Text('${cycleTime}m'),
+                          ),
+                      ],
+                      selected: <int>{selectedCycleTime},
+                      onSelectionChanged: (Set<int> newSelection) {
+                        setState(() {
+                          selectedCycleTime = newSelection.first;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Cancel'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    textStyle: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  child: const Text('Confirm'),
+                  onPressed: () {
+                    Navigator.of(context).pop(selectedCycleTime);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     controller.close();
@@ -135,11 +231,28 @@ class _TrackerWaitingToStartState extends State<TrackerWaitingToStart>
         margin: const EdgeInsets.all(0),
         child: InkWell(
           onTap: () {
-            context.goNamed(
-              AppRoutes.machineDetailName,
-              pathParameters: {'machineId': widget.machine.machineId},
-              extra: {'machine': widget.machine},
-            );
+            _dialogBuilder(context, widget.machine).then((newCycleTime) async {
+              if (newCycleTime != null) {
+                if (mounted && context.mounted) {
+                  final didUpdate = await context
+                      .read<ClaimCubit>()
+                      .updateCycleTime(widget.machine, newCycleTime);
+                  if (!mounted || !context.mounted) return;
+
+                  if (!didUpdate) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Failed to update cycle time. Please try again.',
+                        ),
+                      ),
+                    );
+                  } else {
+                    context.read<ClaimCubit>().refreshClaimedMachines();
+                  }
+                }
+              }
+            });
           },
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -147,37 +260,47 @@ class _TrackerWaitingToStartState extends State<TrackerWaitingToStart>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    spacing: 12,
-                    children: [
-                      MachineStatusIndicator(
-                        status: widget.machine.currentStatus,
-                        size: BoxSize.large,
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.machine.name,
-                              style: Theme.of(context).textTheme.labelLarge,
-                            ),
-                            Text(
-                              '${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName ?? widget.machine.room?.area?.name}',
-                            ),
-                          ],
+                InkWell(
+                  onTap: () {
+                    context.goNamed(
+                      AppRoutes.machineDetailName,
+                      pathParameters: {'machineId': widget.machine.machineId},
+                      extra: {'machine': widget.machine},
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      spacing: 12,
+                      children: [
+                        MachineStatusIndicator(
+                          status: widget.machine.currentStatus,
+                          size: BoxSize.large,
                         ),
-                      ),
-                      widget.machine.type == MachineType.washer
-                          ? AssetIcons.washerIcon(context)
-                          : AssetIcons.dryerIcon(context),
-                    ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.machine.name,
+                                style: Theme.of(context).textTheme.labelLarge,
+                              ),
+                              Text(
+                                '${widget.machine.room?.name} @ ${widget.machine.room?.area?.shortName ?? widget.machine.room?.area?.name}',
+                              ),
+                            ],
+                          ),
+                        ),
+                        widget.machine.type == MachineType.washer
+                            ? AssetIcons.washerIcon(context)
+                            : AssetIcons.dryerIcon(context),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -29,6 +29,10 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
               MachineDisplayUtils.isCompletedLike(machine.currentStatus),
         );
 
+        final hasWaitingMachines = (state.claimedMachines ?? []).any(
+          (machine) => machine.currentStatus == MachineStatus.available,
+        );
+
         return Scaffold(
           appBar: AppBarComponent(
             actions: [
@@ -107,16 +111,23 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           child: Column(
-                            spacing: 20,
+                            spacing: 0,
 
                             children: [
-                              SizedBox(height: 0),
+                              SizedBox(height: 20),
 
                               AnimatedSize(
                                 duration: Duration(milliseconds: 300),
                                 curve: Curves.fastOutSlowIn,
                                 alignment: Alignment.topCenter,
-                                child: WaitngToStartSection(),
+                                child: hasWaitingMachines
+                                    ? Column(
+                                        children: [
+                                          WaitingToStartSection(),
+                                          SizedBox(height: 20),
+                                        ],
+                                      )
+                                    : SizedBox.shrink(),
                               ),
 
                               // section 1:
@@ -128,8 +139,10 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                                 alignment: Alignment.topCenter,
                                 child: InUseByYouSection(),
                               ),
+                              SizedBox(height: 20),
 
                               Divider(),
+                              SizedBox(height: 20),
 
                               // section 2:
                               // "Subscribed Machines"

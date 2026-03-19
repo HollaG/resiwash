@@ -10,14 +10,14 @@ import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dar
     as claim_state;
 import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_waiting_to_start.dart';
 
-class WaitngToStartSection extends StatefulWidget {
-  const WaitngToStartSection({super.key});
+class WaitingToStartSection extends StatefulWidget {
+  const WaitingToStartSection({super.key});
 
   @override
-  State<WaitngToStartSection> createState() => _WaitngToStartSectionState();
+  State<WaitingToStartSection> createState() => _WaitingToStartSectionState();
 }
 
-class _WaitngToStartSectionState extends State<WaitngToStartSection> {
+class _WaitingToStartSectionState extends State<WaitingToStartSection> {
   bool isEditingClaimed = false;
   bool canEditClaimed = false;
 
