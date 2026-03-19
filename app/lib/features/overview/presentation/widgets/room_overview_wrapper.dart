@@ -333,9 +333,21 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: <Widget>[
-                Text(
-                  'Select rooms',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Row(
+                  children: [
+                    Text(
+                      'Select rooms',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        // simply close sheet
+                        Navigator.of(context).pop();
+                      },
+                      child: Text("Done"),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16),
                 Expanded(
