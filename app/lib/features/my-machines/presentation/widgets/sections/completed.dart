@@ -8,7 +8,7 @@ import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart'
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
     as claim_state;
-import 'package:resiwash/features/my-machines/presentation/widgets/tracker.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker.dart';
 import 'package:resiwash/theme.dart';
 
 class CompletedSection extends StatefulWidget {

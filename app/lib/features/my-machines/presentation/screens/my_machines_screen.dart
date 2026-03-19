@@ -11,6 +11,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dar
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/completed.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/subscriptions.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_mini_container.dart';
 
 class MyMachinesScreen extends StatefulWidget {
   const MyMachinesScreen({super.key});
@@ -55,6 +56,7 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
             appBar: AppBarComponent(
               actions: [
                 // IconButton(onPressed: () {}, icon: Icon(Icons.help_outline)),
+                // TrackerMiniContainer(),
               ],
               title: "My Machines",
               backgroundColor: hasCompletedMachines

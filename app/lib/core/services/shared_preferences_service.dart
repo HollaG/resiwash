@@ -225,7 +225,7 @@ class SharedPreferencesService {
   }
 
   bool shouldOpenTimerAfterClaiming() {
-    return _prefs.getBool('openTimerAfterClaiming') ?? true;
+    return _prefs.getBool('openTimerAfterClaiming') ?? false;
   }
 
   void setOpenTimerAfterClaiming(bool value) {

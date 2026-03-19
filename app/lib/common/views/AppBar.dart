@@ -1,5 +1,6 @@
 // app bar component
 import 'package:flutter/material.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_mini_container.dart';
 
 class AppBarComponent extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -25,10 +26,11 @@ class AppBarComponent extends StatelessWidget implements PreferredSizeWidget {
           fontWeight: FontWeight.bold,
         ),
       ),
-      actions: actions,
+      actions: [...?actions, TrackerMiniContainer()],
       backgroundColor: backgroundColor ?? Theme.of(context).colorScheme.primary,
       foregroundColor:
           foregroundColor ?? Theme.of(context).colorScheme.onPrimary,
+
       // titleTextStyle: Theme.of(context).textTheme.headlineSmall,
       // titleTextStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
       //   fontWeight: FontWeight.bold,

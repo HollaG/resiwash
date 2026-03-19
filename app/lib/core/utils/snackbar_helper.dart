@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/main.dart';
+import 'package:resiwash/theme.dart';
 
 /// Helper class for showing snackbars throughout the app
 class SnackbarHelper {
@@ -105,4 +108,54 @@ class SnackbarHelper {
       backgroundColor: Colors.orange.shade700,
     );
   }
+
+  // static void showClaimedMachineIfNotShown({
+  //   required String title,
+  //   required String description,
+  //   required MachineStatus status,
+  //   required int secondsTillCompletion,
+  //   required String machineId, // for identifying the snackbar
+  // }) {
+  //   final messenger = scaffoldMessengerKey.currentState;
+  //   if (messenger == null) {
+  //     appLog.e("Snackbar messenger is null");
+  //     return;
+  //   }
+
+  //   messenger.showSnackBar(
+  //     SnackBar(
+  //       key: ValueKey("claimed_machine_$machineId"),
+  //       content: Row(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.center,
+  //         children: [
+  //           Center(
+  //             child: MachineStatusIndicator(
+  //               status: status,
+  //               size: BoxSize.large,
+  //             ),
+  //           ),
+
+  //           Expanded(
+  //             child: Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               crossAxisAlignment: CrossAxisAlignment.start,
+  //               spacing: 4,
+  //               children: [Text(title), Text(description)],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       duration: Duration(seconds: secondsTillCompletion),
+  //       backgroundColor: scaffoldMessengerKey
+  //           .currentContext!
+  //           .appColors
+  //           .accent
+  //           .colorContainer,
+  //       dismissDirection: DismissDirection.none,
+
+  //       behavior: SnackBarBehavior.floating,
+  //     ),
+  //   );
+  // }
 }

@@ -11,7 +11,7 @@ class OpenTimerDefaultSwitch extends StatefulWidget {
 }
 
 class _OpenTimerDefaultSwitchState extends State<OpenTimerDefaultSwitch> {
-  bool canOpenTimer = true;
+  bool canOpenTimer = false;
 
   @override
   void initState() {

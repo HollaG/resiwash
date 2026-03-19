@@ -241,6 +241,15 @@ class LocalNotificationService {
     MachineType machineType,
   ) async {
     appLog.i("Showing claimed machine in use notification: $title");
+
+    // SnackbarHelper.showClaimedMachineIfNotShown(
+    //   title: title,
+    //   description: body,
+    //   status: MachineStatus.inUse,
+    //   secondsTillCompletion: secondsTillCompletion,
+    //   machineId: machineId,
+    // );
+
     // 1. start a system timer (TODO)
     if (Platform.isAndroid) {
       bool skipUi = !sl<SharedPreferencesService>()
@@ -250,6 +259,16 @@ class LocalNotificationService {
         title: title,
         skipUi: skipUi,
       );
+
+      if (skipUi) {
+        appLog.i("Timer started without opening UI");
+
+        SnackbarHelper.showInfo(
+          message: "Machine claimed. A system timer has been started for you.",
+        );
+      } else {
+        appLog.i("Timer started and UI opened");
+      }
     } else {
       try {
         final startDate = DateTime.now();
@@ -286,6 +305,11 @@ class LocalNotificationService {
             'isFinished': true,
           });
         });
+
+        SnackbarHelper.showInfo(
+          message:
+              "Machine claimed. A timer has been started and will show up on your lock screen / dynamic island (if supported).",
+        );
       } catch (e) {
         appLog.e("Error creating live activity: $e");
         // show a snackbar warning saying that machine was claimed but timer could not be shown

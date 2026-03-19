@@ -8,6 +8,7 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/common/views/homeMainCard.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_mini_container.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/router.dart';
