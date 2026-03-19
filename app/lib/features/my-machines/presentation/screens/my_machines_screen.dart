@@ -68,9 +68,12 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
               child: SingleChildScrollView(
                 physics: AlwaysScrollableScrollPhysics(),
                 child: SafeArea(
-                  child: SizedBox(
-                    width: double.infinity,
-
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minWidth: double.infinity,
+                      maxWidth: double.infinity,
+                      minHeight: MediaQuery.of(context).size.height,
+                    ),
                     child: Column(
                       children: [
                         // for COMPLETED machines only. Should be minimally full height, but can expand if there are more completed machines. If no completed machines, should be 0 height.
@@ -121,6 +124,7 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
 
                         Container(
                           color: Theme.of(context).scaffoldBackgroundColor,
+
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20.0,

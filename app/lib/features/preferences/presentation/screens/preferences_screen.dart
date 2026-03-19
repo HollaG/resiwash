@@ -59,9 +59,12 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                 SingleChildScrollView(
                   physics: AlwaysScrollableScrollPhysics(),
                   child: SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: double.infinity,
+                        maxWidth: double.infinity,
+                        minHeight: MediaQuery.of(context).size.height,
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Column(
