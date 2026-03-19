@@ -23,6 +23,7 @@ import { sendMachineGroupStatusChangedNotification } from "../../../utils/fireba
 import {
   getClaimants,
   sendNotificationToClaimants,
+  unclaimMachine,
 } from "../../../utils/notifications";
 
 // saves IN-MEMORY which machines have been sending data
@@ -403,7 +404,7 @@ export const createMultipleEvents = asyncHandler(
     const rawEvents: RawEvent[] = [];
     const actualEvents: UpdateEvent[] = [];
 
-    data.forEach((espEvent) => {
+    for (const espEvent of data) {
       // convert EspEvent to UpdateEvent
       const machine = sensorLinks.find((link) => {
         return (
@@ -530,6 +531,24 @@ export const createMultipleEvents = asyncHandler(
 
           if (!latestEvent || latestEvent.status !== effectiveStatus) {
             // if there is a state change detected
+
+            if (machine.machine.currentStatus === MachineStatus.FINISHED && (effectiveStatus === MachineStatus.IN_USE || effectiveStatus === MachineStatus.FINISHING)) {
+              // edge case:
+              // machine FINISHED (aka CLAIMED && BECAME AVAILABLE)
+              // sensor is trying to go into in_use_like state
+              // unclaim the machine
+              machine.machine.claimId = null; // remove the claim association but leave it in the claim history
+              machine.machine.claim = null;
+
+              // save
+
+              await machineRepository.update(
+                { machineId: machine.machineId },
+                { claimId: null, claim: null }
+              );
+              // machineRepository.save(machine.machine);
+
+            }
             actualEvents.push(actualEvent);
           } else {
             // NO STATE CHANGE
@@ -537,7 +556,7 @@ export const createMultipleEvents = asyncHandler(
           }
         }
       }
-    });
+    }
 
     const savedRawEvents = await rawEventRepository.save(rawEvents);
 
