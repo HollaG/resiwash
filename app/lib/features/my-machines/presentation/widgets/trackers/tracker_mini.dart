@@ -41,7 +41,13 @@ class _TrackerMiniState extends State<TrackerMini>
 
     // Optionally, you can have another timer to refresh data from server every minute
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
-      // Here you would typically call a method to refresh the machine data
+      if (!mounted) return;
+
+      // Skip refresh once machine is done/available-like.
+      if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
+        return;
+      }
+
       context.read<ClaimCubit>().refreshClaimedMachines();
     });
   }
@@ -86,20 +92,20 @@ class _TrackerMiniState extends State<TrackerMini>
   }
 
   Widget _calculateTimeLeftText(BuildContext context) {
+    if (widget.machine.currentStatus == MachineStatus.available) {
+      return Text("...", style: Theme.of(context).textTheme.labelSmall);
+    }
     if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
-      // cancel the refresh timer
-      _refreshTimer.cancel();
-
       // if fastRefreshTimer is active, cancel it
       // if (_fastRefreshTimer.isActive) {
       //   _fastRefreshTimer.cancel();
       // }
-      return Text("Done");
+      return Text("Done", style: Theme.of(context).textTheme.labelSmall);
     }
     final cycleTime = widget.claimedMetadata.cycleTime;
 
     if (cycleTime == null) {
-      return Text("?");
+      return Text("?", style: Theme.of(context).textTheme.labelSmall);
     }
 
     final lastAvailableTime = widget.machine.lastAvailableTime;
@@ -144,8 +150,9 @@ class _TrackerMiniState extends State<TrackerMini>
 
   @override
   Widget build(BuildContext context) {
-    if (MachineDisplayUtils.isAvailableLike(widget.machine.currentStatus)) {
-      return Center(
+    if (MachineDisplayUtils.isCompletedLike(widget.machine.currentStatus)) {
+      return Align(
+        alignment: Alignment.centerRight,
         child: InkWell(
           splashColor: Theme.of(context).colorScheme.primary.withAlpha(50),
           onTap: () {
@@ -188,7 +195,8 @@ class _TrackerMiniState extends State<TrackerMini>
         ),
       );
     } else {
-      return Center(
+      return Align(
+        alignment: Alignment.centerRight,
         child: InkWell(
           splashColor: Theme.of(context).colorScheme.primary.withAlpha(50),
           onTap: () {

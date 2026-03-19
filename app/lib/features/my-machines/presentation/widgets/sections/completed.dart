@@ -32,7 +32,7 @@ class _CompletedSectionState extends State<CompletedSection> {
           final completedMachines = state.claimedMachines!
               .where(
                 (machine) =>
-                    MachineDisplayUtils.isAvailableLike(machine.currentStatus),
+                    MachineDisplayUtils.isCompletedLike(machine.currentStatus),
               )
               .toList();
 
@@ -128,29 +128,6 @@ class _CompletedSectionState extends State<CompletedSection> {
                       )
                       .toList(),
                 ),
-
-              // Padding(
-              //   padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-
-              //   child: Column(
-              //     spacing: 8,
-              //     children: [
-              //       Text(
-              //         textAlign: TextAlign.center,
-              //         "You have not marked any machines as in use. ",
-              //         style: Theme.of(context).textTheme.bodyMedium,
-              //       ),
-              //       Text(
-              //         textAlign: TextAlign.center,
-              //         "Swipe right on a machine, or scan a QR code to mark a machine as in use by you.",
-              //         style: Theme.of(context).textTheme.bodyMedium,
-              //       ),
-              //       MachineRowSlidableExplanation(
-              //         initialPeekState: PeekState.left,
-              //       ),
-              //     ],
-              //   ),
-              // ),
             ],
           );
 

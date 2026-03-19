@@ -9,6 +9,10 @@ class MachineDisplayUtils {
         status == MachineStatus.finished;
   }
 
+  static bool isCompletedLike(MachineStatus? status) {
+    return status == MachineStatus.finished;
+  }
+
   static bool isInUseLike(MachineStatus? status) {
     return status == MachineStatus.inUse || status == MachineStatus.finishing;
   }

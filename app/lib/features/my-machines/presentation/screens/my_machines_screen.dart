@@ -9,6 +9,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cu
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/completed.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/sections/waiting_to_start.dart';
 
 class MyMachinesScreen extends StatefulWidget {
   const MyMachinesScreen({super.key});
@@ -25,7 +26,7 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
         // Derive UI state from bloc state so it is correct on first build and updates.
         final hasCompletedMachines = (state.claimedMachines ?? []).any(
           (machine) =>
-              MachineDisplayUtils.isAvailableLike(machine.currentStatus),
+              MachineDisplayUtils.isCompletedLike(machine.currentStatus),
         );
 
         return Scaffold(
@@ -110,6 +111,13 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
 
                             children: [
                               SizedBox(height: 0),
+
+                              AnimatedSize(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.fastOutSlowIn,
+                                alignment: Alignment.topCenter,
+                                child: WaitngToStartSection(),
+                              ),
 
                               // section 1:
                               // "In use by you"

@@ -46,18 +46,21 @@ class _TrackerMiniContainerState extends State<TrackerMiniContainer> {
               maxHeight: kToolbarHeight,
               maxWidth: 150,
             ),
-            child: PageView.builder(
-              controller: _pageController,
-              itemBuilder: (context, index) {
-                final meta = validMetaList[index % validMetaList.length];
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: PageView.builder(
+                controller: _pageController,
+                itemBuilder: (context, index) {
+                  final meta = validMetaList[index % validMetaList.length];
 
-                return TrackerMini(
-                  claimedMetadata: meta,
-                  machine: claimedMachineList.firstWhere(
-                    (machine) => machine.machineId == meta.machineId,
-                  ),
-                );
-              },
+                  return TrackerMini(
+                    claimedMetadata: meta,
+                    machine: claimedMachineList.firstWhere(
+                      (machine) => machine.machineId == meta.machineId,
+                    ),
+                  );
+                },
+              ),
             ),
           );
         }

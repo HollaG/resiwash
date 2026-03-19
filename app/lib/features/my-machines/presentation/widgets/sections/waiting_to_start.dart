@@ -8,16 +8,16 @@ import 'package:resiwash/features/machine/presentation/widgets/machine_row.dart'
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
     as claim_state;
-import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_waiting_to_start.dart';
 
-class InUseByYouSection extends StatefulWidget {
-  const InUseByYouSection({super.key});
+class WaitngToStartSection extends StatefulWidget {
+  const WaitngToStartSection({super.key});
 
   @override
-  State<InUseByYouSection> createState() => _InUseByYouSectionState();
+  State<WaitngToStartSection> createState() => _WaitngToStartSectionState();
 }
 
-class _InUseByYouSectionState extends State<InUseByYouSection> {
+class _WaitngToStartSectionState extends State<WaitngToStartSection> {
   bool isEditingClaimed = false;
   bool canEditClaimed = false;
 
@@ -28,86 +28,6 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
   ) {
     if (!mounted) return;
 
-    // toggle isEditing
-    setState(() {
-      isEditingClaimed = !isEditingClaimed;
-    });
-    // _dialogBuilder(context).then((selectedCycleTime) {
-    // if (selectedCycleTime != null) {
-    //   context
-    //       .read<MyMachinesCubit>()
-    //       .updateClaimedMachineCycleTime(wi, cycleTime)
-    // }
-    // });
-    // show a bottom sheet with a selectable list of machines
-    // showModalBottomSheet(
-    //   context: context,
-    //   builder: (bottomSheetContext) {
-    //     return BlocProvider.value(
-    //       value: context.read<MyMachinesCubit>(), // reuse existing cubit
-    //       child: BlocBuilder<MyMachinesCubit, MyMachinesState>(
-    //         builder: (context, state) {
-    //           if (state is! MyMachinesLoaded) {
-    //             return Center(child: CircularProgressIndicator());
-    //           }
-    //           final subscribedMachines = state.subscribedMachines ?? [];
-    //           final claimedMeta = state.claimedMachineMetadata;
-    //           return SizedBox(
-    //             width: double.infinity,
-    //             height: 500,
-    //             child: Container(
-    //               padding: const EdgeInsets.all(24.0),
-    //               child: Column(
-    //                 children: [
-    //                   Text(
-    //                     'Select machines',
-    //                     style: Theme.of(context).textTheme.headlineSmall,
-    //                   ),
-    //                   // Text("You can also swipe left twice to claim a machine."),
-    //                   SizedBox(height: 16),
-    //                   Expanded(
-    //                     child: ListView(
-    //                       children: subscribedMachines
-    //                           .map(
-    //                             (machine) => CheckboxListTile(
-    //                               contentPadding: EdgeInsets.zero,
-    //                               title: MachineRow(
-    //                                 machine: machine,
-    //                                 showIcon: false,
-    //                                 allowSwipe: false,
-    //                               ),
-    //                               value: claimedMeta
-    //                                   .map((e) => e.machineId)
-    //                                   .contains(machine.machineId),
-    //                               onChanged: (newValue) {
-    //                                 if (newValue == true) {
-    //                                   context
-    //                                       .read<MyMachinesCubit>()
-    //                                       .claimMachine(machine);
-    //                                 } else {
-    //                                   context
-    //                                       .read<MyMachinesCubit>()
-    //                                       .unclaimMachine(machine);
-    //                                 }
-    //                               },
-    //                             ),
-    //                           )
-    //                           .toList(),
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //             ),
-    //           );
-    //         },
-    //       ),
-    //     );
-    //   },
-    // );
-  }
-
-  // There's no "saving" needed as it is live
-  void _onFinishPressed() {
     // toggle isEditing
     setState(() {
       isEditingClaimed = !isEditingClaimed;
@@ -137,16 +57,18 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
         if (state is claim_state.ClaimLoading)
           return Center(child: CircularProgressIndicator());
         if (state is claim_state.ClaimLoaded) {
-          // filter out to only have in-use machines
-          final inUseMachines = state.claimedMachines!
+          // filter out to only have claimed machines that haven't started machines
+          final waitingToStartMachines = state.claimedMachines!
               .where(
                 (machine) =>
-                    MachineDisplayUtils.isInUseLike(machine.currentStatus),
+                    machine.currentStatus ==
+                    MachineStatus
+                        .available, // special case: claimedMachine + available = not started,
               )
               .toList();
 
-          final inUseMetadata = state.claimedMachineMetadata.where(
-            (meta) => inUseMachines.any(
+          final waitingToStartMeta = state.claimedMachineMetadata.where(
+            (meta) => waitingToStartMachines.any(
               (machine) => machine.machineId == meta.machineId,
             ),
           );
@@ -164,21 +86,18 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "In-progress machines",
+                          "Waiting to start",
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         RichText(
                           text: TextSpan(
-                            text: "Claim a machine to get ",
+                            text:
+                                "Your machine has not started yet! Please remember to start it.",
                             style: Theme.of(context).textTheme.bodySmall,
                             children: [
                               TextSpan(
-                                text: "timers & reminders ",
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              TextSpan(text: "set on your phone."),
-                              TextSpan(
-                                text: " Tap to edit.",
+                                text:
+                                    " If you've just started it, updates may take up to 30 seconds to reflect.",
                                 style: TextStyle(fontStyle: FontStyle.italic),
                               ),
                             ],
@@ -191,15 +110,16 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
               ),
 
               // claimed machines
-              if (inUseMachines.isNotEmpty && inUseMetadata.isNotEmpty)
+              if (waitingToStartMachines.isNotEmpty &&
+                  waitingToStartMeta.isNotEmpty)
                 Column(
                   spacing: 8,
-                  children: inUseMetadata
+                  children: waitingToStartMeta
                       .map(
-                        (claimedMeta) => Tracker(
+                        (claimedMeta) => TrackerWaitingToStart(
                           showControls: isEditingClaimed,
                           claimedMetadata: claimedMeta,
-                          machine: (inUseMachines).firstWhere(
+                          machine: (waitingToStartMachines).firstWhere(
                             (machine) =>
                                 machine.machineId == claimedMeta.machineId,
                           ),
