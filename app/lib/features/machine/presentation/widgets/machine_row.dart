@@ -8,6 +8,7 @@ import 'package:resiwash/asset-export.dart';
 import 'package:resiwash/core/injections/area/area_service_locator.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/utils/subscription_utils.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
@@ -295,12 +296,8 @@ class _MachineRowState extends State<MachineRow>
               // show error message in snackbar only if this route is currently active
               // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
               if (!TickerMode.of(context)) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+
+              SnackbarHelper.showError(message: state.message);
             }
           },
         ),

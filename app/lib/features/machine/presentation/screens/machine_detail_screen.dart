@@ -271,12 +271,7 @@ class _MachineDetailScreenState extends State<MachineDetailScreen> {
                 // show error message in snackbar only if this route is currently active
                 // because MachineRow is used in two StatefulShellBranches that are both kept in memory.
                 if (!TickerMode.of(context)) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
+                SnackbarHelper.showError(message: state.message);
               }
             },
           ),
