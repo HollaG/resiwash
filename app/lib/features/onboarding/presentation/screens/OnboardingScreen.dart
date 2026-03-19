@@ -21,14 +21,14 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-enum OnboardingPage { home, check, claim, contact }
+enum OnboardingPage { check, claim, claim2, home }
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
-  final PageController _pageViewController = PageController();
+  final PageController _pageViewController = PageController(initialPage: 0);
   static const int _lastPageIndex = 3;
   int _currentPage = 0;
   bool _didHandleEndOverscroll = false;
@@ -78,7 +78,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Widget _buildPage(int index) {
     switch (index) {
-      case 0:
+      case 3:
         return Overview(
           onCheckTap: () {
             _goToSection(OnboardingPage.check);
@@ -91,11 +91,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           },
           onDismiss: widget.onDismiss,
         );
-      case 1:
+      case 0:
         return Check();
-      case 2:
+      case 1:
         return Claim();
-      case 3:
+      case 2:
         return Claim2();
       default:
         return const SizedBox.shrink();
