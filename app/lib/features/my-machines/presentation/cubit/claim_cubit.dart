@@ -338,6 +338,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
           if (Platform.isIOS) {
             sl<LocalNotificationService>().cancelLiveActivity(machineId);
+            sl<LocalNotificationService>().cancelAlarm(machineId);
           }
 
           // Reload state to reflect changes

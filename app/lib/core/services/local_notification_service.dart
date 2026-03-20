@@ -12,6 +12,7 @@ import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:flutter_alarmkit/flutter_alarmkit.dart';
 import 'dart:async';
 
 import "package:resiwash/features/machine/data/models/machine_model.dart";
@@ -48,6 +49,8 @@ class LocalNotificationService {
 
   // Map machine IDs to the Live Activity notification ID
   static final Map<String, String> notificationIds = {};
+
+  static final Map<String, String> iosTimerIds = {};
 
   // Initialize notification channels and categories
   Future<void> initialize() async {
@@ -271,41 +274,53 @@ class LocalNotificationService {
       }
     } else {
       try {
-        final startDate = DateTime.now();
-        final endDate = DateTime.now().add(
-          Duration(seconds: secondsTillCompletion),
-        );
-
-        // Ensure no stale activities are blocking the queue (Apple rate limits to max 5 around same time)
-        // await _liveActivitiesPlugin.endAllActivities();
-
-        print("debug machinetype is $machineType ${machineType.name}");
-
-        final activityId = await _liveActivitiesPlugin
-            .createActivity(machineId, {
-              'machineName': machineName,
-              'roomName': roomName,
-              'startDate': startDate.millisecondsSinceEpoch.toString(),
-              'endDate': endDate.millisecondsSinceEpoch.toString(),
-              'isFinished': false,
-              'machineType': machineType.name,
-            });
-
-        if (activityId == null) {
-          throw Exception("Live activity creation failed: $machineId");
+        // first, check if iOS26
+        bool isIos26 = false;
+        try {
+          await FlutterAlarmkit().getPlatformVersion();
+          isIos26 = true;
+        } catch (e) {
+          isIos26 = false;
         }
-        appLog.i("Live activity created successfully: $activityId");
 
-        notificationIds[machineId] = activityId;
+        if (isIos26) {
+          startAlarm(machineId, title, secondsTillCompletion);
+        } else {
+          final startDate = DateTime.now();
+          final endDate = DateTime.now().add(
+            Duration(seconds: secondsTillCompletion),
+          );
 
-        // Set a timer to update the activity to "finished" state when it completes
-        Timer(Duration(seconds: secondsTillCompletion), () {
-          appLog.i("Live activity finished: $machineId for id $activityId");
-          _liveActivitiesPlugin.updateActivity(activityId, {
-            'isFinished': true,
+          // Ensure no stale activities are blocking the queue (Apple rate limits to max 5 around same time)
+          // await _liveActivitiesPlugin.endAllActivities();
+
+          print("debug machinetype is $machineType ${machineType.name}");
+
+          final activityId = await _liveActivitiesPlugin
+              .createActivity(machineId, {
+                'machineName': machineName,
+                'roomName': roomName,
+                'startDate': startDate.millisecondsSinceEpoch.toString(),
+                'endDate': endDate.millisecondsSinceEpoch.toString(),
+                'isFinished': false,
+                'machineType': machineType.name,
+              });
+
+          if (activityId == null) {
+            throw Exception("Live activity creation failed: $machineId");
+          }
+          appLog.i("Live activity created successfully: $activityId");
+
+          notificationIds[machineId] = activityId;
+
+          // Set a timer to update the activity to "finished" state when it completes
+          Timer(Duration(seconds: secondsTillCompletion), () {
+            appLog.i("Live activity finished: $machineId for id $activityId");
+            _liveActivitiesPlugin.updateActivity(activityId, {
+              'isFinished': true,
+            });
           });
-        });
-
+        }
         SnackbarHelper.showInfo(
           message:
               "Machine claimed. A timer has been started and will show up on your lock screen / dynamic island (if supported).",
@@ -401,6 +416,43 @@ class LocalNotificationService {
     if (activityId != null) {
       try {
         await _liveActivitiesPlugin.endActivity(activityId);
+      } catch (e) {
+        appLog.i(e);
+      }
+    }
+  }
+
+  Future<void> startAlarm(
+    String machineId,
+    String title,
+    int secondsTillCompletion,
+  ) async {
+    try {
+      final isAuthorized = await FlutterAlarmkit().requestAuthorization();
+      if (isAuthorized) {
+        print('Alarm authorization granted');
+
+        final alarmId = await FlutterAlarmkit().setCountdownAlarm(
+          countdownDurationInSeconds: secondsTillCompletion,
+          repeatDurationInSeconds: 5,
+          label: title,
+          tintColor: '#515B92',
+        );
+
+        iosTimerIds[machineId] = alarmId;
+      } else {
+        print('Alarm authorization denied or not determined');
+      }
+    } catch (e) {
+      print('Error requesting authorization: $e');
+    }
+  }
+
+  Future<void> cancelAlarm(String machineId) async {
+    final alarmId = iosTimerIds[machineId];
+    if (alarmId != null) {
+      try {
+        await FlutterAlarmkit().cancelAlarm(alarmId: alarmId);
       } catch (e) {
         appLog.i(e);
       }
