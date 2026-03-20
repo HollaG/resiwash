@@ -434,7 +434,7 @@ class LocalNotificationService {
 
         final alarmId = await FlutterAlarmkit().setCountdownAlarm(
           countdownDurationInSeconds: secondsTillCompletion,
-          repeatDurationInSeconds: 5,
+          repeatDurationInSeconds: 5 * 60,
           label: title,
           tintColor: '#515B92',
         );
