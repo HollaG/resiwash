@@ -31,6 +31,14 @@ target 'Runner' do
   use_frameworks!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+  # Add this block
+  target 'AlarmkitWidgetExtension' do
+    inherit! :search_paths
+    use_frameworks!
+    pod 'flutter_alarmkit', :path => '.symlinks/plugins/flutter_alarmkit/ios'
+  end
+
   target 'RunnerTests' do
     inherit! :search_paths
   end

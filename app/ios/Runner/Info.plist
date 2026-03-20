@@ -52,5 +52,19 @@
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
+
+		<!-- Required: AlarmKit usage description -->
+		<key>NSAlarmKitUsageDescription</key>
+		<string>This app uses alarms to notify you even when your device is locked.</string>
+
+		<!-- Required for AlarmKit local network communication -->
+		<key>NSBonjourServices</key>
+		<array>
+			<string>_alarmkit._tcp</string>
+		</array>
+		<key>NSLocalNetworkUsageDescription</key>
+		<string>This app needs access to the local network to discover and connect to alarm devices.</string>
+
+	
 </dict>
 </plist>
