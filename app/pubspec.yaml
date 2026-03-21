@@ -1,7 +1,7 @@
 name: resiwash
 description: "Laundry status companion app"
 publish_to: "none"
-version: 1.0.3+23
+version: 1.0.3+24
 
 environment:
   sdk: ^3.8.1

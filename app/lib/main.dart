@@ -297,10 +297,10 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              SnackbarHelper.showInfo(
-                message:
-                    "You can access the tutorial anytime by swiping to the right.",
-              );
+              // SnackbarHelper.showInfo(
+              //   message:
+              //       "You can access the tutorial",
+              // );
             },
             child: const Text('Maybe later'),
           ),
