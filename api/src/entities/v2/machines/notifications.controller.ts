@@ -157,7 +157,7 @@ export const claimMachine = expressAsyncHandler(
         machineType: machine.type,
       };
 
-      sendOkResponse(res, { message: "Machine claimed successfully", data });
+      sendOkResponse(res, { message: "Machine claimed successfully", ...data });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
