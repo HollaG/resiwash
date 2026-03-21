@@ -31,6 +31,16 @@ type CustomDataPayload = {
 type CustomMessage = Message & { data: CustomDataPayload };
 type CustomMulticastMessage = MulticastMessage & { data: CustomDataPayload };
 
+export type DataMessageForDeviceTimers = {
+  title: string;
+  body: string;
+  secondsTillCompletion: number; // send as string to avoid firebase data message parsing issues
+  machineId: number;
+  machineName: string;
+  machineRoomName: string;
+  machineType: string;
+};
+
 /**
  *
  * @param machine Machine object with `room` and `area` joined !!important
@@ -248,6 +258,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
 /**
  * Send a claim notification and also tell the device to start the timer*
  *
+ *
  */
 export const sendNewlyClaimedMachineNotification = async ({
   machineId,
@@ -270,7 +281,10 @@ export const sendNewlyClaimedMachineNotification = async ({
   let body = "";
   let secondsTillCompletion = null;
 
-  if (isAvailableLike(machine.currentStatus) || machine.currentStatus === MachineStatus.UNKNOWN) {
+  if (
+    isAvailableLike(machine.currentStatus) ||
+    machine.currentStatus === MachineStatus.UNKNOWN
+  ) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} claimed.`;
 
     const expectedEndTime =
@@ -376,7 +390,7 @@ export const sendNewlyClaimedMachineNotification = async ({
     const response = await getMessaging().send(message);
     console.log("[🔥🏠] Successfully sent message:", response);
 
-    return response;
+    return message.data;
   } catch (e: any) {
     console.error("[🔥🏠] Error sending message:", e);
 

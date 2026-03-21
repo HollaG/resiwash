@@ -14,6 +14,7 @@ import {
   updateCycleTime,
 } from "../../../utils/notifications";
 import {
+  DataMessageForDeviceTimers,
   sendClaimedMachineStatusChangedNotification,
   sendMachineGroupStatusChangedNotification,
   sendNewlyClaimedMachineNotification,
@@ -111,7 +112,54 @@ export const claimMachine = expressAsyncHandler(
         );
       }
 
-      sendOkResponse(res, { message: "Machine claimed successfully" });
+      // * Important note: this machine here is stale.
+      // For manual machines, we override all logic below later.
+      // But, if it's not a manual machine, then the status of the machine will still be based off the sensor data.
+      let secondsTillCompletion = null;
+
+      if (
+        isAvailableLike(machine.currentStatus) ||
+        machine.currentStatus === MachineStatus.UNKNOWN
+      ) {
+        const expectedEndTime =
+          Date.now() +
+          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      } else if (machine.currentStatus === MachineStatus.IN_USE) {
+        const expectedEndTime =
+          machine.lastAvailableTime!.getTime() +
+          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      } else if (machine.currentStatus === MachineStatus.FINISHING) {
+        const expectedEndTime =
+          machine.lastAvailableTime!.getTime() +
+          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      }
+
+      if (machine.isManualEntry) {
+        secondsTillCompletion = cycleTime * 60; // for manual machines, we trust the user's input cycle time
+      }
+
+      let data: DataMessageForDeviceTimers = {
+        title: `${machine.name} @ ${machine.room?.shortName || machine.room?.name}`,
+        body: "",
+        secondsTillCompletion, // convert minutes to seconds
+        machineId: machine.machineId,
+        machineName: machine.name,
+        machineRoomName: machine.room?.shortName || machine.room?.name || "",
+        machineType: machine.type,
+      };
+
+      sendOkResponse(res, { message: "Machine claimed successfully", data });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }
