@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
@@ -67,56 +68,66 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
           // }
         },
         builder: (context, state) {
-          return Column(
-            children: [
-              HomeHeader(username: "Marcus"),
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () {
-                    // return Future.delayed(Duration(seconds: 1), () {});
-                    // wait for 1s first
+          return Scaffold(
+            appBar: AppBarComponent(
+              actions: [],
+              title: "",
+              // backgroundColor: Theme.of(context).colorScheme.surface,
+              // foregroundColor: Theme.of(context).colorScheme.onSurface,
+            ),
+            body: Column(
+              children: [
+                HomeHeader(username: "Marcus"),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () {
+                      // return Future.delayed(Duration(seconds: 1), () {});
+                      // wait for 1s first
 
-                    // Create a completer to wait for the loading to complete
-                    final completer = Completer<void>();
+                      // Create a completer to wait for the loading to complete
+                      final completer = Completer<void>();
 
-                    // Listen for state changes
-                    late StreamSubscription subscription;
-                    subscription = context.read<OverviewCubit>().stream.listen((
-                      state,
-                    ) {
-                      if (state is OverviewLoaded || state is OverviewError) {
-                        subscription.cancel();
-                        completer.complete();
-                      }
-                    });
-                    final loadedLocations = sl<SharedPreferencesService>()
-                        .getSavedLocations();
+                      // Listen for state changes
+                      late StreamSubscription subscription;
+                      subscription = context
+                          .read<OverviewCubit>()
+                          .stream
+                          .listen((state) {
+                            if (state is OverviewLoaded ||
+                                state is OverviewError) {
+                              subscription.cancel();
+                              completer.complete();
+                            }
+                          });
+                      final loadedLocations = sl<SharedPreferencesService>()
+                          .getSavedLocations();
 
-                    appLog.d("Loaded locations: $loadedLocations");
-                    // Trigger the refresh
-                    context.read<OverviewCubit>().load(
-                      roomIds: loadedLocations.getAllRoomIds(),
-                    );
-
-                    // Wait for completion
-                    return completer.future;
-                  },
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight,
-                          ),
-                          child: RoomOverviewWrapper(roomIds: []),
-                        ),
+                      appLog.d("Loaded locations: $loadedLocations");
+                      // Trigger the refresh
+                      context.read<OverviewCubit>().load(
+                        roomIds: loadedLocations.getAllRoomIds(),
                       );
+
+                      // Wait for completion
+                      return completer.future;
                     },
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: constraints.maxHeight,
+                            ),
+                            child: RoomOverviewWrapper(roomIds: []),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

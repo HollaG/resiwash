@@ -125,20 +125,172 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10.0,
               children: [
+                if (numberOfRooms > 0)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      // Text(
+                      //   "Legend",
+                      //   style: Theme.of(context).textTheme.headlineSmall
+                      //       ?.copyWith(
+                      //         color: Theme.of(
+                      //           context,
+                      //         ).colorScheme.onSurfaceVariant,
+                      //       ),
+                      // ),
+                      Row(
+                        spacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.available,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Available",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.available,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.finished,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Finished (waiting for pickup)",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.finished,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Row(
+                        spacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.inUse,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "In Use",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.inUse,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.finishing,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Finishing (~10mins left)",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.finishing,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
                 Row(
                   children: [
                     Text(
                       "Rooms ($numberOfRooms)",
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        showChangeRoomSheet(context, locations);
-                      },
-                      label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
-                      icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
-                    ),
+                    if (numberOfRooms == 0)
+                      FilledButton.icon(
+                        onPressed: () {
+                          showChangeRoomSheet(context, locations);
+                        },
+                        label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
+                        icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
+                      )
+                    else
+                      TextButton.icon(
+                        onPressed: () {
+                          showChangeRoomSheet(context, locations);
+                        },
+                        label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
+                        icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
+                      ),
                   ],
                 ),
                 if (numberOfRooms == 0)
@@ -172,129 +324,7 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
                     return RoomOverview(roomId: roomId);
                   },
                 ),
-                if (numberOfRooms > 0)
-                  Text(
-                    "Legend",
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                if (numberOfRooms > 0)
-                  Row(
-                    spacing: 8,
-                    children: [
-                      SizedBox(
-                        width: 90,
-                        child: Row(
-                          children: [
-                            MachineStatusIndicator(
-                              status: MachineStatus.available,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Available",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color:
-                                          MachineStatusIndicator.getTextColor(
-                                            context,
-                                            MachineStatus.available,
-                                          ),
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            MachineStatusIndicator(
-                              status: MachineStatus.finished,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Finished (waiting for pickup)",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color:
-                                          MachineStatusIndicator.getTextColor(
-                                            context,
-                                            MachineStatus.finished,
-                                          ),
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                if (numberOfRooms > 0)
-                  Row(
-                    spacing: 8,
-                    children: [
-                      SizedBox(
-                        width: 90,
-                        child: Row(
-                          children: [
-                            MachineStatusIndicator(status: MachineStatus.inUse),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "In Use",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color:
-                                          MachineStatusIndicator.getTextColor(
-                                            context,
-                                            MachineStatus.inUse,
-                                          ),
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            MachineStatusIndicator(
-                              status: MachineStatus.finishing,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Finishing (~10mins left)",
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color:
-                                          MachineStatusIndicator.getTextColor(
-                                            context,
-                                            MachineStatus.finishing,
-                                          ),
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
 
-                // Column(
-                //   children: loadedLocations.getAllRoomIds().map((roomId) {
-                //     return RoomOverview(roomId: roomId);
-                //   }).toList(),
-                // ),
                 if (numberOfRooms > 0) Divider(),
                 if (numberOfRooms > 0)
                   Center(

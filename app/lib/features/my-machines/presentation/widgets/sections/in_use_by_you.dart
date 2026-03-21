@@ -76,16 +76,16 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                         ),
                         RichText(
                           text: TextSpan(
-                            text: "Claim a machine to get ",
+                            text: "Get",
                             style: Theme.of(context).textTheme.bodySmall,
                             children: [
                               TextSpan(
-                                text: "timers & reminders ",
+                                text: " timers & reminders ",
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              TextSpan(text: "set on your phone."),
+                              TextSpan(text: "by claiming."),
                               TextSpan(
-                                text: " Tap to edit.",
+                                text: " Tap to change cycle time",
                                 style: TextStyle(fontStyle: FontStyle.italic),
                               ),
                             ],
@@ -94,13 +94,15 @@ class _InUseByYouSectionState extends State<InUseByYouSection> {
                       ],
                     ),
                   ),
+
+                  // TextButton(onPressed: () {}, child: Text("Change cycle")),
                 ],
               ),
 
               // claimed machines
               if (inUseMachines.isNotEmpty && inUseMetadata.isNotEmpty)
                 Column(
-                  spacing: 8,
+                  spacing: 12,
                   children: inUseMetadata
                       .map(
                         (claimedMeta) => Tracker(

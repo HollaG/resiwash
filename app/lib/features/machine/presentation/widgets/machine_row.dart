@@ -34,12 +34,14 @@ class MachineRow extends StatefulWidget {
   final MachineEntity machine;
   final bool showIcon;
   final bool allowSwipe;
+  final bool showRoomName;
 
   const MachineRow({
     super.key,
     required this.machine,
     this.showIcon = true,
     this.allowSwipe = true,
+    this.showRoomName = false,
   });
 
   @override
@@ -823,36 +825,37 @@ class _MachineRowState extends State<MachineRow>
                             //     //   context,
                             //     // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                             //   ),
-                            if (widget.machine.claimId != null)
-                              Icon(
-                                Icons.sensor_occupied_rounded,
-                                size: 14,
-                                // color: Theme.of(
-                                //   context,
-                                // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                              ),
+                            // if (widget.machine.claimId != null)
+                            //   Icon(
+                            //     Icons.sensor_occupied_rounded,
+                            //     size: 14,
+                            //     // color: Theme.of(
+                            //     //   context,
+                            //     // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                            //   ),
                             Text(
                               widget.machine.name,
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                           ],
                         ),
-                        Expanded(
-                          child: Text(
-                            "@ $location",
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withValues(alpha: 0.8),
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
+                        if (widget.showRoomName)
+                          Expanded(
+                            child: Text(
+                              "@ $location",
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withValues(alpha: 0.8),
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],
