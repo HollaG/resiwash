@@ -129,7 +129,6 @@ class _TrackerWaitingToStartState extends State<TrackerWaitingToStart>
 
   @override
   void dispose() {
-    controller.close();
     controller.dispose();
     super.dispose();
   }

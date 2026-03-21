@@ -62,8 +62,6 @@ class _TrackerState extends State<Tracker> with SingleTickerProviderStateMixin {
     _timer.cancel();
     _refreshTimer.cancel();
     _fastRefreshTimer.cancel();
-    // Ensure slidable is closed before disposing to stop any active animations
-    controller.close();
     controller.dispose();
     super.dispose();
   }

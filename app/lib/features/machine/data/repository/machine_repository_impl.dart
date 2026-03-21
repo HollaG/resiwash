@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/data/datasource/machine_remote_datasource.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_result.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
@@ -64,13 +65,16 @@ class MachineRepositoryImpl implements MachineRepository {
   }
 
   @override
-  Future<Either<Failure, void>> claimMachine({
+  Future<Either<Failure, ClaimResult>> claimMachine({
     required String machineId,
     required ClaimMachineParams params,
   }) async {
     try {
-      await dataSource.claimMachine(machineId: machineId, params: params);
-      return const Right(null);
+      final result = await dataSource.claimMachine(
+        machineId: machineId,
+        params: params,
+      );
+      return Right(result);
     } on Failure catch (e) {
       print("MachineRepositoryImpl claimMachine error: ${e.message}");
       return Left(e);

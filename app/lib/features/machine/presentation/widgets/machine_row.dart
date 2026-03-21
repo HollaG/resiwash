@@ -71,6 +71,7 @@ class _MachineRowState extends State<MachineRow>
       2; // 0 = not claimed, 1 = claimed, 2 = loading, 3 = success claiming, 4 = success unclaiming
 
   late final SlidableController controller = SlidableController(this);
+  bool _controllerDisposed = false;
 
   // Cache cubit references to avoid unsafe context lookups
   late final ClaimCubit _claimCubit;
@@ -108,8 +109,16 @@ class _MachineRowState extends State<MachineRow>
 
   @override
   void dispose() {
+    _controllerDisposed = true;
     controller.dispose();
     super.dispose();
+  }
+
+  void _safeCloseController() {
+    if (!mounted || _controllerDisposed) {
+      return;
+    }
+    controller.close();
   }
 
   Future<int?> _dialogBuilder(
@@ -233,7 +242,7 @@ class _MachineRowState extends State<MachineRow>
 
   Future<void> closeControllerAfterDelay() async {
     await Future.delayed(const Duration(seconds: 1));
-    if (mounted) controller.close();
+    _safeCloseController();
   }
 
   @override
@@ -501,7 +510,7 @@ class _MachineRowState extends State<MachineRow>
                       onDismissed: () => {},
                       confirmDismiss: () async {
                         if (claimState == ClaimState.loading) {
-                          controller.close();
+                          _safeCloseController();
                           return false;
                         }
 
@@ -607,7 +616,7 @@ class _MachineRowState extends State<MachineRow>
                       onDismissed: () => {},
                       confirmDismiss: () async {
                         if (claimState == ClaimState.loading) {
-                          controller.close();
+                          _safeCloseController();
                           return false;
                         }
 

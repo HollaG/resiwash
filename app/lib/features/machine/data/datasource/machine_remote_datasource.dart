@@ -5,6 +5,7 @@ import 'package:resiwash/core/models/api_response.dart';
 import 'package:resiwash/core/network/dio_client.dart';
 import 'package:resiwash/core/network/paths.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_result.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
@@ -92,7 +93,7 @@ class MachineRemoteDatasource {
     }
   }
 
-  Future<void> claimMachine({
+  Future<ClaimResult> claimMachine({
     required String machineId,
     required ClaimMachineParams params,
   }) async {
@@ -102,7 +103,19 @@ class MachineRemoteDatasource {
         data: params.toJson(),
       );
 
-      appLog.d('[api] ${response.data}');
+      appLog.d('[api] claimMachine ${response.data}');
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Failure(message: 'Invalid claim response payload');
+      }
+
+      // Use ApiResponse for single machine response
+      final apiResponse = ApiResponse<ClaimResult>.fromJson(
+        response.data,
+        (json) => ClaimResult.fromJson(json as Map<String, dynamic>),
+      );
+
+      return apiResponse.data;
     } on DioException catch (e) {
       throw e.error is Failure
           ? e.error as Failure

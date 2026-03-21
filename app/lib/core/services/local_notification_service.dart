@@ -253,7 +253,61 @@ class LocalNotificationService {
     //   machineId: machineId,
     // );
 
+    // startLocalPlatformTimer(
+    //   title,
+    //   secondsTillCompletion,
+    //   machineId,
+    //   machineName,
+    //   roomName,
+    //   machineType,
+    // );
+
+    // 2. Show a normal notification saying machine is in use
+    try {
+      appLog.i("Channels initialized: claimed=${claimedChannel.id}");
+
+      final notificationId = DateTime.now().hashCode;
+      appLog.i("Using notification ID: $notificationId");
+
+      flutterLocalNotificationsPlugin.show(
+        notificationId,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            claimedChannel.id,
+            claimedChannel.name,
+            importance: Importance.max,
+            priority: Priority.max,
+          ),
+          iOS: DarwinNotificationDetails(
+            categoryIdentifier: claimedCategory.identifier,
+            interruptionLevel: InterruptionLevel.timeSensitive,
+            presentAlert: true,
+            presentSound: true,
+          ),
+        ),
+      );
+
+      appLog.i('Notification shown successfully');
+    } catch (e, stackTrace) {
+      appLog.e("Error showing notification: $e");
+      appLog.e("Stack: $stackTrace");
+    }
+  }
+
+  Future<void> startLocalPlatformTimer(
+    String title,
+    int secondsTillCompletion,
+    String machineId,
+    String machineName,
+    String roomName,
+    MachineType machineType,
+  ) async {
     // 1. start a system timer (TODO)
+    print(
+      'debug starting localPlatformTimer with title $title for machine $machineId with secondsTillCompletion $secondsTillCompletion',
+    );
     if (Platform.isAndroid) {
       bool skipUi = !sl<SharedPreferencesService>()
           .shouldOpenTimerAfterClaiming();
@@ -333,38 +387,6 @@ class LocalNotificationService {
               "Timer could not be shown as there are already 5 timers (max possible at once)",
         );
       }
-    }
-    // 2. Show a normal notification saying machine is in use
-    try {
-      appLog.i("Channels initialized: claimed=${claimedChannel.id}");
-
-      final notificationId = DateTime.now().hashCode;
-      appLog.i("Using notification ID: $notificationId");
-
-      flutterLocalNotificationsPlugin.show(
-        notificationId,
-        title,
-        body,
-        NotificationDetails(
-          android: AndroidNotificationDetails(
-            claimedChannel.id,
-            claimedChannel.name,
-            importance: Importance.max,
-            priority: Priority.max,
-          ),
-          iOS: DarwinNotificationDetails(
-            categoryIdentifier: claimedCategory.identifier,
-            interruptionLevel: InterruptionLevel.timeSensitive,
-            presentAlert: true,
-            presentSound: true,
-          ),
-        ),
-      );
-
-      appLog.i('Notification shown successfully');
-    } catch (e, stackTrace) {
-      appLog.e("Error showing notification: $e");
-      appLog.e("Stack: $stackTrace");
     }
   }
 
