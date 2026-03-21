@@ -116,14 +116,12 @@ export const claimMachine = expressAsyncHandler(
       // For manual machines, we override all logic below later.
       // But, if it's not a manual machine, then the status of the machine will still be based off the sensor data.
       let secondsTillCompletion = null;
-
       if (
         isAvailableLike(machine.currentStatus) ||
         machine.currentStatus === MachineStatus.UNKNOWN
       ) {
         const expectedEndTime =
-          Date.now() +
-          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+          Date.now() + (cycleTime ? cycleTime * 60000 : 0);
 
         secondsTillCompletion = Math.floor(
           (expectedEndTime - Date.now()) / 1000,
@@ -131,7 +129,7 @@ export const claimMachine = expressAsyncHandler(
       } else if (machine.currentStatus === MachineStatus.IN_USE) {
         const expectedEndTime =
           machine.lastAvailableTime!.getTime() +
-          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+          (cycleTime ? cycleTime * 60000 : 0);
 
         secondsTillCompletion = Math.floor(
           (expectedEndTime - Date.now()) / 1000,
@@ -139,7 +137,7 @@ export const claimMachine = expressAsyncHandler(
       } else if (machine.currentStatus === MachineStatus.FINISHING) {
         const expectedEndTime =
           machine.lastAvailableTime!.getTime() +
-          (machine.claim.cycleTime ? machine.claim.cycleTime * 60000 : 0);
+          (cycleTime ? cycleTime * 60000 : 0);
         secondsTillCompletion = Math.floor(
           (expectedEndTime - Date.now()) / 1000,
         );
