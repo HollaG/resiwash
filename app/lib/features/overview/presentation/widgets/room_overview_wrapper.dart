@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
@@ -336,6 +337,15 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
                       ),
                     ),
                   ),
+
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      AppShellPageController.instance.showTutorial();
+                    },
+                    child: Text("Need help? Visit the tutorial"),
+                  ),
+                ),
               ],
             ),
           );

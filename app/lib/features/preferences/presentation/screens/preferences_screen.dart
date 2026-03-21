@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
@@ -222,6 +223,15 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                       context,
                                     ).colorScheme.onSurfaceVariant,
                                   ),
+                            ),
+                            Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  AppShellPageController.instance
+                                      .showTutorial();
+                                },
+                                child: Text("View tutorial"),
+                              ),
                             ),
                           ],
                         ),

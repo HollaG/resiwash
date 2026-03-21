@@ -12,6 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
@@ -23,6 +24,7 @@ import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:upgrader/upgrader.dart';
 import 'util.dart';
 import 'theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -264,12 +266,14 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
   StreamSubscription<Uri>? _linkSubscription;
 
   late PageController _pageViewController;
+  int _rootPageIndex = 1;
 
   @override
   void initState() {
     super.initState();
     initDeepLinks();
     _pageViewController = PageController(initialPage: 1);
+    AppShellPageController.instance.attach(_pageViewController);
     WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorialIfNew());
   }
 
@@ -330,6 +334,8 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    AppShellPageController.instance.detach();
+    _pageViewController.dispose();
     _linkSubscription?.cancel();
     super.dispose();
   }
@@ -365,6 +371,15 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
               PageView.builder(
                 controller: _pageViewController,
                 itemCount: 2,
+                onPageChanged: (index) {
+                  if (!mounted) return;
+                  setState(() {
+                    _rootPageIndex = index;
+                  });
+                },
+                physics: _rootPageIndex == 0
+                    ? const PageScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Theme(
