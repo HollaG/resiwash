@@ -448,7 +448,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                   AppShellPageController.instance
                                       .showTutorial();
                                 },
-                                child: Text("View tutorial"),
+                                child: Text("Need help? Visit the tutorial"),
                               ),
                             ),
                           ],

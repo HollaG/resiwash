@@ -94,6 +94,25 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
     return widget.currentBranchIndex == widget.scanQrBranchIndex;
   }
 
+  bool _isClaimingMachine() {
+    final currentPath = GoRouterState.of(context).uri.path;
+    final _state = GoRouterState.of(context);
+
+    Map<String, dynamic>? extra = _state.extra as Map<String, dynamic>?;
+    final shouldClaim =
+        _state.uri.queryParameters['claim'] == 'true' ||
+        extra?['initialAction'] == InitialPageAction.claim;
+
+    print(
+      "debug scanqrfloating checking if we're having initial action of claim ${_state.uri.queryParameters}, extra: $extra, shouldClaim: $shouldClaim",
+    );
+
+    if (shouldClaim) {
+      return true;
+    }
+    return currentPath.contains("/machine/") && currentPath.contains("claim");
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
@@ -153,6 +172,13 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
 
     if (_isOnScanQrBranch()) {
       _removePreviousOverlay();
+      return;
+    }
+
+    if (_isClaimingMachine()) {
+      print(
+        "debug floating scan qr skipping show overlay since we're currently claiming a machine",
+      );
       return;
     }
 

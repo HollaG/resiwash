@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/common/views/AppBar.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
@@ -160,6 +161,15 @@ class _MyMachinesScreenState extends State<MyMachinesScreen> {
                               // UsageHistorySection(),
                             ],
                           ),
+                        ),
+                      ),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            AppShellPageController.instance.showTutorial();
+                          },
+                          child: Text("Need help? Visit the tutorial"),
                         ),
                       ),
                     ],
