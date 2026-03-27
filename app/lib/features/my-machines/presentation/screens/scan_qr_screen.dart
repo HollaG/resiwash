@@ -34,7 +34,7 @@ class MobileScannerSimple extends StatefulWidget {
             ),
 
             const Text(
-              "Alternatively, you can tap your phone on the Tap icon, below the QR code (NFC must be available and enabled).",
+              "Alternatively if available, you can tap your phone on the 'X' in the QR code (NFC must be available and enabled).",
             ),
             Divider(),
             const Text(
