@@ -4,7 +4,9 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OpenTimerDefaultSwitch extends StatefulWidget {
-  const OpenTimerDefaultSwitch({Key? key}) : super(key: key);
+  final Function(bool)? onChanged;
+
+  const OpenTimerDefaultSwitch({Key? key, this.onChanged}) : super(key: key);
 
   @override
   State<OpenTimerDefaultSwitch> createState() => _OpenTimerDefaultSwitchState();
@@ -43,6 +45,8 @@ class _OpenTimerDefaultSwitchState extends State<OpenTimerDefaultSwitch> {
           sl<SharedPreferencesService>().setOpenTimerAfterClaiming(true);
           print("debug set opentimer to true");
         }
+
+        widget.onChanged?.call(canOpenTimer);
       },
 
       title: Text(

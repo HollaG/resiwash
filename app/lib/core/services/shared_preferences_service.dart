@@ -240,6 +240,14 @@ class SharedPreferencesService {
     _prefs.setBool('showScannerOnStart', value);
   }
 
+  bool shouldUseRealCycleTimes() {
+    return _prefs.getBool('useRealCycleTimes') ?? true;
+  }
+
+  void setUseRealCycleTimes(bool value) {
+    _prefs.setBool('useRealCycleTimes', value);
+  }
+
   // // Save a list of room IDs
   // Future<void> setRoomIds(Set<String> roomIds) async {
   //   await _prefs.setStringList(roomIdsKey, roomIds);

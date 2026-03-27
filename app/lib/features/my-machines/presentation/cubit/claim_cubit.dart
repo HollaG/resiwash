@@ -148,12 +148,19 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// NOTE: the storage supports claiming multiple machines. However, we restrict it to one-to-one logically.
   ///       If we ever expand in the future, we can.
   ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
-  /// [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
+  ///
+  /// NOTE: Increase the cycle time by 5mins, by default.
   Future<bool> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
     final currentState = state;
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
     List<MachineEntity> currentClaimedMachines = [];
+
+    if (sl<SharedPreferencesService>().shouldUseRealCycleTimes()) {
+      cycleTime =
+          cycleTime +
+          5; // Add 5 mins buffer by default, as machines take longer than expected to finish
+    }
 
     if (currentState is ClaimLoaded) {
       currentClaimedMachineMetadata = currentState.claimedMachineMetadata;

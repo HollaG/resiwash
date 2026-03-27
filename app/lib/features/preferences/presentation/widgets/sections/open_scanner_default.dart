@@ -4,7 +4,9 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OpenScannerDefaultSwitch extends StatefulWidget {
-  const OpenScannerDefaultSwitch({Key? key}) : super(key: key);
+  final Function(bool)? onChanged;
+
+  const OpenScannerDefaultSwitch({Key? key, this.onChanged}) : super(key: key);
 
   @override
   State<OpenScannerDefaultSwitch> createState() =>
@@ -44,6 +46,8 @@ class _OpenScannerDefaultSwitchState extends State<OpenScannerDefaultSwitch> {
           sl<SharedPreferencesService>().setShowScannerOnStart(true);
           print("debug set openscanner to true");
         }
+
+        widget.onChanged?.call(canOpenScanner);
       },
 
       title: Text(
