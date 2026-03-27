@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:draggable_float_widget/draggable_float_widget.dart';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScanQrFloating extends StatefulWidget {
   const ScanQrFloating({super.key});
@@ -98,6 +99,7 @@ class _ScanQrFloatingState extends State<ScanQrFloating> {
             borderTopContainTopBar: false,
             borderBottom: kToolbarHeight + defaultBorderWidth,
             appBarHeight: 0,
+            animDuration: const Duration(milliseconds: 100),
           ),
           onTap: () => _removePreviousOverlay(),
           child: SizedBox(
@@ -108,11 +110,10 @@ class _ScanQrFloatingState extends State<ScanQrFloating> {
                 color: Theme.of(context).colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Center(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  child: Text("Scan QR Code"),
-                ),
+              child: MobileScanner(
+                onDetect: (result) {
+                  print(result.barcodes.first.rawValue);
+                },
               ),
             ),
           ),
