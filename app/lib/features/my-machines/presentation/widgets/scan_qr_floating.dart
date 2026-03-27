@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:draggable_float_widget/draggable_float_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:go_router/go_router.dart';
+import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
+import 'package:resiwash/router.dart';
 
 class ScanQrFloating extends StatefulWidget {
   const ScanQrFloating({super.key});
@@ -11,72 +14,152 @@ class ScanQrFloating extends StatefulWidget {
   State<ScanQrFloating> createState() => _ScanQrFloatingState();
 }
 
-class _ScanQrFloatingState extends State<ScanQrFloating> {
+class _ScanQrFloatingState extends State<ScanQrFloating>
+    with WidgetsBindingObserver {
   OverlayEntry? _overlayEntry;
-  bool _showDraggableFloat = false;
   late StreamController<OperateEvent> eventStreamController;
+  bool _wasOnScanQrRoute = false;
 
+  final MobileScannerController controller = MobileScannerController();
+
+  // 5 second timer for users to scan
+  Timer? _scanTimer;
   @override
   void initState() {
-    print("debug ScanQrFloating initState");
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    router.routerDelegate.addListener(_handleRouteChanged);
     eventStreamController = StreamController.broadcast();
+    _wasOnScanQrRoute = _isOnScanQrRoute();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _showOverlay();
+      _showOverlayForCurrentSession();
     });
+  }
+
+  void _handleRouteChanged() {
+    if (!mounted) return;
+
+    final isOnScanQrRoute = _isOnScanQrRoute();
+    if (isOnScanQrRoute == _wasOnScanQrRoute) {
+      return;
+    }
+
+    _wasOnScanQrRoute = isOnScanQrRoute;
+    if (isOnScanQrRoute) {
+      _removePreviousOverlay();
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _showOverlayForCurrentSession();
+    });
+  }
+
+  bool _isOnScanQrRoute() {
+    final currentPath = router.routeInformationProvider.value.uri.path;
+    return currentPath == AppRoutes.scanQr;
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _showOverlayForCurrentSession();
+        });
+        break;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _removePreviousOverlay();
+        break;
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    router.routerDelegate.removeListener(_handleRouteChanged);
     _removePreviousOverlay();
     eventStreamController.close();
+    controller.dispose();
     super.dispose();
   }
 
   _removePreviousOverlay() {
+    _scanTimer?.cancel();
+    _scanTimer = null;
     _overlayEntry?.remove();
     _overlayEntry = null;
   }
 
-  Widget build(BuildContext context) {
-    return Container();
+  void _showOverlayForCurrentSession() {
+    if (_isOnScanQrRoute()) {
+      _removePreviousOverlay();
+      return;
+    }
+
+    _showOverlay();
+
+    // Start the timer once the overlay is shown.
+    _scanTimer?.cancel();
+    _scanTimer = Timer(const Duration(seconds: 5), () {
+      _removePreviousOverlay();
+    });
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: Text("Overlay Mode", style: TextStyle(color: Colors.white)),
-  //       actions: [
-  //         Padding(
-  //           padding: EdgeInsets.only(right: 12),
-  //           child: InkWell(
-  //             onTap: () {
-  //               if (_showDraggableFloat) {
-  //                 _removePreviousOverlay();
-  //               } else {
-  //                 _showOverlay();
-  //               }
-  //               setState(() {
-  //                 _showDraggableFloat = !_showDraggableFloat;
-  //               });
-  //             },
-  //             child: Icon(
-  //               _showDraggableFloat
-  //                   ? Icons.amp_stories_rounded
-  //                   : Icons.amp_stories_outlined,
-  //               color: Colors.white,
-  //               size: 28,
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //     backgroundColor: Colors.grey,
-  //     body: widget.listView,
-  //   );
-  // }
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink();
+  }
+
+  void _handleBarcode(BarcodeCapture barcodes) async {
+    if (!mounted) return;
+
+    Barcode? firstBarcode = barcodes.barcodes.firstOrNull;
+    if (firstBarcode == null) {
+      return;
+    }
+    // url format: https://resi-wash.com/manual?roomId=6&machineId=33
+    // extract roomId and machineId from the url
+    String? rawValue = firstBarcode.rawValue;
+    if (rawValue == null) {
+      return;
+    }
+
+    if (!rawValue.startsWith('https://resi-wash.com/manual')) {
+      return;
+    }
+
+    debugPrint('debug Scanned QR code with value: $rawValue');
+
+    final uri = Uri.parse(rawValue);
+    final machineIdParam = uri.queryParameters['machineId'];
+
+    // based on the machineId, redirect the user to the MachineDetailScreen, and
+    // also set extra information to popup "claim" option
+    await controller.stop();
+
+    if (!mounted) return;
+
+    if (machineIdParam?.isNotEmpty == true) {
+      // immediately remove the overlay and stop the timer
+      _removePreviousOverlay();
+      _scanTimer?.cancel();
+
+      context.replaceNamed(
+        AppRoutes.machineDetailName,
+        pathParameters: {'machineId': machineIdParam!},
+        extra: {'initialAction': InitialPageAction.claim},
+      );
+    }
+  }
 
   _showOverlay() {
     final screenWidth = MediaQuery.sizeOf(context).width;
@@ -111,8 +194,9 @@ class _ScanQrFloatingState extends State<ScanQrFloating> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: MobileScanner(
+                controller: controller,
                 onDetect: (result) {
-                  print(result.barcodes.first.rawValue);
+                  _handleBarcode(result);
                 },
               ),
             ),
@@ -121,7 +205,15 @@ class _ScanQrFloatingState extends State<ScanQrFloating> {
       },
     );
 
-    /// Warning: context cannot be the context of MaterialApp
-    Overlay.of(context)?.insert(_overlayEntry!);
+    final overlayState =
+        router.routerDelegate.navigatorKey.currentState?.overlay ??
+        Overlay.maybeOf(context, rootOverlay: true);
+
+    if (overlayState == null) {
+      debugPrint('ScanQrFloating: no Overlay available to insert entry.');
+      return;
+    }
+
+    overlayState.insert(_overlayEntry!);
   }
 }
