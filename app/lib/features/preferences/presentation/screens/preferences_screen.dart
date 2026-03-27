@@ -223,6 +223,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                 }
 
                                 return SettingTile(
+                                  initiallyExpanded: true,
                                   title: "Set claim defaults",
                                   subtitle:
                                       "When claiming a machine, you can bypass the cycle time selection screen by enabling the switch and choosing your typical cycle time. Note that you can still edit the cycle time after marking.",

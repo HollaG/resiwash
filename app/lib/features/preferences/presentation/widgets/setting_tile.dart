@@ -9,12 +9,15 @@ class SettingTile extends StatefulWidget {
   final List<Widget> children;
   final TileState? state;
 
+  final bool initiallyExpanded;
+
   const SettingTile({
     Key? key,
     required this.title,
     this.subtitle,
     required this.children,
     this.state = TileState.enabled,
+    this.initiallyExpanded = false,
   }) : super(key: key);
 
   @override
@@ -22,13 +25,28 @@ class SettingTile extends StatefulWidget {
 }
 
 class _SettingTileState extends State<SettingTile> {
-  bool isExpanded = false;
+  late bool isExpanded;
+
+  @override
+  void initState() {
+    super.initState();
+    isExpanded = widget.initiallyExpanded;
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initiallyExpanded != widget.initiallyExpanded) {
+      isExpanded = widget.initiallyExpanded;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: ExpansionTile(
+        initiallyExpanded: isExpanded,
         childrenPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 8,
