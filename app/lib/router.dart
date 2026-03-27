@@ -192,6 +192,8 @@ class AppRoutes {
   static const String profile = '/profile';
   static const String scanQr = '/scan-qr';
 
+  static const int scanQrBranchIndex = 3;
+
   static const String settings = '/settings';
 
   // -- route names -- //

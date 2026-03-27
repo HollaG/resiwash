@@ -46,7 +46,15 @@ class BaseView extends StatelessWidget {
           claimedMachinesCount = state.claimedMachines?.length ?? 0;
         }
         return Scaffold(
-          body: Stack(children: [ScanQrFloating(), navigationShell]),
+          body: Stack(
+            children: [
+              ScanQrFloating(
+                currentBranchIndex: navigationShell.currentIndex,
+                scanQrBranchIndex: AppRoutes.scanQrBranchIndex,
+              ),
+              navigationShell,
+            ],
+          ),
           // floatingActionButton: shouldShowFAB
           //     ? FloatingActionButton(
           //         onPressed: () => context.push(AppRoutes.scanQr),
@@ -100,7 +108,6 @@ class BaseView extends StatelessWidget {
                   claimedMachinesCount: claimedMachinesCount,
                 ),
 
-                // IMPORTANT: When uncommenting this, make sure to change the goBranch of the FAB
                 _menuItem(
                   context,
                   index: 2,
@@ -113,8 +120,10 @@ class BaseView extends StatelessWidget {
                     onPressed: () {
                       if (!isOnScanQrPage) {
                         navigationShell.goBranch(
-                          3,
-                          initialLocation: 3 == navigationShell.currentIndex,
+                          AppRoutes.scanQrBranchIndex,
+                          initialLocation:
+                              AppRoutes.scanQrBranchIndex ==
+                              navigationShell.currentIndex,
                         );
                       } else {
                         _onHelpClicked(context);

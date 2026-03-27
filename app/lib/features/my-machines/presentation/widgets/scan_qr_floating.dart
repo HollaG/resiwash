@@ -8,21 +8,32 @@ import 'package:resiwash/features/machine/presentation/screens/machine_detail_sc
 import 'package:resiwash/router.dart';
 
 class ScanQrFloating extends StatefulWidget {
-  const ScanQrFloating({super.key});
+  const ScanQrFloating({
+    super.key,
+    required this.currentBranchIndex,
+    this.scanQrBranchIndex = 3,
+  });
+
+  final int currentBranchIndex;
+  final int scanQrBranchIndex;
 
   @override
   State<ScanQrFloating> createState() => _ScanQrFloatingState();
 }
 
-final int overlayCooldownSeconds = 60;
+final int overlayCooldownSeconds = 5;
+
+enum _OverlayOpenMode { coldStartOnly, everyResume }
 
 class _ScanQrFloatingState extends State<ScanQrFloating>
     with WidgetsBindingObserver {
   OverlayEntry? _overlayEntry;
   late StreamController<OperateEvent> eventStreamController;
-  bool _wasOnScanQrRoute = false;
+  static const _overlayOpenMode = _OverlayOpenMode.everyResume;
 
   final MobileScannerController controller = MobileScannerController();
+
+  bool canShowAgain = true;
 
   // Only ever re-show the overlay if it's been at least 1 minute since the app was last visible
   DateTime lastOpenTime = DateTime.now().subtract(
@@ -31,57 +42,67 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
 
   // 5 second timer for users to scan
   Timer? _scanTimer;
+
+  bool _shouldShowOnResume() {
+    switch (_overlayOpenMode) {
+      case _OverlayOpenMode.coldStartOnly:
+        return false;
+      case _OverlayOpenMode.everyResume:
+        return true;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    router.routerDelegate.addListener(_handleRouteChanged);
     eventStreamController = StreamController.broadcast();
-    _wasOnScanQrRoute = _isOnScanQrRoute();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showOverlayForCurrentSession();
     });
   }
 
-  void _handleRouteChanged() {
-    print("debug floating scan qr detected route changed");
+  @override
+  void didUpdateWidget(covariant ScanQrFloating oldWidget) {
+    super.didUpdateWidget(oldWidget);
     if (!mounted) return;
 
-    final isOnScanQrRoute = _isOnScanQrRoute();
-    if (isOnScanQrRoute == _wasOnScanQrRoute) {
+    final wasOnScanQrBranch =
+        oldWidget.currentBranchIndex == oldWidget.scanQrBranchIndex;
+    final isOnScanQrBranch = _isOnScanQrBranch();
+
+    if (wasOnScanQrBranch == isOnScanQrBranch) {
       return;
     }
 
-    print(
-      isOnScanQrRoute
-          ? "debug floating scan qr detected route changed to scan QR route"
-          : "debug floating scan qr detected route changed away from scan QR route",
-    );
-
-    _wasOnScanQrRoute = isOnScanQrRoute;
-    if (isOnScanQrRoute) {
+    if (isOnScanQrBranch) {
       _removePreviousOverlay();
       return;
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      _showOverlayForCurrentSession();
-    });
+    // Do not auto-show when leaving the scan branch.
+    return;
   }
 
-  bool _isOnScanQrRoute() {
-    final currentPath = router.routeInformationProvider.value.uri.path;
-    return currentPath == AppRoutes.scanQr;
+  bool _isOnScanQrBranch() {
+    print(
+      "debug checking if on scan qr branch, currentBranchIndex: ${widget.currentBranchIndex}, scanQrBranchIndex: ${widget.scanQrBranchIndex}",
+    );
+    return widget.currentBranchIndex == widget.scanQrBranchIndex;
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!mounted) return;
 
+    print("debug ScanQrFloating observed app lifecycle change: $state");
+
     switch (state) {
       case AppLifecycleState.resumed:
+        if (!_shouldShowOnResume()) {
+          return;
+        }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           _showOverlayForCurrentSession();
@@ -89,10 +110,17 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
         break;
       case AppLifecycleState.inactive:
       case AppLifecycleState.hidden:
-      case AppLifecycleState.paused:
       case AppLifecycleState.detached:
-        lastOpenTime = DateTime.now();
         _removePreviousOverlay();
+
+        break;
+      case AppLifecycleState.paused:
+        _removePreviousOverlay();
+        // break;
+        canShowAgain = true;
+        lastOpenTime = DateTime.now();
+        // _removePreviousOverlay();
+
         break;
     }
   }
@@ -100,7 +128,6 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    router.routerDelegate.removeListener(_handleRouteChanged);
     _removePreviousOverlay();
     eventStreamController.close();
     controller.dispose();
@@ -115,11 +142,17 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   }
 
   void _showOverlayForCurrentSession() {
-    if (_isOnScanQrRoute()) {
+    if (_isOnScanQrBranch()) {
       _removePreviousOverlay();
       return;
     }
 
+    if (!canShowAgain) {
+      print(
+        "debug floating scan qr skipping show overlay since canShowAgain is false, aka we did not hit paused state",
+      );
+      return;
+    }
     if (DateTime.now().difference(lastOpenTime) <
         Duration(seconds: overlayCooldownSeconds)) {
       print(
@@ -135,6 +168,8 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
     _scanTimer = Timer(const Duration(seconds: 5), () {
       _removePreviousOverlay();
     });
+
+    canShowAgain = false;
   }
 
   @override
