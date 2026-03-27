@@ -13,6 +13,7 @@ import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/sections/machine_default_cycle.dart';
+import 'package:resiwash/features/preferences/presentation/widgets/sections/open_scanner_default.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/sections/open_timer_default.dart';
 import 'package:resiwash/theme.dart';
 
@@ -138,6 +139,8 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
+                                    spacing: 2,
+
                                     children: [
                                       Text(
                                         "Set claim defaults",
@@ -175,11 +178,46 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                 ],
                               ),
                             ),
+                            Divider(),
 
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 2,
+                              children: [
+                                Text(
+                                  "Open scanner when opening app",
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineSmall,
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    text:
+                                        "When enabled, the QR code scanner will be active for 5 seconds when you open the app, allowing you to quickly scan the machine QR code.",
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                              child: Column(
+                                spacing: 8,
+                                children: [
+                                  // default cycle time (washer)
+                                  OpenScannerDefaultSwitch(),
+                                ],
+                              ),
+                            ),
+                            Divider(),
                             // default cycle time (dryer)
                             if (Platform.isAndroid)
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
+                                spacing: 2,
+
                                 children: [
                                   Text(
                                     "Open timer after claiming",

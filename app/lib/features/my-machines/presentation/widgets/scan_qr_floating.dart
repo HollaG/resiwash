@@ -4,6 +4,8 @@ import 'package:draggable_float_widget/draggable_float_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
+import 'package:resiwash/core/injections/machine/machine_service_locator.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/features/machine/presentation/screens/machine_detail_screen.dart';
 import 'package:resiwash/router.dart';
 
@@ -142,6 +144,13 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   }
 
   void _showOverlayForCurrentSession() {
+    if (sl<SharedPreferencesService>().shouldShowScannerOnStart() == false) {
+      print(
+        "debug floating scan qr skipping show overlay since user preference is to not show on start",
+      );
+      return;
+    }
+
     if (_isOnScanQrBranch()) {
       _removePreviousOverlay();
       return;
@@ -251,6 +260,7 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
                 color: Theme.of(context).colorScheme.secondaryContainer,
                 borderRadius: BorderRadius.circular(8),
               ),
+              clipBehavior: Clip.hardEdge,
               child: MobileScanner(
                 controller: controller,
                 onDetect: (result) {
