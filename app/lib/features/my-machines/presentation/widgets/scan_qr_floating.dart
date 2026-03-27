@@ -14,6 +14,8 @@ class ScanQrFloating extends StatefulWidget {
   State<ScanQrFloating> createState() => _ScanQrFloatingState();
 }
 
+final int overlayCooldownSeconds = 60;
+
 class _ScanQrFloatingState extends State<ScanQrFloating>
     with WidgetsBindingObserver {
   OverlayEntry? _overlayEntry;
@@ -21,6 +23,11 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   bool _wasOnScanQrRoute = false;
 
   final MobileScannerController controller = MobileScannerController();
+
+  // Only ever re-show the overlay if it's been at least 1 minute since the app was last visible
+  DateTime lastOpenTime = DateTime.now().subtract(
+    Duration(seconds: overlayCooldownSeconds),
+  );
 
   // 5 second timer for users to scan
   Timer? _scanTimer;
@@ -38,12 +45,19 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   }
 
   void _handleRouteChanged() {
+    print("debug floating scan qr detected route changed");
     if (!mounted) return;
 
     final isOnScanQrRoute = _isOnScanQrRoute();
     if (isOnScanQrRoute == _wasOnScanQrRoute) {
       return;
     }
+
+    print(
+      isOnScanQrRoute
+          ? "debug floating scan qr detected route changed to scan QR route"
+          : "debug floating scan qr detected route changed away from scan QR route",
+    );
 
     _wasOnScanQrRoute = isOnScanQrRoute;
     if (isOnScanQrRoute) {
@@ -77,6 +91,7 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
       case AppLifecycleState.hidden:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
+        lastOpenTime = DateTime.now();
         _removePreviousOverlay();
         break;
     }
@@ -102,6 +117,14 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
   void _showOverlayForCurrentSession() {
     if (_isOnScanQrRoute()) {
       _removePreviousOverlay();
+      return;
+    }
+
+    if (DateTime.now().difference(lastOpenTime) <
+        Duration(seconds: overlayCooldownSeconds)) {
+      print(
+        "debug floating scan qr skipping show overlay since last show time is ${DateTime.now().difference(lastOpenTime).inSeconds} seconds ago",
+      );
       return;
     }
 
@@ -215,5 +238,8 @@ class _ScanQrFloatingState extends State<ScanQrFloating>
     }
 
     overlayState.insert(_overlayEntry!);
+
+    // update that we've shown
+    lastOpenTime = DateTime.now();
   }
 }
