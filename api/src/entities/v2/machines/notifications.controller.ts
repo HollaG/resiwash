@@ -81,7 +81,7 @@ export const claimMachine = expressAsyncHandler(
         cycleTime,
       );
       // 1. update the machine object with the new claimant and cycle time
-      machine.claimId = savedClaim.claimId; // associate the machine with the new claim
+      machine.claimId = savedClaim.identifiers[0].claimId; // associate the machine with the new claim
       await AppDataSource.getRepository(Machine).save(machine);
 
       // 2. update the claims table with the new claim

@@ -118,7 +118,6 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
     if (machine.isManualEntry) {
       await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
     } else if (machine.currentStatus === MachineStatus.FINISHED) {
-
       // ONLY set the machine to available if it is FINISHED.
       await updateMachineStatusAfterTime(MachineStatus.AVAILABLE, machineId);
     }
@@ -152,7 +151,7 @@ export const addToClaimHistory = async (
   claim.fcmToken = fcmToken;
   claim.cycleTime = cycleTime;
 
-  const savedClaim = await claimRepository.save(claim);
+  const savedClaim = await claimRepository.insert(claim);
 
   console.log(
     `Added claim history for machine ${machineId}, token ${fcmToken}, cycle time ${cycleTime}`,
