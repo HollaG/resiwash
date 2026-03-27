@@ -48,10 +48,10 @@ class BaseView extends StatelessWidget {
         return Scaffold(
           body: Stack(
             children: [
-              ScanQrFloating(
-                currentBranchIndex: navigationShell.currentIndex,
-                scanQrBranchIndex: AppRoutes.scanQrBranchIndex,
-              ),
+              // ScanQrFloating(
+              //   currentBranchIndex: navigationShell.currentIndex,
+              //   scanQrBranchIndex: AppRoutes.scanQrBranchIndex,
+              // ),
               navigationShell,
             ],
           ),

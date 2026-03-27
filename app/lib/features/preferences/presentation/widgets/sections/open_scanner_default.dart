@@ -39,6 +39,8 @@ class _OpenScannerDefaultSwitchState extends State<OpenScannerDefaultSwitch> {
           canOpenScanner = value;
         });
 
+        // request for camera permission if not already granted and user is trying to enable the setting
+
         if (!value) {
           sl<SharedPreferencesService>().setShowScannerOnStart(false);
           print("debug set openscanner to false");

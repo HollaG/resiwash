@@ -271,34 +271,33 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                               },
                             ),
 
-                            Builder(
-                              builder: (context) {
-                                bool canOpenScanner =
-                                    sl<SharedPreferencesService>()
-                                        .shouldShowScannerOnStart();
+                            // Builder(
+                            //   builder: (context) {
+                            //     bool canOpenScanner =
+                            //         sl<SharedPreferencesService>()
+                            //             .shouldShowScannerOnStart();
 
-                                void onOpenScannerChanged(bool value) {
-                                  setState(() {
-                                    canOpenScanner = value;
-                                  });
-                                }
+                            //     void onOpenScannerChanged(bool value) {
+                            //       setState(() {
+                            //         canOpenScanner = value;
+                            //       });
+                            //     }
 
-                                return SettingTile(
-                                  title: "Open scanner when opening app",
-                                  subtitle:
-                                      "When enabled, the QR code scanner will be active for 5 seconds when you open the app, allowing you to quickly scan the machine QR code.",
-                                  state: canOpenScanner
-                                      ? TileState.enabled
-                                      : TileState.disabled,
-                                  children: [
-                                    OpenScannerDefaultSwitch(
-                                      onChanged: onOpenScannerChanged,
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-
+                            //     return SettingTile(
+                            //       title: "Open scanner when opening app",
+                            //       subtitle:
+                            //           "When enabled, the QR code scanner will be active for 5 seconds when you open the app, allowing you to quickly scan the machine QR code.",
+                            //       state: canOpenScanner
+                            //           ? TileState.enabled
+                            //           : TileState.disabled,
+                            //       children: [
+                            //         OpenScannerDefaultSwitch(
+                            //           onChanged: onOpenScannerChanged,
+                            //         ),
+                            //       ],
+                            //     );
+                            //   },
+                            // ),
                             if (Platform.isAndroid)
                               Builder(
                                 builder: (context) {

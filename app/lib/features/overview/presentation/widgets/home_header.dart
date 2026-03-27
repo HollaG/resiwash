@@ -74,6 +74,7 @@ class _HomeHeaderState extends State<HomeHeader> {
 
         return Container(
           width: double.infinity,
+          height: 100,
           padding: const EdgeInsets.fromLTRB(36.0, 12, 36, 36),
           color: Theme.of(context).colorScheme.primary,
           child: SafeArea(
