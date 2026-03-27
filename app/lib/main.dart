@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:app_links/app_links.dart';
 import 'package:draggable_float_widget/draggable_float_widget.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_floating.dart';
 import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_mini_container.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -402,6 +403,17 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
                   }
                 },
               ),
+              // DraggableFloatWidget(
+              //   child: ElevatedButton(onPressed: () {}, child: Text("Press")),
+              //   // eventStreamController: eventStreamController,
+              //   config: DraggableFloatWidgetBaseConfig(
+              //     isFullScreen: false,
+              //     initPositionYInTop: false,
+              //     initPositionYMarginBorder: 50,
+              //     borderBottom: kToolbarHeight + defaultBorderWidth,
+              //   ),
+              //   onTap: () => print("Drag onTap!"),
+              // ),
               // DraggableFloatWidget(
               //   child: TrackerMiniContainer(),
               //   config: DraggableFloatWidgetBaseConfig(

@@ -5,6 +5,7 @@ import 'package:resiwash/features/machine/presentation/utils/machine_display_uti
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/screens/scan_qr_screen.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_floating.dart';
 import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
@@ -45,7 +46,7 @@ class BaseView extends StatelessWidget {
           claimedMachinesCount = state.claimedMachines?.length ?? 0;
         }
         return Scaffold(
-          body: navigationShell,
+          body: Stack(children: [ScanQrFloating(), navigationShell]),
           // floatingActionButton: shouldShowFAB
           //     ? FloatingActionButton(
           //         onPressed: () => context.push(AppRoutes.scanQr),
