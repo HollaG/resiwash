@@ -116,11 +116,18 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
     }
 
     // if there is a linked claim, update the unclaimedAt time
+    console.log("-- BEGIN UPDATE CLAIM HISTORY --");
+    console.log(
+      `machine.claim is ${machine.claim ? "present" : "not present"}`,
+    );
     if (machine.claim) {
       const claimRepository = AppDataSource.getRepository(Claim);
       machine.claim.unclaimedAt = new Date();
+
+      console.log({ claim: machine.claim });
       await claimRepository.save(machine.claim);
     }
+    console.log("-- END UPDATE CLAIM HISTORY --");
 
     machine.claimId = null; // remove the claim association but leave it in the claim history
     machine.claim = null;
