@@ -21,9 +21,8 @@ import { Dryer } from "../../../classes/Dryer";
 import { Washer } from "../../../classes/Washer";
 import { sendMachineGroupStatusChangedNotification } from "../../../utils/firebase-messaging";
 import {
-  getClaimants,
+  forceUnclaimMachine,
   sendNotificationToClaimants,
-  unclaimMachine,
 } from "../../../utils/notifications";
 
 // saves IN-MEMORY which machines have been sending data
@@ -503,7 +502,7 @@ export const createMultipleEvents = asyncHandler(
            *   latestEvent.status=FINISHED vs status=AVAILABLE → always different → new FINISHED event every 10s.
            */
 
-          // This code presents a problem, because we can't tell when someone has 
+          // This code presents a problem, because we can't tell when someone has
           // either a) claimed a free machine (waiting to start)
           // or b) machine finished.
           // If the detected status is now "AVAILABLE" AND there is a claimId AND the curremt machine status is "AVAILABLE", then we know that this machine was claimed from available state.
@@ -513,9 +512,15 @@ export const createMultipleEvents = asyncHandler(
           // If there is no claimId, no change.
           let effectiveStatus = status;
           if (machine.machine.claimId) {
-            if (status === MachineStatus.AVAILABLE && machine.machine.currentStatus === MachineStatus.AVAILABLE) {
+            if (
+              status === MachineStatus.AVAILABLE &&
+              machine.machine.currentStatus === MachineStatus.AVAILABLE
+            ) {
               effectiveStatus = status; // make sure no change
-            } else if (status === MachineStatus.AVAILABLE && machine.machine.currentStatus !== MachineStatus.AVAILABLE) {
+            } else if (
+              status === MachineStatus.AVAILABLE &&
+              machine.machine.currentStatus !== MachineStatus.AVAILABLE
+            ) {
               effectiveStatus = MachineStatus.FINISHED; // machine has just finished, transition to FINISHED
             }
           }
@@ -532,23 +537,22 @@ export const createMultipleEvents = asyncHandler(
           if (!latestEvent || latestEvent.status !== effectiveStatus) {
             // if there is a state change detected
 
-            if (machine.machine.currentStatus === MachineStatus.FINISHED && (effectiveStatus === MachineStatus.IN_USE || effectiveStatus === MachineStatus.FINISHING)) {
-              // edge case:
-              // machine FINISHED (aka CLAIMED && BECAME AVAILABLE)
-              // sensor is trying to go into in_use_like state
-              // unclaim the machine
-              machine.machine.claimId = null; // remove the claim association but leave it in the claim history
-              machine.machine.claim = null;
-
-              // save
-
-              await machineRepository.update(
-                { machineId: machine.machineId },
-                { claimId: null, claim: null }
-              );
-              // machineRepository.save(machine.machine);
-
+            if (
+              machine.machine.currentStatus === MachineStatus.FINISHED &&
+              (effectiveStatus === MachineStatus.IN_USE ||
+                effectiveStatus === MachineStatus.FINISHING)
+            ) {
+              // [[EDGE CASE]]
+              // The machine in FINISHED state
+              // --> This occurs because someone hasn't released the machine after it completed
+              // The sensor now wants detects that the machine is running
+              // We need to:
+              // 1. Trigger an `unclaim` for the old claim
+              // 2. change the status as per normal
+              await forceUnclaimMachine(machine.machineId);
             }
+
+            // This adds this machine to the list to be updated
             actualEvents.push(actualEvent);
           } else {
             // NO STATE CHANGE
@@ -597,10 +601,10 @@ export const createMultipleEvents = asyncHandler(
         machine.currentStatus = event.status; // set the currentStatus to the new status
         machine.previousStatusActiveTime = machine.lastChangeTime
           ? Math.floor(
-            (machine.lastChangeTime.getTime() -
-              machine.lastUpdated!.getTime()) /
-            1000,
-          )
+              (machine.lastChangeTime.getTime() -
+                machine.lastUpdated!.getTime()) /
+                1000,
+            )
           : 0; // calculate how long the machine was in the previous status in seconds
 
         if (isAvailableLike(machine.currentStatus)) {
@@ -624,7 +628,7 @@ export const createMultipleEvents = asyncHandler(
       });
 
       // send notification to claimant if applicable
-      sendNotificationToClaimants(machine.machineId).catch((e) => { }); // do nothing
+      sendNotificationToClaimants(machine.machineId).catch((e) => {}); // do nothing
     }
 
     sendOkResponse(res, savedRawEvents);

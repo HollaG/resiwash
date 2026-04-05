@@ -30,4 +30,10 @@ export class Claim {
 
   @CreateDateColumn()
   claimedAt: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  completedAt: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  unclaimedAt: Date;
 }

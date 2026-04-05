@@ -8,6 +8,7 @@ import {
   setMachineManualStatusAndNotify,
   updateMachineStatusAfterTime,
 } from "../services/machines.service";
+import { updateClaimMachineFinished } from "../utils/notifications";
 
 /**
  * Scheduled job to check for "stuck" machines and clean up stale claims
@@ -73,6 +74,8 @@ const runMachineCycleEndCheck = async () => {
               machine.machineId,
             );
           } else {
+            await updateClaimMachineFinished(machine.claim.claimId);
+
             await updateMachineStatusAfterTime(
               MachineStatus.FINISHED,
               machine.machineId,

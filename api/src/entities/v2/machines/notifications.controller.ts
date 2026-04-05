@@ -12,6 +12,7 @@ import {
   getClaimants,
   sendAndCleanupInvalidToken,
   updateCycleTime,
+  forceUnclaimMachine,
 } from "../../../utils/notifications";
 import {
   DataMessageForDeviceTimers,
@@ -74,13 +75,20 @@ export const claimMachine = expressAsyncHandler(
       }
       // allowed to claim, aka either there's no claimant, or the claimant is the same user, or the machine is available (claimed but not in use)
 
-      // 1. create an entry in the claim history table
+      // 1a. create an entry in the claim history table
       const savedClaim = await addToClaimHistory(
         machineId,
         fcmToken,
         cycleTime,
       );
-      // 1. update the machine object with the new claimant and cycle time
+
+      // 1b. if ther already is a claimaint,
+      //     then we need to forcibly unclaim for them
+      if (machine.claimId) {
+        await forceUnclaimMachine(machine.machineId);
+      }
+
+      // 1b. update the machine object with the new claimant and cycle time
       machine.claimId = savedClaim.identifiers[0].claimId; // associate the machine with the new claim
       await AppDataSource.getRepository(Machine).save(machine);
 

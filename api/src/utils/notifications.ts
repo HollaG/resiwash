@@ -104,6 +104,24 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
       return;
     }
 
+    if (currentClaimToken !== fcmToken) {
+      console.log(
+        `Machine ${machineId} is claimed by another user (${currentClaimToken}) when trying to unclaim for ${fcmToken}`,
+      );
+
+      // Do not throw any errors, as we want the FE to sync up with the BE
+      // This can happen when the user A does not unclaim a machine locally, and the machine gets claimed again by another user B
+      // User A's device cannot register that the machine is now claimed separately.
+      return;
+    }
+
+    // if there is a linked claim, update the unclaimedAt time
+    if (machine.claim) {
+      const claimRepository = AppDataSource.getRepository(Claim);
+      machine.claim.unclaimedAt = new Date();
+      await claimRepository.save(machine.claim);
+    }
+
     machine.claimId = null; // remove the claim association but leave it in the claim history
     machine.claim = null;
 
@@ -126,6 +144,42 @@ export const unclaimMachine = async (machineId: number, fcmToken: string) => {
   } else {
     console.log(
       `Machine ${machineId} not found when trying to unclaim for ${fcmToken}`,
+    );
+  }
+};
+
+/**
+ * Only used to unclaim a machine for a user when the sensor detects
+ * that the machine goes back in use.
+ * @param machineId
+ */
+export const forceUnclaimMachine = async (machineId: number) => {
+  const machineRepository = AppDataSource.getRepository(Machine);
+
+  const machine = await machineRepository
+    .createQueryBuilder("machine")
+    .leftJoinAndSelect("machine.claim", "claim")
+    .addSelect("claim.fcmToken")
+    .where("machine.machineId = :machineId", { machineId: Number(machineId) })
+    .getOne();
+
+  if (machine) {
+    // if there is a linked claim, update the unclaimedAt time
+    if (machine.claim) {
+      const claimRepository = AppDataSource.getRepository(Claim);
+      machine.claim.unclaimedAt = new Date();
+      await claimRepository.save(machine.claim);
+    }
+
+    machine.claimId = null; // remove the claim association but leave it in the claim history
+    machine.claim = null;
+
+    await machineRepository.save(machine);
+
+    console.log(`Force unclaimed machine ${machineId} due to sensor event`);
+  } else {
+    console.log(
+      `Machine ${machineId} not found when trying to force unclaim due to sensor event`,
     );
   }
 };
@@ -208,6 +262,40 @@ export const updateCycleTime = async (claimId: number, cycleTime: number) => {
     cycleTime,
   );
   return true;
+};
+
+export const updateClaimMachineFinished = async (claimId: number) => {
+  const claimRepository = AppDataSource.getRepository(Claim);
+
+  const claim = await claimRepository.findOne({
+    where: {
+      claimId: claimId,
+    },
+  });
+
+  if (!claim) {
+    throw new NotClaimedError();
+  }
+
+  claim.completedAt = new Date();
+  await claimRepository.save(claim);
+};
+
+export const updateClaimMachineReleased = async (claimId: number) => {
+  const claimRepository = AppDataSource.getRepository(Claim);
+
+  const claim = await claimRepository.findOne({
+    where: {
+      claimId: claimId,
+    },
+  });
+
+  if (!claim) {
+    throw new NotClaimedError();
+  }
+
+  claim.unclaimedAt = new Date();
+  await claimRepository.save(claim);
 };
 
 // Note: As of now, there can only be ONE claimant per machine. We will leave the return value
