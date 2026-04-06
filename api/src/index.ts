@@ -59,7 +59,7 @@ app.use(
     secret: process.env.SESSION_KEY,
     resave: true,
     saveUninitialized: true,
-  })
+  }),
 );
 app.use(logger);
 const port = process.env.PORT || 3000;
@@ -68,7 +68,6 @@ const port = process.env.PORT || 3000;
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
-
 const API_VERSION = process.env.API_VERSION || "v1";
 
 const API_VERSIONS = ["v1", "v2"];
@@ -78,7 +77,7 @@ const API_VERSIONS = ["v1", "v2"];
 // Machines
 app.use(
   `/api/v1/areas/:areaId/:roomId`,
-  require("./entities/v1/machines/machines.routes")
+  require("./entities/v1/machines/machines.routes"),
 );
 
 // Rooms
@@ -88,13 +87,13 @@ app.use(`/api/v1/areas/:areaId`, require("./entities/v1/rooms/rooms.routes"));
 app.use(
   `/api/v1/areas`,
   VerifyToken,
-  require("./entities/v1/areas/areas.routes")
+  require("./entities/v1/areas/areas.routes"),
 );
 
 // Locations
 app.use(
   `/api/v1/locations`,
-  require("./entities/v1/locations/locations.routes")
+  require("./entities/v1/locations/locations.routes"),
 );
 
 // Events
@@ -108,7 +107,7 @@ app.use(`/api/v1/sensors`, require("./entities/v1/sensors/sensors.routes"));
 app.use(
   `/api/v2/areas`,
   VerifyToken,
-  require("./entities/v2/areas/areas.routes")
+  require("./entities/v2/areas/areas.routes"),
 );
 
 // Rooms
@@ -120,7 +119,7 @@ app.use(`/api/v2/machines`, require("./entities/v2/machines/machines.routes"));
 // Locations
 app.use(
   `/api/v2/locations`,
-  require("./entities/v2/locations/locations.routes")
+  require("./entities/v2/locations/locations.routes"),
 );
 
 // Events
@@ -131,6 +130,9 @@ app.use(`/api/v2/sensors`, require("./entities/v2/sensors/sensors.routes"));
 
 // admin: todo, protect with auth middleware
 app.use(`/api/v2/admin`, require("./entities/v2/admin/admin.routes"));
+
+// users
+app.use(`/api/v2/users`, require("./entities/v2/users/users.routes"));
 
 // error handler (last)
 app.use(errorHandler);

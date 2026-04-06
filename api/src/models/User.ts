@@ -13,9 +13,13 @@ export class User {
   @Column()
   fcmToken: string;
 
-  @Column({ nullable: true })
-  name?: string;
+  @Column()
+  name: string;
 
   @CreateDateColumn()
   createDate: Date;
+
+  // Other providers
+  @Column({ nullable: true })
+  telegramId?: string;
 }
