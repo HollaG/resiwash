@@ -143,7 +143,7 @@ export const sendClaimedMachineStatusChangedNotification = async ({
         body += ` Unfortunately, there is no available dryer at the moment.`;
       }
     }
-  } else if (isAvailableLike(machine.currentStatus)) {
+  } else if (machine.currentStatus === MachineStatus.FINISHED) {
     title = `${machine.name} @ ${machine.room?.shortName || machine.room?.name} has finished!`;
     body = `Please collect your clothes as soon as possible.`;
 
