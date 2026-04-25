@@ -6,8 +6,13 @@ import 'package:resiwash/features/machine/presentation/utils/machine_display_uti
 
 class MachineDefaultCycle extends StatefulWidget {
   final MachineType machineType;
+  final VoidCallback? onChanged;
 
-  const MachineDefaultCycle({super.key, required this.machineType});
+  const MachineDefaultCycle({
+    super.key,
+    required this.machineType,
+    this.onChanged,
+  });
 
   @override
   State<MachineDefaultCycle> createState() => _MachineDefaultCycleState();
@@ -82,6 +87,7 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
               sl<SharedPreferencesService>().clearPreferredCycleTime(
                 widget.machineType,
               );
+              widget.onChanged?.call();
               print(
                 "debug Cleared defaultCycleTime for ${widget.machineType}, hasSetDefault: $hasSetDefault",
               );
@@ -90,6 +96,7 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
                 widget.machineType,
                 selectedCycleTime,
               );
+              widget.onChanged?.call();
 
               print(
                 "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",
@@ -150,6 +157,7 @@ class _MachineDefaultCycleState extends State<MachineDefaultCycle> {
                         widget.machineType,
                         newSelection.first,
                       );
+                      widget.onChanged?.call();
 
                       print(
                         "debug Set defaultCycleTime for ${widget.machineType} to $selectedCycleTime, hasSetDefault: $hasSetDefault",

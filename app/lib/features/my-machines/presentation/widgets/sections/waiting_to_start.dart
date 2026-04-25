@@ -9,6 +9,7 @@ import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dar
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart'
     as claim_state;
 import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_waiting_to_start.dart';
+import 'package:resiwash/theme.dart';
 
 class WaitingToStartSection extends StatefulWidget {
   const WaitingToStartSection({super.key});
@@ -93,12 +94,20 @@ class _WaitingToStartSectionState extends State<WaitingToStartSection> {
                           text: TextSpan(
                             text:
                                 "Your machine has not started yet! Please remember to start it.",
-                            style: Theme.of(context).textTheme.bodySmall,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
                             children: [
                               TextSpan(
                                 text:
                                     " If you've just started it, updates may take up to 30 seconds to reflect.",
-                                style: TextStyle(fontStyle: FontStyle.italic),
+                                style: TextStyle(fontStyle: FontStyle.italic)
+                                    .copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
                               ),
                             ],
                           ),
@@ -113,7 +122,7 @@ class _WaitingToStartSectionState extends State<WaitingToStartSection> {
               if (waitingToStartMachines.isNotEmpty &&
                   waitingToStartMeta.isNotEmpty)
                 Column(
-                  spacing: 8,
+                  spacing: 12,
                   children: waitingToStartMeta
                       .map(
                         (claimedMeta) => TrackerWaitingToStart(

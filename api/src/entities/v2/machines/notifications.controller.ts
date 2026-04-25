@@ -12,8 +12,10 @@ import {
   getClaimants,
   sendAndCleanupInvalidToken,
   updateCycleTime,
+  forceUnclaimMachine,
 } from "../../../utils/notifications";
 import {
+  DataMessageForDeviceTimers,
   sendClaimedMachineStatusChangedNotification,
   sendMachineGroupStatusChangedNotification,
   sendNewlyClaimedMachineNotification,
@@ -73,14 +75,21 @@ export const claimMachine = expressAsyncHandler(
       }
       // allowed to claim, aka either there's no claimant, or the claimant is the same user, or the machine is available (claimed but not in use)
 
-      // 1. create an entry in the claim history table
+      // 1a. create an entry in the claim history table
       const savedClaim = await addToClaimHistory(
         machineId,
         fcmToken,
         cycleTime,
       );
-      // 1. update the machine object with the new claimant and cycle time
-      machine.claimId = savedClaim.claimId; // associate the machine with the new claim
+
+      // 1b. if ther already is a claimaint,
+      //     then we need to forcibly unclaim for them
+      if (machine.claimId) {
+        await forceUnclaimMachine(machine.machineId);
+      }
+
+      // 1b. update the machine object with the new claimant and cycle time
+      machine.claimId = savedClaim.identifiers[0].claimId; // associate the machine with the new claim
       await AppDataSource.getRepository(Machine).save(machine);
 
       // 2. update the claims table with the new claim
@@ -111,7 +120,52 @@ export const claimMachine = expressAsyncHandler(
         );
       }
 
-      sendOkResponse(res, { message: "Machine claimed successfully" });
+      // * Important note: this machine here is stale.
+      // For manual machines, we override all logic below later.
+      // But, if it's not a manual machine, then the status of the machine will still be based off the sensor data.
+      let secondsTillCompletion = null;
+      if (
+        isAvailableLike(machine.currentStatus) ||
+        machine.currentStatus === MachineStatus.UNKNOWN
+      ) {
+        const expectedEndTime =
+          Date.now() + (cycleTime ? cycleTime * 60000 : 0);
+
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      } else if (machine.currentStatus === MachineStatus.IN_USE) {
+        const expectedEndTime =
+          machine.lastAvailableTime!.getTime() +
+          (cycleTime ? cycleTime * 60000 : 0);
+
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      } else if (machine.currentStatus === MachineStatus.FINISHING) {
+        const expectedEndTime =
+          machine.lastAvailableTime!.getTime() +
+          (cycleTime ? cycleTime * 60000 : 0);
+        secondsTillCompletion = Math.floor(
+          (expectedEndTime - Date.now()) / 1000,
+        );
+      }
+
+      if (machine.isManualEntry) {
+        secondsTillCompletion = cycleTime * 60; // for manual machines, we trust the user's input cycle time
+      }
+
+      let data: DataMessageForDeviceTimers = {
+        title: `${machine.name} @ ${machine.room?.shortName || machine.room?.name}`,
+        body: "",
+        secondsTillCompletion, // convert minutes to seconds
+        machineId: machine.machineId,
+        machineName: machine.name,
+        machineRoomName: machine.room?.shortName || machine.room?.name || "",
+        machineType: machine.type,
+      };
+
+      sendOkResponse(res, { message: "Machine claimed successfully", ...data });
     } catch (error) {
       return sendErrorResponse(res, error.message, 400);
     }

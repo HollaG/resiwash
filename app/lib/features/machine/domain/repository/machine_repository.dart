@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_result.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
@@ -22,7 +23,7 @@ abstract interface class MachineRepository {
     required UnclaimMachineParams params,
   });
 
-  Future<Either<Failure, void>> claimMachine({
+  Future<Either<Failure, ClaimResult>> claimMachine({
     required String machineId,
     required ClaimMachineParams params,
   });

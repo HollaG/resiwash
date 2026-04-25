@@ -91,10 +91,6 @@ class Overview extends StatelessWidget {
             ],
           ),
 
-          Text(
-            "Swipe right on any page to access this knowledge base again.",
-            textAlign: TextAlign.center,
-          ),
           Center(
             child: FilledButton(onPressed: onDismiss, child: Text("I got it!")),
           ),

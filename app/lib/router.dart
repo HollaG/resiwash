@@ -14,6 +14,33 @@ import 'package:go_router/go_router.dart';
 
 final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
+CustomTransitionPage<T> _buildSlidePage<T>({
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<T>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 260),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+
+      return SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(1, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      );
+    },
+  );
+}
+
 final router = GoRouter(
   initialLocation: AppRoutes.home,
   navigatorKey: navigatorKey,
@@ -44,7 +71,7 @@ final router = GoRouter(
                 GoRoute(
                   path: AppRoutes.machineList,
                   name: AppRoutes.machineListName,
-                  builder: (context, state) {
+                  pageBuilder: (context, state) {
                     print('Machine route hit with URI: ${state.uri}');
                     final roomIds =
                         state.uri.queryParametersAll['roomIds[]'] ?? [];
@@ -57,20 +84,23 @@ final router = GoRouter(
                     Map<String, dynamic>? extra =
                         state.extra as Map<String, dynamic>?;
 
-                    return MachineListScreen(
-                      areaIds: areaIds,
-                      roomIds: roomIds,
-                      machineIds: machineIds,
-                      title: extra?['title'] as String?,
-                      count: extra?['count'] as String?,
-                      types: types,
+                    return _buildSlidePage(
+                      state: state,
+                      child: MachineListScreen(
+                        areaIds: areaIds,
+                        roomIds: roomIds,
+                        machineIds: machineIds,
+                        title: extra?['title'] as String?,
+                        count: extra?['count'] as String?,
+                        types: types,
+                      ),
                     );
                   },
                 ),
                 GoRoute(
                   path: '${AppRoutes.machineList}/${AppRoutes.machineDetail}',
                   name: AppRoutes.machineDetailName,
-                  builder: (context, state) {
+                  pageBuilder: (context, state) {
                     final machineId = state.pathParameters['machineId']!;
                     Map<String, dynamic>? extra =
                         state.extra as Map<String, dynamic>?;
@@ -90,13 +120,16 @@ final router = GoRouter(
                       "debug route hit machine detail key: $key, shouldClaim: $shouldClaim, extra: $extra, ${extra?['initialAction']}, ${InitialPageAction.claim}",
                     );
 
-                    return MachineDetailScreen(
-                      key: ValueKey(key),
-                      machineId: machineId,
-                      initialAction: shouldClaim
-                          ? InitialPageAction.claim
-                          : (extra?['initialAction'] as InitialPageAction? ??
-                                InitialPageAction.none),
+                    return _buildSlidePage(
+                      state: state,
+                      child: MachineDetailScreen(
+                        key: ValueKey(key),
+                        machineId: machineId,
+                        initialAction: shouldClaim
+                            ? InitialPageAction.claim
+                            : (extra?['initialAction'] as InitialPageAction? ??
+                                  InitialPageAction.none),
+                      ),
                     );
                   },
                 ),
@@ -158,6 +191,8 @@ class AppRoutes {
   static const String myMachines = '/me';
   static const String profile = '/profile';
   static const String scanQr = '/scan-qr';
+
+  static const int scanQrBranchIndex = 3;
 
   static const String settings = '/settings';
 

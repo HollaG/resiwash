@@ -34,12 +34,14 @@ class MachineRow extends StatefulWidget {
   final MachineEntity machine;
   final bool showIcon;
   final bool allowSwipe;
+  final bool showRoomName;
 
   const MachineRow({
     super.key,
     required this.machine,
     this.showIcon = true,
     this.allowSwipe = true,
+    this.showRoomName = false,
   });
 
   @override
@@ -71,6 +73,7 @@ class _MachineRowState extends State<MachineRow>
       2; // 0 = not claimed, 1 = claimed, 2 = loading, 3 = success claiming, 4 = success unclaiming
 
   late final SlidableController controller = SlidableController(this);
+  bool _controllerDisposed = false;
 
   // Cache cubit references to avoid unsafe context lookups
   late final ClaimCubit _claimCubit;
@@ -108,8 +111,16 @@ class _MachineRowState extends State<MachineRow>
 
   @override
   void dispose() {
+    _controllerDisposed = true;
     controller.dispose();
     super.dispose();
+  }
+
+  void _safeCloseController() {
+    if (!mounted || _controllerDisposed) {
+      return;
+    }
+    controller.close();
   }
 
   Future<int?> _dialogBuilder(
@@ -233,7 +244,7 @@ class _MachineRowState extends State<MachineRow>
 
   Future<void> closeControllerAfterDelay() async {
     await Future.delayed(const Duration(seconds: 1));
-    if (mounted) controller.close();
+    _safeCloseController();
   }
 
   @override
@@ -501,7 +512,7 @@ class _MachineRowState extends State<MachineRow>
                       onDismissed: () => {},
                       confirmDismiss: () async {
                         if (claimState == ClaimState.loading) {
-                          controller.close();
+                          _safeCloseController();
                           return false;
                         }
 
@@ -607,7 +618,7 @@ class _MachineRowState extends State<MachineRow>
                       onDismissed: () => {},
                       confirmDismiss: () async {
                         if (claimState == ClaimState.loading) {
-                          controller.close();
+                          _safeCloseController();
                           return false;
                         }
 
@@ -814,36 +825,37 @@ class _MachineRowState extends State<MachineRow>
                             //     //   context,
                             //     // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
                             //   ),
-                            if (widget.machine.claimId != null)
-                              Icon(
-                                Icons.sensor_occupied_rounded,
-                                size: 14,
-                                // color: Theme.of(
-                                //   context,
-                                // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
-                              ),
+                            // if (widget.machine.claimId != null)
+                            //   Icon(
+                            //     Icons.sensor_occupied_rounded,
+                            //     size: 14,
+                            //     // color: Theme.of(
+                            //     //   context,
+                            //     // ).textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                            //   ),
                             Text(
                               widget.machine.name,
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                           ],
                         ),
-                        Expanded(
-                          child: Text(
-                            "@ $location",
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withValues(alpha: 0.8),
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            softWrap: false,
+                        if (widget.showRoomName)
+                          Expanded(
+                            child: Text(
+                              "@ $location",
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.color
+                                        ?.withValues(alpha: 0.8),
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ],

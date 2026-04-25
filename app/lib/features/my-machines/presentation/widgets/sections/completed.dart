@@ -113,7 +113,7 @@ class _CompletedSectionState extends State<CompletedSection> {
               // claimed machines
               if (completedMetadata.isNotEmpty && completedMetadata.isNotEmpty)
                 Column(
-                  spacing: 8,
+                  spacing: 12,
                   children: completedMetadata
                       .map(
                         (claimedMeta) => Tracker(

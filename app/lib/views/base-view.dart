@@ -5,6 +5,7 @@ import 'package:resiwash/features/machine/presentation/utils/machine_display_uti
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
 import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
 import 'package:resiwash/features/my-machines/presentation/screens/scan_qr_screen.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_floating.dart';
 import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
@@ -45,7 +46,15 @@ class BaseView extends StatelessWidget {
           claimedMachinesCount = state.claimedMachines?.length ?? 0;
         }
         return Scaffold(
-          body: navigationShell,
+          body: Stack(
+            children: [
+              // ScanQrFloating(
+              //   currentBranchIndex: navigationShell.currentIndex,
+              //   scanQrBranchIndex: AppRoutes.scanQrBranchIndex,
+              // ),
+              navigationShell,
+            ],
+          ),
           // floatingActionButton: shouldShowFAB
           //     ? FloatingActionButton(
           //         onPressed: () => context.push(AppRoutes.scanQr),
@@ -99,7 +108,6 @@ class BaseView extends StatelessWidget {
                   claimedMachinesCount: claimedMachinesCount,
                 ),
 
-                // IMPORTANT: When uncommenting this, make sure to change the goBranch of the FAB
                 _menuItem(
                   context,
                   index: 2,
@@ -112,8 +120,10 @@ class BaseView extends StatelessWidget {
                     onPressed: () {
                       if (!isOnScanQrPage) {
                         navigationShell.goBranch(
-                          3,
-                          initialLocation: 3 == navigationShell.currentIndex,
+                          AppRoutes.scanQrBranchIndex,
+                          initialLocation:
+                              AppRoutes.scanQrBranchIndex ==
+                              navigationShell.currentIndex,
                         );
                       } else {
                         _onHelpClicked(context);

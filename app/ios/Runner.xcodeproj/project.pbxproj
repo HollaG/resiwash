@@ -16,10 +16,14 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		AFC9E97392033142B1732AB6 /* Pods_AlarmkitWidgetExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A20F4B3C32CABE58C50691D /* Pods_AlarmkitWidgetExtension.framework */; };
 		E68CE1862F586CD1008F740F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = E68CE1852F586CD1008F740F /* GoogleService-Info.plist */; };
 		E68CE18E2F59D8B5008F740F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68CE18D2F59D8B5008F740F /* WidgetKit.framework */; };
 		E68CE1902F59D8B5008F740F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68CE18F2F59D8B5008F740F /* SwiftUI.framework */; };
 		E68CE19F2F59D8B7008F740F /* ResiWashWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E68CE18C2F59D8B5008F740F /* ResiWashWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E69FDB052F6DC43B001E6BAB /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68CE18D2F59D8B5008F740F /* WidgetKit.framework */; };
+		E69FDB062F6DC43B001E6BAB /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E68CE18F2F59D8B5008F740F /* SwiftUI.framework */; };
+		E69FDB132F6DC43D001E6BAB /* AlarmkitWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E69FDB042F6DC43B001E6BAB /* AlarmkitWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +40,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = E68CE18B2F59D8B5008F740F;
 			remoteInfo = ResiWashWidgetExtension;
+		};
+		E69FDB112F6DC43D001E6BAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E69FDB032F6DC43B001E6BAB;
+			remoteInfo = AlarmkitWidgetExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -57,6 +68,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				E68CE19F2F59D8B7008F740F /* ResiWashWidgetExtension.appex in Embed Foundation Extensions */,
+				E69FDB132F6DC43D001E6BAB /* AlarmkitWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -66,11 +78,14 @@
 /* Begin PBXFileReference section */
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		1A20F4B3C32CABE58C50691D /* Pods_AlarmkitWidgetExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AlarmkitWidgetExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		262DED9B176656FD5DAD03F2 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		2C59840D1A25BC5007476F69 /* Pods-AlarmkitWidgetExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AlarmkitWidgetExtension.release.xcconfig"; path = "Target Support Files/Pods-AlarmkitWidgetExtension/Pods-AlarmkitWidgetExtension.release.xcconfig"; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		4EC533CE0A6F9074067D46AB /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		734CAF59C61B261DA4815AFB /* Pods-AlarmkitWidgetExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AlarmkitWidgetExtension.debug.xcconfig"; path = "Target Support Files/Pods-AlarmkitWidgetExtension/Pods-AlarmkitWidgetExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
@@ -81,6 +96,7 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B7D5392F787223C8215148D6 /* Pods-AlarmkitWidgetExtension.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-AlarmkitWidgetExtension.profile.xcconfig"; path = "Target Support Files/Pods-AlarmkitWidgetExtension/Pods-AlarmkitWidgetExtension.profile.xcconfig"; sourceTree = "<group>"; };
 		BD93299760FF11C7C6CFAAC3 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0030B28DACCAE11324738F3 /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		E26EA6D3F0DD4F9652C25CC1 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -90,6 +106,7 @@
 		E68CE18D2F59D8B5008F740F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E68CE18F2F59D8B5008F740F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E68CE1A62F59D8EC008F740F /* ResiWashWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ResiWashWidgetExtension.entitlements; sourceTree = "<group>"; };
+		E69FDB042F6DC43B001E6BAB /* AlarmkitWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AlarmkitWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED89A83D7B36717E4A827755 /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		EF73E34F8345DE4FAE6D0116 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		FE2893621DB8DB391A03DE69 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
@@ -103,6 +120,13 @@
 			);
 			target = E68CE18B2F59D8B5008F740F /* ResiWashWidgetExtension */;
 		};
+		E69FDB172F6DC43D001E6BAB /* Exceptions for "AlarmkitWidget" folder in "AlarmkitWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E69FDB032F6DC43B001E6BAB /* AlarmkitWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -111,11 +135,15 @@
 			exceptions = (
 				E68CE1A42F59D8B7008F740F /* Exceptions for "ResiWashWidget" folder in "ResiWashWidgetExtension" target */,
 			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
 			path = ResiWashWidget;
+			sourceTree = "<group>";
+		};
+		E69FDB072F6DC43B001E6BAB /* AlarmkitWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E69FDB172F6DC43D001E6BAB /* Exceptions for "AlarmkitWidget" folder in "AlarmkitWidgetExtension" target */,
+			);
+			path = AlarmkitWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -146,6 +174,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E69FDB012F6DC43B001E6BAB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E69FDB062F6DC43B001E6BAB /* SwiftUI.framework in Frameworks */,
+				E69FDB052F6DC43B001E6BAB /* WidgetKit.framework in Frameworks */,
+				AFC9E97392033142B1732AB6 /* Pods_AlarmkitWidgetExtension.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -158,6 +196,9 @@
 				4EC533CE0A6F9074067D46AB /* Pods-RunnerTests.debug.xcconfig */,
 				FE2893621DB8DB391A03DE69 /* Pods-RunnerTests.release.xcconfig */,
 				E0030B28DACCAE11324738F3 /* Pods-RunnerTests.profile.xcconfig */,
+				734CAF59C61B261DA4815AFB /* Pods-AlarmkitWidgetExtension.debug.xcconfig */,
+				2C59840D1A25BC5007476F69 /* Pods-AlarmkitWidgetExtension.release.xcconfig */,
+				B7D5392F787223C8215148D6 /* Pods-AlarmkitWidgetExtension.profile.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -177,6 +218,7 @@
 				E26EA6D3F0DD4F9652C25CC1 /* Pods_RunnerTests.framework */,
 				E68CE18D2F59D8B5008F740F /* WidgetKit.framework */,
 				E68CE18F2F59D8B5008F740F /* SwiftUI.framework */,
+				1A20F4B3C32CABE58C50691D /* Pods_AlarmkitWidgetExtension.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -199,6 +241,7 @@
 				9740EEB11CF90186004384FC /* Flutter */,
 				97C146F01CF9000F007C117D /* Runner */,
 				E68CE1912F59D8B5008F740F /* ResiWashWidget */,
+				E69FDB072F6DC43B001E6BAB /* AlarmkitWidget */,
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				2106E1079FF3B19D3A6074AA /* Pods */,
@@ -213,6 +256,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				E68CE18C2F59D8B5008F740F /* ResiWashWidgetExtension.appex */,
+				E69FDB042F6DC43B001E6BAB /* AlarmkitWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -274,6 +318,7 @@
 			);
 			dependencies = (
 				E68CE19E2F59D8B7008F740F /* PBXTargetDependency */,
+				E69FDB122F6DC43D001E6BAB /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -300,6 +345,27 @@
 			productReference = E68CE18C2F59D8B5008F740F /* ResiWashWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		E69FDB032F6DC43B001E6BAB /* AlarmkitWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E69FDB182F6DC43D001E6BAB /* Build configuration list for PBXNativeTarget "AlarmkitWidgetExtension" */;
+			buildPhases = (
+				5ED884DE0B523F1AD43F7C6C /* [CP] Check Pods Manifest.lock */,
+				E69FDB002F6DC43B001E6BAB /* Sources */,
+				E69FDB012F6DC43B001E6BAB /* Frameworks */,
+				E69FDB022F6DC43B001E6BAB /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E69FDB072F6DC43B001E6BAB /* AlarmkitWidget */,
+			);
+			name = AlarmkitWidgetExtension;
+			productName = AlarmkitWidgetExtension;
+			productReference = E69FDB042F6DC43B001E6BAB /* AlarmkitWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -322,10 +388,12 @@
 					E68CE18B2F59D8B5008F740F = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					E69FDB032F6DC43B001E6BAB = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = 97C146E91CF9000F007C117D /* Build configuration list for PBXProject "Runner" */;
-			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -333,6 +401,7 @@
 				Base,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
+			preferredProjectObjectVersion = 77;
 			productRefGroup = 97C146EF1CF9000F007C117D /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -340,6 +409,7 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				E68CE18B2F59D8B5008F740F /* ResiWashWidgetExtension */,
+				E69FDB032F6DC43B001E6BAB /* AlarmkitWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -365,6 +435,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E68CE18A2F59D8B5008F740F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E69FDB022F6DC43B001E6BAB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -405,6 +482,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Runner/Pods-Runner-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5ED884DE0B523F1AD43F7C6C /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-AlarmkitWidgetExtension-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
 		822CE2EFA01BCCD371EFEB64 /* [CP] Embed Pods Frameworks */ = {
@@ -510,6 +609,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E69FDB002F6DC43B001E6BAB /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -522,6 +628,11 @@
 			isa = PBXTargetDependency;
 			target = E68CE18B2F59D8B5008F740F /* ResiWashWidgetExtension */;
 			targetProxy = E68CE19D2F59D8B7008F740F /* PBXContainerItemProxy */;
+		};
+		E69FDB122F6DC43D001E6BAB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E69FDB032F6DC43B001E6BAB /* AlarmkitWidgetExtension */;
+			targetProxy = E69FDB112F6DC43D001E6BAB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -978,6 +1089,138 @@
 			};
 			name = Profile;
 		};
+		E69FDB142F6DC43D001E6BAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 734CAF59C61B261DA4815AFB /* Pods-AlarmkitWidgetExtension.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VW33H97T5U;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlarmkitWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlarmkitWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resiwash.app.AlarmkitWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E69FDB152F6DC43D001E6BAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 2C59840D1A25BC5007476F69 /* Pods-AlarmkitWidgetExtension.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VW33H97T5U;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlarmkitWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlarmkitWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resiwash.app.AlarmkitWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E69FDB162F6DC43D001E6BAB /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = B7D5392F787223C8215148D6 /* Pods-AlarmkitWidgetExtension.profile.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = VW33H97T5U;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlarmkitWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlarmkitWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.resiwash.app.AlarmkitWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Profile;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1017,6 +1260,16 @@
 				E68CE1A12F59D8B7008F740F /* Debug */,
 				E68CE1A22F59D8B7008F740F /* Release */,
 				E68CE1A32F59D8B7008F740F /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E69FDB182F6DC43D001E6BAB /* Build configuration list for PBXNativeTarget "AlarmkitWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E69FDB142F6DC43D001E6BAB /* Debug */,
+				E69FDB152F6DC43D001E6BAB /* Release */,
+				E69FDB162F6DC43D001E6BAB /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

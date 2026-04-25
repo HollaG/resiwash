@@ -34,7 +34,7 @@ class MobileScannerSimple extends StatefulWidget {
             ),
 
             const Text(
-              "Alternatively, you can tap your phone on the Tap icon, below the QR code (NFC must be available and enabled).",
+              "Alternatively if available, you can tap your phone on the 'X' in the QR code (NFC must be available and enabled).",
             ),
             Divider(),
             const Text(
@@ -81,7 +81,9 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
     _subscription = controller.barcodes.listen(_handleBarcode);
 
     // Finally, start the scanner itself.
-    unawaited(controller.start());
+    // print("debug qr [scanner] starting... from initState");
+
+    // unawaited(controller.start());
   }
 
   @override
@@ -104,10 +106,12 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
         // Don't forget to resume listening to the barcode events.
         _subscription = controller.barcodes.listen(_handleBarcode);
         final shell = StatefulNavigationShell.of(context);
-        if (!controller.value.isRunning && shell.currentIndex == 3) {
+        if (!controller.value.isRunning &&
+            shell.currentIndex == AppRoutes.scanQrBranchIndex) {
+          print("debug qr [scanner] starting... from lifecycle");
+
           unawaited(controller.start());
         }
-      // unawaited(controller.start());
       case AppLifecycleState.inactive:
         // Stop the scanner when the app is paused.
         // Also stop the barcode events subscription.
@@ -120,10 +124,6 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-
-    print(
-      "debug qr didChangeDependencies, current machineId: $machineId, roomId: $roomId",
-    );
 
     // Restart the scanner when coming back to this page
     // Check if we're visible and the scanner is paused
@@ -218,10 +218,24 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
       // Became visible - restart scanner
       print("debug qr became visible, restarting scanner");
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted &&
-            !controller.value.isRunning &&
-            controller.value.hasCameraPermission) {
+        print(
+          "debug qr mounted: $mounted, hasCameraPermission: ${controller.value.hasCameraPermission}, isRunning: ${controller.value.isRunning}",
+        );
+        if (mounted && !controller.value.isRunning) {
+          print("debug qr [scanner] starting... from visibility change");
           unawaited(controller.start());
+
+          // try again after 500ms
+          // try starting the scanner after 500ms
+          // Future.delayed(const Duration(milliseconds: 500), () {
+          //   print(
+          //     "debug qr delayed start, mounted: $mounted, hasCameraPermission: ${controller.value.hasCameraPermission}, isRunning: ${controller.value.isRunning}",
+          //   );
+          //   if (!controller.value.isRunning) {
+          //     print("debug qr starting scanner from initState delayed");
+          //     unawaited(controller.start());
+          //   }
+          // });
         }
       });
     } else if (!isVisible && _wasVisible) {
@@ -278,33 +292,79 @@ class _MobileScannerSimpleState extends State<MobileScannerSimple>
                   ),
                 ),
               ),
-
-              Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(48, 0, 48, 0),
-
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primaryFixed,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        spacing: 8,
-                        children: [
-                          Icon(
-                            Icons.check,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 20,
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 32),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.white.withAlpha(60),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xff515b92).withAlpha(200),
+                      blurRadius: 24,
+                      spreadRadius: 6,
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withAlpha(40),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Card(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  clipBehavior: Clip.hardEdge,
+                  elevation: 0,
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.timer, color: Colors.white),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            "Set a timer on your phone by claiming a machine. Faster than manual setting!",
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: Colors.white),
                           ),
-                          Text("Automatic timer notifications "),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
+              // Column(
+              //   children: [
+              //     Container(
+              //       padding: const EdgeInsets.fromLTRB(48, 0, 48, 0),
+
+              //       child: Container(
+              //         padding: const EdgeInsets.all(12),
+              //         decoration: BoxDecoration(
+              //           color: Theme.of(context).colorScheme.primaryFixed,
+              //           borderRadius: BorderRadius.circular(12),
+              //         ),
+              //         child: Row(
+              //           spacing: 8,
+              //           children: [
+              //             Icon(
+              //               Icons.check,
+              //               color: Theme.of(context).colorScheme.primary,
+              //               size: 20,
+              //             ),
+              //             Text("Automatic timer notifications "),
+              //           ],
+              //         ),
+              //       ),
+              //     ),
+              //   ],
+              // ),
               // BlocConsumer<MachineDetailCubit, MachineDetailState>(
               //   listener: (context, state) {
               //     print("MachineDetailState changed: $state");

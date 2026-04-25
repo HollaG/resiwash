@@ -9,6 +9,7 @@ import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
 import 'package:resiwash/core/utils/claimed_machine.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
@@ -147,12 +148,19 @@ class ClaimCubit extends Cubit<ClaimState> {
   /// NOTE: the storage supports claiming multiple machines. However, we restrict it to one-to-one logically.
   ///       If we ever expand in the future, we can.
   ///       As such, when we claim a machine, we do not append to existing claimed machines, but replace the whole List.
-  /// [UPDATE 9 FEB 2026]: Now supports multiple claimed machines.
+  ///
+  /// NOTE: Increase the cycle time by 5mins, by default.
   Future<bool> claimMachine(MachineEntity machine, {int cycleTime = 30}) async {
     final machineId = machine.machineId;
     final currentState = state;
     List<ClaimedMachineMetadata> currentClaimedMachineMetadata = [];
     List<MachineEntity> currentClaimedMachines = [];
+
+    if (sl<SharedPreferencesService>().shouldUseRealCycleTimes()) {
+      cycleTime =
+          cycleTime +
+          5; // Add 5 mins buffer by default, as machines take longer than expected to finish
+    }
 
     if (currentState is ClaimLoaded) {
       currentClaimedMachineMetadata = currentState.claimedMachineMetadata;
@@ -205,7 +213,7 @@ class ClaimCubit extends Cubit<ClaimState> {
           );
           return false;
         },
-        (_) async {
+        (claimResult) async {
           // Add to SharedPreferences with cycle time
           final updatedClaimedMetadataForThisMachine = _sharedPreferencesService
               .claimMachine(machineId, cycleTime: cycleTime);
@@ -226,8 +234,24 @@ class ClaimCubit extends Cubit<ClaimState> {
           );
 
           // refresh the machine, then show the claim status
-          // Show notification
-
+          // Start timer
+          MachineType machineType = MachineType.unknown;
+          try {
+            machineType = MachineType.values.firstWhere(
+              (e) => e.toString().split('.').last == claimResult.machineType,
+            );
+          } catch (e) {
+            appLog.w('Unknown machine type: ${claimResult.machineType}');
+          }
+          appLog.i("debug Claim result is $claimResult");
+          sl<LocalNotificationService>().startLocalPlatformTimer(
+            claimResult.title,
+            claimResult.secondsTillCompletion,
+            claimResult.machineId,
+            claimResult.machineName,
+            claimResult.machineRoomName,
+            machineType,
+          );
           final params = GetMachineParams(extra: false);
           final updatedMachineEither = await _getMachineUseCase.call(
             machineId: machineId,
@@ -338,6 +362,7 @@ class ClaimCubit extends Cubit<ClaimState> {
 
           if (Platform.isIOS) {
             sl<LocalNotificationService>().cancelLiveActivity(machineId);
+            sl<LocalNotificationService>().cancelAlarm(machineId);
           }
 
           // Reload state to reflect changes

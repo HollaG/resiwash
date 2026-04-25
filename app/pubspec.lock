@@ -329,6 +329,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.0"
+  draggable_float_widget:
+    dependency: "direct main"
+    description:
+      name: draggable_float_widget
+      sha256: "075675c56f6b2bfc9f972a3937dc1b59838489a312f75fe7e90ba6844a84dce4"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   equatable:
     dependency: "direct main"
     description:
@@ -430,6 +438,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.2"
+  flutter_alarmkit:
+    dependency: "direct main"
+    description:
+      name: flutter_alarmkit
+      sha256: "95151ad64a51d29c8e3a684a4c40384d079263e6a693f53226b5caff6f866188"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.10"
   flutter_app_group_directory:
     dependency: transitive
     description:
@@ -808,6 +824,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  os_detect:
+    dependency: transitive
+    description:
+      name: os_detect
+      sha256: "7d87c0dd98c6faf110d5aa498e9a6df02ffce4bb78cc9cfc8ad02929be9bb71f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.3"
   package_config:
     dependency: transitive
     description:
@@ -1213,6 +1237,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.2"
+  upgrader:
+    dependency: "direct main"
+    description:
+      name: upgrader
+      sha256: "3fae4eb861c7e8567f91412d9ca4a287e024e58d6f79f98da79e3f6d78da74ba"
+      url: "https://pub.dev"
+    source: hosted
+    version: "12.5.0"
   url_launcher:
     dependency: "direct main"
     description:
@@ -1317,6 +1349,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  version:
+    dependency: transitive
+    description:
+      name: version
+      sha256: "3d4140128e6ea10d83da32fef2fa4003fccbf6852217bb854845802f04191f94"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.2"
   video_player:
     dependency: "direct main"
     description:

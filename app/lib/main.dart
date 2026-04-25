@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:app_links/app_links.dart';
+import 'package:draggable_float_widget/draggable_float_widget.dart';
 import 'package:resiwash/core/utils/snackbar_helper.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_floating.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/trackers/tracker_mini_container.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -10,6 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
 import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/services/firebase_notification_service.dart';
 import 'package:resiwash/core/services/live_notification_service.dart';
 import 'package:resiwash/core/services/local_notification_service.dart';
@@ -21,6 +25,7 @@ import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart
 import 'package:resiwash/router.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:upgrader/upgrader.dart';
 import 'util.dart';
 import 'theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -262,12 +267,14 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
   StreamSubscription<Uri>? _linkSubscription;
 
   late PageController _pageViewController;
+  int _rootPageIndex = 1;
 
   @override
   void initState() {
     super.initState();
     initDeepLinks();
     _pageViewController = PageController(initialPage: 1);
+    AppShellPageController.instance.attach(_pageViewController);
     WidgetsBinding.instance.addPostFrameCallback((_) => _showTutorialIfNew());
   }
 
@@ -291,10 +298,10 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
           TextButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              SnackbarHelper.showInfo(
-                message:
-                    "You can access the tutorial anytime by swiping to the right.",
-              );
+              // SnackbarHelper.showInfo(
+              //   message:
+              //       "You can access the tutorial",
+              // );
             },
             child: const Text('Maybe later'),
           ),
@@ -328,6 +335,8 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    AppShellPageController.instance.detach();
+    _pageViewController.dispose();
     _linkSubscription?.cancel();
     super.dispose();
   }
@@ -358,30 +367,64 @@ class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
         themeMode: ThemeMode.light,
         scaffoldMessengerKey: scaffoldMessengerKey,
         builder: (context, child) {
-          return PageView.builder(
-            controller: _pageViewController,
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return Theme(
-                  data: theme.dark(),
-                  child: OnboardingScreen(
-                    onDismiss: () => _pageViewController.animateToPage(
-                      1,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    ),
-                    onSwipePastEnd: () => _pageViewController.animateToPage(
-                      1,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    ),
-                  ),
-                );
-              } else {
-                return child ?? const SizedBox.shrink();
-              }
-            },
+          return Stack(
+            children: [
+              PageView.builder(
+                controller: _pageViewController,
+                itemCount: 2,
+                onPageChanged: (index) {
+                  if (!mounted) return;
+                  setState(() {
+                    _rootPageIndex = index;
+                  });
+                },
+                physics: _rootPageIndex == 0
+                    ? const PageScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return Theme(
+                      data: theme.dark(),
+                      child: OnboardingScreen(
+                        onDismiss: () => _pageViewController.animateToPage(
+                          1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        ),
+                        onSwipePastEnd: () => _pageViewController.animateToPage(
+                          1,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                        ),
+                      ),
+                    );
+                  } else {
+                    return child ?? const SizedBox.shrink();
+                  }
+                },
+              ),
+              // DraggableFloatWidget(
+              //   child: ElevatedButton(onPressed: () {}, child: Text("Press")),
+              //   // eventStreamController: eventStreamController,
+              //   config: DraggableFloatWidgetBaseConfig(
+              //     isFullScreen: false,
+              //     initPositionYInTop: false,
+              //     initPositionYMarginBorder: 50,
+              //     borderBottom: kToolbarHeight + defaultBorderWidth,
+              //   ),
+              //   onTap: () => print("Drag onTap!"),
+              // ),
+              // DraggableFloatWidget(
+              //   child: TrackerMiniContainer(),
+              //   config: DraggableFloatWidgetBaseConfig(
+              //     isFullScreen: false,
+              //     initPositionYInTop: false,
+              //     initPositionYMarginBorder: 50,
+              //     borderBottom: kBottomNavigationBarHeight + defaultBorderWidth,
+              //   ),
+              //   onTap: () => print("Drag onTap!"),
+              // ),
+            ],
           );
         },
       ),
