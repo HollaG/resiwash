@@ -2,8 +2,12 @@ import 'package:fpdart/fpdart.dart';
 import 'package:resiwash/core/errors/Failure.dart';
 import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/features/machine/data/datasource/machine_remote_datasource.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_result.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/update_machine_params.dart';
 import 'package:resiwash/features/machine/domain/repository/machine_repository.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
 
@@ -21,7 +25,7 @@ class MachineRepositoryImpl implements MachineRepository {
       appLog.d("Fetched machines: $machines");
       return Right(machines);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }
@@ -39,7 +43,57 @@ class MachineRepositoryImpl implements MachineRepository {
       );
       return Right(machine);
     } on Failure catch (e) {
-      return Left(Failure(message: e.message));
+      return Left(e);
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> unclaimMachine({
+    required String machineId,
+    required UnclaimMachineParams params,
+  }) async {
+    try {
+      await dataSource.unclaimMachine(machineId: machineId, params: params);
+      return const Right(null);
+    } on Failure catch (e) {
+      return Left(e);
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, ClaimResult>> claimMachine({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      final result = await dataSource.claimMachine(
+        machineId: machineId,
+        params: params,
+      );
+      return Right(result);
+    } on Failure catch (e) {
+      print("MachineRepositoryImpl claimMachine error: ${e.message}");
+      return Left(e);
+    } catch (e) {
+      return Left(Failure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateClaim({
+    required String machineId,
+    required UpdateClaimParams params,
+  }) async {
+    try {
+      await dataSource.updateClaim(machineId: machineId, params: params);
+      return const Right(null);
+    } on Failure catch (e) {
+      print("MachineRepositoryImpl updateClaim error: ${e.message}");
+      return Left(e);
     } catch (e) {
       return Left(Failure());
     }

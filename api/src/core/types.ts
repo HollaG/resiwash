@@ -11,7 +11,31 @@ export enum MachineStatus {
   FINISHING = "FINISHING",
   HAS_ISSUES = "HAS_ISSUES",
   UNKNOWN = "UNKNOWN",
+  FINISHED = "FINISHED",
 }
+
+export const isAvailableLike = (status: MachineStatus): boolean => {
+  return (
+    status === MachineStatus.AVAILABLE || status === MachineStatus.FINISHED
+  );
+};
+
+export const getReadableMachineStatus = (status: MachineStatus): string => {
+  switch (status) {
+    case MachineStatus.AVAILABLE:
+      return "Available";
+    case MachineStatus.IN_USE:
+      return "In Use";
+    case MachineStatus.FINISHING:
+      return "Finishing";
+    case MachineStatus.HAS_ISSUES:
+      return "Has Issues";
+    case MachineStatus.UNKNOWN:
+      return "Unknown";
+    case MachineStatus.FINISHED:
+      return "Finished";
+  }
+};
 
 export const STATUS_CODE_MAP = {
   0: MachineStatus.AVAILABLE,
@@ -19,6 +43,7 @@ export const STATUS_CODE_MAP = {
   2: MachineStatus.FINISHING,
   3: MachineStatus.HAS_ISSUES,
   4: MachineStatus.UNKNOWN,
+  5: MachineStatus.FINISHED,
 };
 
 export class GetQueryBoolean {

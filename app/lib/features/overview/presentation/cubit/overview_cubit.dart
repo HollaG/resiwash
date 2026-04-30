@@ -8,6 +8,8 @@ import 'package:resiwash/features/area/domain/entities/area_entity.dart';
 import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 
+import 'package:resiwash/core/extensions/safecubit.dart';
+
 class OverviewCubit extends Cubit<OverviewState> {
   final ListMachinesUseCase listMachinesUseCase; // <-- depend on the use case
   final ListLocationsUseCase listLocationsUseCase;
@@ -18,9 +20,12 @@ class OverviewCubit extends Cubit<OverviewState> {
   }) : super(OverviewInitial());
 
   Future<void> load({List<String>? roomIds}) async {
-    // emit(OverviewLoading());
+    // safeEmit(OverviewLoading());
+    // if no roomIds, just don't load anything
+    appLog.d("OverviewCubit.load called with roomIds: $roomIds");
+
     if (state is OverviewLoaded) {
-      emit(
+      safeEmit(
         OverviewRefreshing(
           machines: (state as OverviewLoaded).machines,
           machinesByRoom: (state as OverviewLoaded).machinesByRoom,
@@ -28,7 +33,7 @@ class OverviewCubit extends Cubit<OverviewState> {
         ),
       );
     } else {
-      emit(OverviewLoading());
+      safeEmit(OverviewLoading());
     }
 
     appLog.d("Loading overview for roomIds: $roomIds");
@@ -51,7 +56,7 @@ class OverviewCubit extends Cubit<OverviewState> {
         (l) => <AreaEntity>[],
         (r) => r,
       ); // Replace dynamic with your LocationEntity if you have one
-      emit(
+      safeEmit(
         OverviewLoaded(
           machines: machines,
           machinesByRoom: _groupMachinesByRoom(machines),
@@ -64,7 +69,7 @@ class OverviewCubit extends Cubit<OverviewState> {
       appLog.e("Machine failure: $machineFailure");
       appLog.e("Location failure: $locationFailure");
 
-      emit(OverviewError("Failed to load overview data"));
+      safeEmit(OverviewError("Failed to load overview data"));
     }
   }
 

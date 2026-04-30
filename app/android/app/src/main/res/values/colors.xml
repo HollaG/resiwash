@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <!-- Primary text color for light theme -->
+  <color name="text_primary">#212121</color>
+</resources>

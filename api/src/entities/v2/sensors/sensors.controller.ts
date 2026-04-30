@@ -14,7 +14,7 @@ export const getSensors = asyncHandler(async (req: Request, res: Response) => {
     relations: ["room"], // Include the room relation if needed
   });
 
-  console.log("getSensors", sensors);
+  req.log.info("getSensors", sensors);
 
   sendOkResponse(res, sensors);
 });
@@ -35,7 +35,7 @@ export const getSensor = asyncHandler(async (req: Request, res: Response) => {
 // for hardware only
 export const registerSensor = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("registerSensor", req.body);
+    req.log.info("registerSensor", req.body);
     const { macAddress } = req.body;
 
     if (!macAddress) {
@@ -66,7 +66,7 @@ export const registerSensor = asyncHandler(
 // for setting API endpoint and API key
 export const setSensorApiKey = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("setSensorApiKey", req.body);
+    req.log.info("setSensorApiKey", req.body);
 
     const { apiKey, roomId } = req.body;
 
@@ -118,7 +118,7 @@ export const setSensorApiKey = asyncHandler(
 
 export const getSensorLinks = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("getSensorLinks", req.params.id);
+    req.log.info("getSensorLinks", req.params.id);
 
     if (Number.isNaN(Number(req.params.id))) {
       res.status(400).json({ error: "Invalid sensor ID" });
@@ -138,7 +138,7 @@ export const getSensorLinks = asyncHandler(
 
 export const setSensorLink = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("setSensorLink", req.body);
+    req.log.info("setSensorLink", req.body);
 
     if (Number.isNaN(Number(req.params.id))) {
       res.status(400).json({ error: "Invalid sensor ID" });
@@ -195,7 +195,7 @@ export const setSensorLink = asyncHandler(
 
 export const deleteSensorLink = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("deleteSensorLink", req.params.id);
+    req.log.info("deleteSensorLink", req.params.id);
 
     if (Number.isNaN(Number(req.params.id))) {
       res.status(400).json({ error: "Invalid sensor ID" });
@@ -209,7 +209,7 @@ export const deleteSensorLink = asyncHandler(
 
     const { source, localId, machineId } = req.body;
 
-    console.log("deleteSensorLink", sensorId, source, localId, machineId);
+    req.log.debug("deleteSensorLink", sensorId, source, localId, machineId);
     if (!source || localId === undefined || machineId === undefined) {
       res
         .status(400)

@@ -5,9 +5,13 @@ import 'package:resiwash/core/models/api_response.dart';
 import 'package:resiwash/core/network/dio_client.dart';
 import 'package:resiwash/core/network/paths.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_result.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/domain/params/claim_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/get_machine_params.dart';
 import 'package:resiwash/features/machine/domain/params/list_machines_params.dart';
+import 'package:resiwash/features/machine/domain/params/unclaim_machine_params.dart';
+import 'package:resiwash/features/machine/domain/params/update_machine_params.dart';
 
 Dio http = DioClient.instance();
 
@@ -52,7 +56,9 @@ class MachineRemoteDatasource {
       // return apiResponse.data.map((model) => model.toEntity()).toList();
     } on DioException catch (e) {
       appLog.e('[api] error fetching machines: $e');
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       print('failed');
       throw Exception();
@@ -79,7 +85,97 @@ class MachineRemoteDatasource {
 
       return apiResponse.data.toEntity();
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<ClaimResult> claimMachine({
+    required String machineId,
+    required ClaimMachineParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/claim",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] claimMachine ${response.data}');
+
+      if (response.data is! Map<String, dynamic>) {
+        throw Failure(message: 'Invalid claim response payload');
+      }
+
+      // Use ApiResponse for single machine response
+      final apiResponse = ApiResponse<ClaimResult>.fromJson(
+        response.data,
+        (json) => ClaimResult.fromJson(json as Map<String, dynamic>),
+      );
+
+      return apiResponse.data;
+    } on DioException catch (e) {
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> updateClaim({
+    required String machineId,
+    required UpdateClaimParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/update",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> unclaimMachine({
+    required String machineId,
+    required UnclaimMachineParams params,
+  }) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/unclaim",
+        data: params.toJson(),
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
+    } catch (e) {
+      throw Exception();
+    }
+  }
+
+  Future<void> pokeClaimant(String machineId) async {
+    try {
+      final Response<dynamic> response = await http.post(
+        "${Paths.machines}/$machineId/poke",
+      );
+
+      appLog.d('[api] ${response.data}');
+    } on DioException catch (e) {
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message as String);
     } catch (e) {
       throw Exception();
     }

@@ -4,9 +4,16 @@ import asyncHandler from "express-async-handler";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
 import { Machine } from "../../../models/Machine";
-import { GetQueryBoolean, MachineType } from "../../../core/types";
+import { setMachineManualStatusAndNotify } from "../../../services/machines.service";
+import {
+  GetQueryBoolean,
+  MachineStatus,
+  MachineType,
+} from "../../../core/types";
 import { UpdateEvent } from "../../../models/UpdateEvent";
 import { RawEvent } from "../../../models/RawEvent";
+import { machine } from "os";
+import { types } from "util";
 
 interface GetMachinesRequest {
   areaIds?: string[]; // todo, we don't need to filter by this anyway
@@ -14,73 +21,118 @@ interface GetMachinesRequest {
   min?: GetQueryBoolean; // actually boolean
   machineIds?: string[];
   extra?: GetQueryBoolean; // actually boolean
+  types?: MachineType[];
 }
 
 // get all machines. but only
 export const getMachines = asyncHandler(
   async (
     req: Request<unknown, unknown, unknown, GetMachinesRequest>,
-    res: Response
+    res: Response,
   ) => {
-    console.log("getMachines", req.query);
+    req.log.info("getMachines", req.query);
     const {
       areaIds = [],
       roomIds = [],
       min,
       machineIds = [],
       extra = GetQueryBoolean.FALSE,
+      types = [],
     } = req.query;
+
+    // note: if no filters are provided, return empty list
+    if (
+      areaIds.length === 0 &&
+      roomIds.length === 0 &&
+      machineIds.length === 0 &&
+      types.length === 0
+    ) {
+      return sendOkResponse(res, []);
+    }
 
     let machines =
       AppDataSource.getRepository(Machine).createQueryBuilder("machine");
 
-    if (GetQueryBoolean.parse(extra)) {
-      // left join room and area
-      console.log("including room and area info");
-      machines = machines
-        .leftJoinAndSelect("machine.room", "room")
-        .leftJoinAndSelect("room.area", "area");
+    // Join room if we need to filter by roomIds or if extra info is requested
+    const needsRoomJoin = roomIds.length > 0 || GetQueryBoolean.parse(extra);
+    const needsClaimJoin = GetQueryBoolean.parse(extra);
+
+    if (needsRoomJoin) {
+      if (GetQueryBoolean.parse(extra)) {
+        // left join room and area with select
+        req.log.debug("including room and area info");
+        machines = machines
+          .leftJoinAndSelect("machine.room", "room")
+          .leftJoinAndSelect("room.area", "area");
+      } else {
+        // just join room without select (for filtering only)
+        machines = machines.leftJoin("machine.room", "room");
+      }
     }
 
-    console.log("SQL Query:", machines.getSql());
-    console.log("Query parameters:", machines.getParameters());
+    if (needsClaimJoin) {
+      req.log.debug("including claim info");
+      machines = machines.leftJoinAndSelect("machine.claim", "claim");
+    }
+
+    req.log.debug("SQL Query:", machines.getSql());
+    req.log.debug("Query parameters:", machines.getParameters());
     // if (areaId && !Number.isNaN(Number(areaId))) {
     //   machines = machines.where("area.areaId = :areaId", {
     //     areaId: Number(areaId),
     //   });
     // }
 
+    let isFirstCondition = true;
+
+    // if (areaIds.length > 0) {
+    //   machines = machines.where("area.areaId IN (:...areaIds)", {
+    //     areaIds: areaIds.map(Number),
+    //   });
+    //   isFirstCondition = false;
+    // }
+
+    if (types.length > 0) {
+      machines = isFirstCondition
+        ? machines.where("machine.type IN (:...types)", { types })
+        : machines.andWhere("machine.type IN (:...types)", { types });
+      isFirstCondition = false;
+    }
+
     if (roomIds.length > 0) {
-      machines = machines.where("machine.roomId IN (:...roomIds)", {
-        roomIds: roomIds.map(Number),
-      });
+      machines = isFirstCondition
+        ? machines.where("room.roomId IN (:...roomIds)", {
+            roomIds: roomIds.map(Number),
+          })
+        : machines.andWhere("room.roomId IN (:...roomIds)", {
+            roomIds: roomIds.map(Number),
+          });
     }
 
     if (machineIds.length > 0) {
-      machines =
-        roomIds.length > 0
-          ? machines.andWhere("machine.machineId IN (:...machineIds)", {
-              machineIds: machineIds.map(Number),
-            })
-          : machines.where("machine.machineId IN (:...machineIds)", {
-              machineIds: machineIds.map(Number),
-            });
+      machines = isFirstCondition
+        ? machines.where("machine.machineId IN (:...machineIds)", {
+            machineIds: machineIds.map(Number),
+          })
+        : machines.andWhere("machine.machineId IN (:...machineIds)", {
+            machineIds: machineIds.map(Number),
+          });
     }
 
     machines = machines.orderBy("machine.name", "ASC");
 
-    console.log("Final SQL Query:", machines.getSql());
-    console.log("Final Query parameters:", machines.getParameters());
+    req.log.debug("Final SQL Query:", machines.getSql());
+    req.log.debug("Final Query parameters:", machines.getParameters());
 
     const machinesList = await machines.getMany();
 
-    console.log("Query result count:", machinesList.length);
-    console.log({ machinesList });
+    req.log.debug("Query result count:", machinesList.length);
+    req.log.debug({ machinesList });
     sendOkResponse(res, machinesList);
 
     // // // only rooms with :areaId
     // if (!areaId || Number(areaId) <= 0) {
-    //   console.log("getRooms: areaId is not valid", areaId);
+    //   req.log.debug("getRooms: areaId is not valid", areaId);
     //   return sendErrorResponse(res, "Area ID is required", 400);
     // }
 
@@ -130,7 +182,7 @@ export const getMachines = asyncHandler(
 
     // // to display how long ago the machine was in this status, use lastChangeTime
     // // example message: Changed to `${currentStatus}` ${new Date(currentTimestamp).toLocaleTimeString()} ago (from ${previousStatus})
-  }
+  },
 );
 
 interface GetMachineRequest {
@@ -141,7 +193,7 @@ interface GetMachineRequest {
 export const getMachine = asyncHandler(
   async (
     req: Request<{ machineId: string }, unknown, unknown, GetMachineRequest>,
-    res: Response
+    res: Response,
   ) => {
     const machineId = parseInt(req.params.machineId, 10);
     if (isNaN(machineId)) {
@@ -160,7 +212,8 @@ export const getMachine = asyncHandler(
     if (GetQueryBoolean.parse(extra)) {
       machineQuery = machineQuery
         .leftJoinAndSelect("machine.room", "room")
-        .leftJoinAndSelect("room.area", "area");
+        .leftJoinAndSelect("room.area", "area")
+        .leftJoinAndSelect("machine.claim", "claim");
     }
 
     const machine = await machineQuery
@@ -178,18 +231,17 @@ export const getMachine = asyncHandler(
       .take(10)
       .getMany();
 
-    const rawEvents = await AppDataSource.getRepository(RawEvent)
-      .createQueryBuilder("event")
-      .where("event.machineId = :id", { id: machineId })
-      .orderBy("event.timestamp", "DESC")
-      .take(1000)
-      .getMany();
+    // const rawEvents = await AppDataSource.getRepository(RawEvent)
+    //   .createQueryBuilder("event")
+    //   .where("event.machineId = :id", { id: machineId })
+    //   .orderBy("event.timestamp", "DESC")
+    //   .take(1000)
+    //   .getMany();
 
     machine.events = events;
-    machine.rawEvents = rawEvents;
 
     sendOkResponse(res, machine);
-  }
+  },
 );
 
 export const createMachine = async (req: Request, res: Response) => {
@@ -198,7 +250,7 @@ export const createMachine = async (req: Request, res: Response) => {
 
   // todo: authentication and authorization
 
-  console.log("createMachine", req.body);
+  req.log.info("createMachine", req.body);
 
   const { areaId, roomId, machine: machineToCreate } = req.body;
   const { name, label, type, imageUrl } = machineToCreate;
@@ -225,8 +277,25 @@ export const createMachine = async (req: Request, res: Response) => {
   machine.imageUrl = imageUrl || null;
   machine.roomId = Number(roomId);
 
+  machine.currentStatus = MachineStatus.AVAILABLE;
+  machine.previousStatus = MachineStatus.AVAILABLE;
+  machine.lastChangeTime = new Date();
+  machine.lastAvailableTime = new Date();
+  machine.isManualEntry = true;
+  machine.previousStatusActiveTime = 0;
+  machine.lastUpdated = new Date();
+
   const machineRepository = AppDataSource.getRepository(Machine);
   await machineRepository.save(machine);
+
+  // when creating a new machine, we can also create an initial UpdateEvent
+  const updateEvent = new UpdateEvent();
+  updateEvent.machine = machine;
+  updateEvent.status = MachineStatus.AVAILABLE;
+  updateEvent.readings = []; // indicate manual update
+
+  const updateEventRepository = AppDataSource.getRepository(UpdateEvent);
+  await updateEventRepository.save(updateEvent);
 
   sendOkResponse(res, machine);
 };
@@ -248,7 +317,7 @@ export const deleteMachine = asyncHandler(
     await machineRepository.remove(machine);
 
     sendOkResponse(res, { message: "Machine deleted successfully" });
-  }
+  },
 );
 
 export const updateMachine = asyncHandler(
@@ -289,5 +358,49 @@ export const updateMachine = asyncHandler(
     await machineRepository.save(machine);
 
     sendOkResponse(res, machine);
-  }
+  },
+);
+
+const TIMEOUT_TRACKER = {} as { [machineId: number]: NodeJS.Timeout };
+
+// TODO: implement getTimeOptions based on possible cycleTimes
+export const getTimeOptions = () => {}; //
+
+interface ManualSetStatusRequest {
+  status: MachineStatus;
+  cycleTime?: number;
+  fcmToken?: string; // todo
+}
+// For manually setting a machine to used (via QR code, etc)
+// POST /api/v{version}/machines/:machineId/manual
+// deprecated
+export const manualSetStatus = asyncHandler(
+  async (
+    req: Request<{ machineId: string }, {}, ManualSetStatusRequest>,
+    res: Response,
+  ) => {
+    const machineId = parseInt(req.params.machineId, 10);
+    if (isNaN(machineId)) {
+      return sendErrorResponse(res, { message: "Invalid machine ID" }, 400);
+    }
+
+    const { status, cycleTime, fcmToken } = req.body;
+
+    try {
+      await setMachineManualStatusAndNotify({ machineId, status, cycleTime });
+
+      return sendOkResponse(res, {
+        message: `Machine status set to ${status}${cycleTime ? ` for ${cycleTime} minutes` : ""}`,
+      });
+    } catch (error: any) {
+      const statusCode =
+        error.message === "Machine not found"
+          ? 404
+          : error.message ===
+              "Manual status update not allowed for this machine"
+            ? 403
+            : 400;
+      return sendErrorResponse(res, { message: error.message }, statusCode);
+    }
+  },
 );

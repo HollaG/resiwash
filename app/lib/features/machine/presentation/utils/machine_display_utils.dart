@@ -4,6 +4,19 @@ import 'package:resiwash/features/machine/data/models/machine_model.dart';
 
 /// Utility class for machine-related formatting and display logic
 class MachineDisplayUtils {
+  static bool isAvailableLike(MachineStatus? status) {
+    return status == MachineStatus.available ||
+        status == MachineStatus.finished;
+  }
+
+  static bool isCompletedLike(MachineStatus? status) {
+    return status == MachineStatus.finished;
+  }
+
+  static bool isInUseLike(MachineStatus? status) {
+    return status == MachineStatus.inUse || status == MachineStatus.finishing;
+  }
+
   /// Generates a descriptive status label for a machine including relative time
   ///
   /// Examples:
@@ -15,6 +28,22 @@ class MachineDisplayUtils {
   ///
 
   static String getStatusLabel(MachineEntity machine) {
+    if (machine.claimId != null) {
+      int? cycleTime = machine.claim?.cycleTime;
+      if (cycleTime != null) {
+        if (!MachineDisplayUtils.isAvailableLike(machine.currentStatus)) {
+          final relativeTime = DateTimeUtils.formatRelativeTimeTo(
+            machine.lastAvailableTime?.add(Duration(minutes: cycleTime)),
+          );
+
+          if (relativeTime != null) {
+            if (isInUseLike(machine.currentStatus)) {
+              return relativeTime;
+            }
+          }
+        }
+      }
+    }
     final status = machine.currentStatus;
     final lastChangeTime = machine.lastChangeTime;
 
@@ -23,9 +52,10 @@ class MachineDisplayUtils {
       final relativeTime = DateTimeUtils.formatRelativeTime(
         machine.lastChangeTime,
       );
-      if (status == MachineStatus.available) {
+      if (isAvailableLike(status)) {
         timePart = ' since $relativeTime';
-      } else if (status == MachineStatus.inUse) {
+      } else if (status == MachineStatus.inUse ||
+          status == MachineStatus.finishing) {
         timePart = ' for $relativeTime';
       }
     }
@@ -38,6 +68,10 @@ class MachineDisplayUtils {
         return 'In use${timePart.replaceFirst(" ago", "")}';
       case MachineStatus.hasIssues:
         return 'Has issues';
+      case MachineStatus.finishing:
+        return 'Finishing${timePart.replaceFirst(" ago", "")}';
+      case MachineStatus.finished:
+        return 'Finished${timePart.replaceFirst("since ", "")}';
       case null:
         return 'Unknown status';
       default:
@@ -53,11 +87,11 @@ class MachineDisplayUtils {
   /// - "A1" (area shortName only)
   /// - "No room" (fallback)
   static String getLocationLabel(MachineEntity machine) {
-    final areaName = machine.room?.area?.shortName;
+    final areaName = machine.room?.area?.shortName ?? machine.room?.area?.name;
     final roomName = machine.room?.name;
 
     if (areaName != null && roomName != null) {
-      return '$areaName $roomName';
+      return '$roomName ($areaName)';
     } else if (roomName != null) {
       return roomName;
     } else if (areaName != null) {
@@ -82,7 +116,11 @@ class MachineDisplayUtils {
   }
 
   static String getType(MachineEntity machine) {
-    switch (machine.type) {
+    return getTypeFromEnum(machine.type);
+  }
+
+  static String getTypeFromEnum(MachineType type) {
+    switch (type) {
       case MachineType.washer:
         return 'Washer';
       case MachineType.dryer:

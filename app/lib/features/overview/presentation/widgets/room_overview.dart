@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:go_router/go_router.dart';
+import 'package:resiwash/core/widgets/status_row_summary.dart';
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
 import 'package:resiwash/features/room/domain/entities/room_entity.dart';
@@ -28,13 +29,13 @@ class RoomOverview extends StatelessWidget {
           return InkWell(
             onTap: () => {
               // navigate to specific room page
-              context.push(
-                Uri(
-                  path: AppRoutes.machineList,
-                  queryParameters: {
-                    'roomIds[]': [roomId],
-                  },
-                ).toString(),
+              context.pushNamed(
+                'machines',
+
+                queryParameters: {
+                  'roomIds[]': [roomId],
+                },
+
                 extra: {
                   'title': room.name,
                   'count': machines.length.toString(),
@@ -54,19 +55,19 @@ class RoomOverview extends StatelessWidget {
                   // Display machines in this room
                   Column(
                     children: [
-                      RoomRow(
-                        label: "Washers",
-                        machines: machines
-                            .filter(
-                              (machine) => machine.type == MachineType.washer,
-                            )
-                            .toList(),
-                      ),
-                      RoomRow(
+                      StatusRowSummary(
                         label: "Dryers",
                         machines: machines
                             .filter(
                               (machine) => machine.type == MachineType.dryer,
+                            )
+                            .toList(),
+                      ),
+                      StatusRowSummary(
+                        label: "Washers",
+                        machines: machines
+                            .filter(
+                              (machine) => machine.type == MachineType.washer,
                             )
                             .toList(),
                       ),
@@ -80,47 +81,6 @@ class RoomOverview extends StatelessWidget {
 
         return Container();
       },
-    );
-  }
-}
-
-class RoomRow extends StatelessWidget {
-  // a subset of machines to display
-  final List<MachineEntity> machines;
-  final String label;
-
-  const RoomRow({required this.label, required this.machines});
-
-  @override
-  Widget build(BuildContext context) {
-    int totalCount = machines.length;
-    int availableCount = machines
-        .where((machine) => machine.currentStatus == MachineStatus.available)
-        .length;
-
-    return Container(
-      padding: EdgeInsets.all(10),
-      child: Row(
-        spacing: 10,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          Spacer(),
-          Row(
-            spacing: 2,
-
-            children: machines
-                .map(
-                  (machine) =>
-                      MachineStatusIndicator(status: machine.currentStatus),
-                )
-                .toList(),
-          ),
-          Text(
-            "$availableCount/$totalCount",
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-        ],
-      ),
     );
   }
 }

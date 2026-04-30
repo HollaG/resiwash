@@ -2,6 +2,7 @@ import { User } from "./models/User";
 
 // src/index.ts
 import express, { Express, Request, Response } from "express";
+const pino = require("pino-http");
 import dotenv from "dotenv";
 import fs from "fs";
 import session from "express-session";
@@ -16,25 +17,36 @@ dotenv.config();
 import { AppDataSource } from "./data-source";
 import { VerifyToken } from "./middleware/auth";
 import { sendErrorResponse } from "./core/responses";
+import { initializeJobs } from "./jobs";
+
+const logger = pino({
+  transport: {
+    target: "pino-pretty",
+  },
+  level: "error",
+});
 
 // TypeORM
 AppDataSource.initialize()
   .then(async () => {
-    console.log("Inserting a new user into the database...");
-    const user = new User();
-    user.firstName = "Timber";
-    user.lastName = "Saw";
-    user.age = 25;
-    await AppDataSource.manager.save(user);
-    console.log("Saved a new user with id: " + user.id);
+    console.log("Database initialized successfully");
 
-    console.log("Loading users from the database...");
-    const users = await AppDataSource.manager.find(User);
-    console.log("Loaded users: ", users);
+    // Initialize scheduled jobs after database connection is established
+    initializeJobs();
 
-    console.log(
-      "Here you can setup and run express / fastify / any other framework."
-    );
+    // console.log("Inserting a new user into the database...");
+    // const user = new User();
+    // user.firstName = "Timber";
+    // user.lastName = "Saw";
+    // user.age = 25;
+    // await AppDataSource.manager.save(user);
+    // console.log("Saved a new user with id: " + user.id);
+    // console.log("Loading users from the database...");
+    // const users = await AppDataSource.manager.find(User);
+    // console.log("Loaded users: ", users);
+    // console.log(
+    //   "Here you can setup and run express / fastify / any other framework."
+    // );
   })
   .catch((error) => console.log(error));
 
@@ -47,15 +59,15 @@ app.use(
     secret: process.env.SESSION_KEY,
     resave: true,
     saveUninitialized: true,
-  })
+  }),
 );
+app.use(logger);
 const port = process.env.PORT || 3000;
 
 // ROUTES
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
-
 const API_VERSION = process.env.API_VERSION || "v1";
 
 const API_VERSIONS = ["v1", "v2"];
@@ -65,7 +77,7 @@ const API_VERSIONS = ["v1", "v2"];
 // Machines
 app.use(
   `/api/v1/areas/:areaId/:roomId`,
-  require("./entities/v1/machines/machines.routes")
+  require("./entities/v1/machines/machines.routes"),
 );
 
 // Rooms
@@ -75,13 +87,13 @@ app.use(`/api/v1/areas/:areaId`, require("./entities/v1/rooms/rooms.routes"));
 app.use(
   `/api/v1/areas`,
   VerifyToken,
-  require("./entities/v1/areas/areas.routes")
+  require("./entities/v1/areas/areas.routes"),
 );
 
 // Locations
 app.use(
   `/api/v1/locations`,
-  require("./entities/v1/locations/locations.routes")
+  require("./entities/v1/locations/locations.routes"),
 );
 
 // Events
@@ -95,7 +107,7 @@ app.use(`/api/v1/sensors`, require("./entities/v1/sensors/sensors.routes"));
 app.use(
   `/api/v2/areas`,
   VerifyToken,
-  require("./entities/v2/areas/areas.routes")
+  require("./entities/v2/areas/areas.routes"),
 );
 
 // Rooms
@@ -107,7 +119,7 @@ app.use(`/api/v2/machines`, require("./entities/v2/machines/machines.routes"));
 // Locations
 app.use(
   `/api/v2/locations`,
-  require("./entities/v2/locations/locations.routes")
+  require("./entities/v2/locations/locations.routes"),
 );
 
 // Events
@@ -115,6 +127,12 @@ app.use(`/api/v2/events`, require("./entities/v2/events/events.routes"));
 
 // Sensors
 app.use(`/api/v2/sensors`, require("./entities/v2/sensors/sensors.routes"));
+
+// admin: todo, protect with auth middleware
+app.use(`/api/v2/admin`, require("./entities/v2/admin/admin.routes"));
+
+// users
+app.use(`/api/v2/users`, require("./entities/v2/users/users.routes"));
 
 // error handler (last)
 app.use(errorHandler);

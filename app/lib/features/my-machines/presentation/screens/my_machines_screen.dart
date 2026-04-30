@@ -1,0 +1,192 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:resiwash/common/views/AppBar.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/subscription_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/sections/completed.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/sections/in_use_by_you.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/sections/waiting_to_start.dart';
+
+class MyMachinesScreen extends StatefulWidget {
+  const MyMachinesScreen({super.key});
+
+  @override
+  State<MyMachinesScreen> createState() => _MyMachinesScreenState();
+}
+
+class _MyMachinesScreenState extends State<MyMachinesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ClaimCubit, ClaimState>(
+      builder: (context, state) {
+        // Derive UI state from bloc state so it is correct on first build and updates.
+        final hasCompletedMachines = (state.claimedMachines ?? []).any(
+          (machine) =>
+              MachineDisplayUtils.isCompletedLike(machine.currentStatus),
+        );
+
+        final hasWaitingMachines = (state.claimedMachines ?? []).any(
+          (machine) => machine.currentStatus == MachineStatus.available,
+        );
+
+        return Scaffold(
+          appBar: AppBarComponent(
+            actions: [
+              // IconButton(onPressed: () {}, icon: Icon(Icons.help_outline)),
+              // TrackerMiniContainer(),
+            ],
+            title: "My Machines",
+            backgroundColor: hasCompletedMachines
+                ? MachineStatusIndicator.getBackgroundColor(
+                    context,
+                    MachineStatus.available,
+                  )
+                : null,
+          ),
+          body: RefreshIndicator(
+            child: SingleChildScrollView(
+              physics: AlwaysScrollableScrollPhysics(),
+              child: SafeArea(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minWidth: double.infinity,
+                    maxWidth: double.infinity,
+                    minHeight: MediaQuery.of(context).size.height,
+                  ),
+                  child: Column(
+                    children: [
+                      // for COMPLETED machines only. Should be minimally full height, but can expand if there are more completed machines. If no completed machines, should be 0 height.
+                      AnimatedContainer(
+                        duration: Duration(milliseconds: 300),
+                        decoration: BoxDecoration(
+                          gradient: hasCompletedMachines
+                              ? LinearGradient(
+                                  colors: [
+                                    MachineStatusIndicator.getBackgroundColor(
+                                      context,
+                                      MachineStatus.available,
+                                    ),
+                                    MachineStatusIndicator.getIndicatorColor(
+                                      context,
+                                      MachineStatus.available,
+                                    ),
+                                  ],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                )
+                              : LinearGradient(
+                                  colors: [
+                                    Theme.of(context).scaffoldBackgroundColor,
+                                    Theme.of(context).scaffoldBackgroundColor,
+                                  ],
+                                ),
+                        ),
+                        child: AnimatedSize(
+                          duration: Duration(milliseconds: 500),
+                          curve: Curves.easeInOut,
+                          alignment: Alignment.topCenter,
+                          child: hasCompletedMachines
+                              ? ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minHeight:
+                                        MediaQuery.of(context).size.height -
+                                        kToolbarHeight,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(24),
+                                    child: CompletedSection(),
+                                  ),
+                                )
+                              : SizedBox(height: 0, width: double.infinity),
+                        ),
+                      ),
+
+                      Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            spacing: 0,
+
+                            children: [
+                              SizedBox(height: 20),
+
+                              AnimatedSize(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.fastOutSlowIn,
+                                alignment: Alignment.topCenter,
+                                child: hasWaitingMachines
+                                    ? Column(
+                                        children: [
+                                          WaitingToStartSection(),
+                                          SizedBox(height: 20),
+                                        ],
+                                      )
+                                    : SizedBox.shrink(),
+                              ),
+
+                              // section 1:
+                              // "In use by you"
+                              // list of in use by you
+                              AnimatedSize(
+                                duration: Duration(milliseconds: 300),
+                                curve: Curves.fastOutSlowIn,
+                                alignment: Alignment.topCenter,
+                                child: InUseByYouSection(),
+                              ),
+                              SizedBox(height: 20),
+
+                              Divider(),
+                              SizedBox(height: 20),
+
+                              // section 2:
+                              // "Subscribed Machines"
+                              // list of subscribed machines
+                              // SubscriptionsSection(),
+
+                              // Divider(),
+                              // section 3:
+                              // Issues reported
+                              // list of issues
+                              // IssuesReportedSection(),
+                              // section 4:
+                              // Usage history
+                              // list of usage history
+                              // UsageHistorySection(),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      Center(
+                        child: TextButton(
+                          onPressed: () {
+                            AppShellPageController.instance.showTutorial();
+                          },
+                          child: Text("Need help? Visit the tutorial"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            onRefresh: () async {
+              // Refresh both subscription and claim cubits
+              await Future.wait([
+                context.read<SubscriptionCubit>().refreshSubscribedMachines(),
+                context.read<ClaimCubit>().refreshClaimedMachines(),
+              ]);
+            },
+          ),
+        );
+      },
+    );
+  }
+}

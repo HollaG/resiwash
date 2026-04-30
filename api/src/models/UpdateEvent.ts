@@ -11,6 +11,7 @@ import {
 } from "typeorm";
 import { Machine } from "./Machine";
 import { MachineStatus } from "../core/types";
+import { Reading } from "../entities/v2/events/events.controller";
 
 @Entity()
 export class UpdateEvent {
@@ -23,13 +24,16 @@ export class UpdateEvent {
   @Column({ type: "enum", enum: MachineStatus, nullable: true })
   status: MachineStatus;
 
+  @Column({ type: "int", nullable: true })
+  cycleTime: number; // in minutes // update this for future metadata tracking
+
   // deprecated
   // use status instead
   @Column({ nullable: true })
   statusCode: number;
 
-  @Column({ nullable: true })
-  reading: number;
+  @Column({ type: "json", nullable: true })
+  readings: Reading[];
 
   @ManyToOne(() => Machine, (machine) => machine.events)
   @JoinColumn({ name: "machineId" })

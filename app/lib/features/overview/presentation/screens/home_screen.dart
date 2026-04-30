@@ -1,17 +1,23 @@
+import 'dart:async';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:resiwash/common/views/AppBar.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
 import 'package:resiwash/features/machine/domain/usecases/list_machines_usecase.dart';
 import 'package:resiwash/core/shared/mixins/error_handler_mixin.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_home.dart';
 import 'package:resiwash/features/room/domain/usecase/get_room_usecase.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_cubit.dart';
 import 'package:resiwash/features/room/presentation/cubit/room_detail_state.dart';
 import 'package:resiwash/features/area/domain/usecases/list_locations_use_case.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
-import 'package:resiwash/features/overview/presentation/widgets/homeHeader.dart';
+import 'package:resiwash/features/overview/presentation/widgets/home_header.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview_wrapper.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -50,38 +56,84 @@ class _HomeScreenState extends State<HomeScreen> with ErrorHandlerMixin {
       child: BlocConsumer<OverviewCubit, OverviewState>(
         listener: (context, state) {
           // Listen for error states and show toast
-          if (state is OverviewError) {
-            showErrorMessage(
-              state.message,
-              onRetry: () {
-                context.read<OverviewCubit>().load(
-                  roomIds: loadedLocations.getAllRoomIds(),
-                );
-              },
-            );
-          }
+          // TODO: improve error handling here, not sure why this errorneously triggers
+          // if (state is OverviewError) {
+          //   showErrorMessage(
+          //     state.message,
+          //     onRetry: () {
+          //       context.read<OverviewCubit>().load(
+          //         roomIds: loadedLocations.getAllRoomIds(),
+          //       );
+          //     },
+          //   );
+          // }
         },
         builder: (context, state) {
-          return Scaffold(
-            // appBar: AppBarComponent(actions: [], title: "ResiWash"),
-            body: RefreshIndicator(
-              onRefresh: () {
-                return Future.delayed(Duration(seconds: 1), () {});
-                // return context
-                //     .read<OverviewCubit>()
-                //     .refresh(roomIds: loadedLocations.getAllRoomIds());
-              },
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return Stack(
+            children: [
+              Scaffold(
+                appBar: AppBarComponent(
+                  actions: [],
+                  title: "",
+                  // backgroundColor: Theme.of(context).colorScheme.surface,
+                  // foregroundColor: Theme.of(context).colorScheme.onSurface,
+                ),
+                body: Column(
                   children: [
                     HomeHeader(username: "Marcus"),
-                    RoomOverviewWrapper(roomIds: []),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () {
+                          // return Future.delayed(Duration(seconds: 1), () {});
+                          // wait for 1s first
+
+                          // Create a completer to wait for the loading to complete
+                          final completer = Completer<void>();
+
+                          // Listen for state changes
+                          late StreamSubscription subscription;
+                          subscription = context
+                              .read<OverviewCubit>()
+                              .stream
+                              .listen((state) {
+                                if (state is OverviewLoaded ||
+                                    state is OverviewError) {
+                                  subscription.cancel();
+                                  completer.complete();
+                                }
+                              });
+                          final loadedLocations = sl<SharedPreferencesService>()
+                              .getSavedLocations();
+
+                          appLog.d("Loaded locations: $loadedLocations");
+                          // Trigger the refresh
+                          context.read<OverviewCubit>().load(
+                            roomIds: loadedLocations.getAllRoomIds(),
+                          );
+
+                          // Wait for completion
+                          return completer.future;
+                        },
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SingleChildScrollView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: RoomOverviewWrapper(roomIds: []),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ),
+              // ScanQrHome(),
+            ],
           );
         },
       ),

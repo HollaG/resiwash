@@ -24,6 +24,7 @@ export function HomeRedesign() {
   const { data: availableLocations } = useLocationInfo();
   const [selectedMachine, setSelectedMachine] = useState<MachineStatusOverview | null>(null);
 
+  console.log({ availableLocations })
   // Flatten saved locations to get individual rooms
   const savedRooms = Object.entries(savedLocations).flatMap(([areaId, roomIds]) =>
     roomIds.map((roomId) => ({
@@ -57,6 +58,34 @@ export function HomeRedesign() {
   return (
     <div className="min-h-screen bg-app">
       <div className="container mx-auto max-w-6xl px-4 py-6 space-y-6">
+        {/* App download badges */}
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+          <a
+            href="https://play.google.com/store/apps/details?id=com.resiwash.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Get it on Google Play"
+          >
+            <img
+              src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
+              alt="Get it on Google Play"
+              className="h-14 w-auto"
+            />
+          </a>
+          <a
+            href="https://apps.apple.com/sg/app/resiwash/id6760129310"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download on the App Store"
+          >
+            <img
+              src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83"
+              alt="Download on the App Store"
+              className="h-10 w-auto"
+            />
+          </a>
+        </div>
+
         {/* Location selector - sticky */}
         <div className="sticky top-16 z-40 -mx-4 backdrop-blur px-4 py-4 border-b border-app"
           style={{ backgroundColor: 'rgba(var(--bg-rgb, 23, 23, 23), 0.95)' }}>
@@ -168,7 +197,7 @@ function RoomCardWrapper({
 
   if (isLoading || !machines || !area || !room) {
     return (
-      <div className="h-64 animate-pulse rounded-lg border bg-surface" 
+      <div className="h-64 animate-pulse rounded-lg border bg-surface"
         style={{ borderColor: 'var(--border-color)' }} />
     );
   }

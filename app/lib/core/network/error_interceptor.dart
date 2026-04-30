@@ -14,8 +14,18 @@ class ErrorInterceptor extends Interceptor {
       // Extract custom error message from server response
       String errorMessage = _extractErrorMessage(response);
 
+      print("Extracted error message: $errorMessage");
+
       // Throw a custom failure with the server's error message
-      throw Failure(message: errorMessage);
+      // throw Failure(message: errorMessage);
+      handler.reject(
+        DioException(
+          requestOptions: response.requestOptions,
+          error: Failure(message: errorMessage),
+        ),
+      );
+
+      return;
     }
 
     // Continue with successful responses
@@ -25,6 +35,12 @@ class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     appLog.e('[api] Network error: $err');
+
+    // Check if the error is already a Failure (thrown from onResponse)
+    // if (err.error is Failure) {
+    //   appLog.d('[api] Error is already a Failure, passing through');
+    //   return;
+    // }
 
     // Handle network errors (no response from server)
     String errorMessage = _handleNetworkError(err);

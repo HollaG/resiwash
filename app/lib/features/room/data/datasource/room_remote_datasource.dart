@@ -19,9 +19,11 @@ class RoomRemoteDatasource {
 
       return apiResponse.data.toEntity();
     } on DioException catch (e) {
-      throw Failure(message: e.message as String);
+      throw e.error is Failure
+          ? e.error as Failure
+          : Failure(message: e.message ?? 'Unknown error');
     } catch (e) {
-      throw Exception();
+      throw Failure(message: 'Unknown error');
     }
   }
 }

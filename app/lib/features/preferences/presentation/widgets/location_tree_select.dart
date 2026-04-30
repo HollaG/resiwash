@@ -69,37 +69,33 @@ class _LocationTreeSelectState extends State<LocationTreeSelect> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Checkbox(
-                  value: areaState == CheckboxState.checked
-                      ? true
-                      : areaState == CheckboxState.unchecked
-                      ? false
-                      : null,
-                  tristate: true,
-                  onChanged: (val) => _onAreaChanged(area, val),
-                ),
-                Text(area.name, style: Theme.of(context).textTheme.labelLarge),
-              ],
+            CheckboxListTile(
+              controlAffinity: ListTileControlAffinity.leading,
+              title: Text(
+                area.name,
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+              value: areaState == CheckboxState.checked
+                  ? true
+                  : areaState == CheckboxState.unchecked
+                  ? false
+                  : null,
+              tristate: true,
+              onChanged: (val) => _onAreaChanged(area, val),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 32.0),
               child: Column(
                 children: (area.rooms != null && area.rooms!.isNotEmpty)
                     ? area.rooms!.map((room) {
-                        return Row(
-                          children: [
-                            Checkbox(
-                              value: _selectedLocations.isRoomSaved(
-                                area.areaId,
-                                room.roomId,
-                              ),
-                              onChanged: (val) =>
-                                  _onRoomChanged(area, room, val),
-                            ),
-                            Text(room.name),
-                          ],
+                        return CheckboxListTile(
+                          controlAffinity: ListTileControlAffinity.leading,
+                          value: _selectedLocations.isRoomSaved(
+                            area.areaId,
+                            room.roomId,
+                          ),
+                          onChanged: (val) => _onRoomChanged(area, room, val),
+                          title: Text(room.name),
                         );
                       }).toList()
                     : [Text("No rooms available in this area")],

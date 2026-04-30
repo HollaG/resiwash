@@ -39,6 +39,14 @@ MachineModel _$MachineModelFromJson(Map<String, dynamic> json) => MachineModel(
     _$MachineStatusEnumMap,
     json['previousStatus'],
   ),
+  previousStatusActiveTime: (json['previousStatusActiveTime'] as num?)?.toInt(),
+  lastAvailableTime: json['lastAvailableTime'] == null
+      ? null
+      : DateTime.parse(json['lastAvailableTime'] as String),
+  claimId: (json['claimId'] as num?)?.toInt(),
+  claim: json['claim'] == null
+      ? null
+      : ClaimModel.fromJson(json['claim'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$MachineModelToJson(MachineModel instance) =>
@@ -59,6 +67,10 @@ Map<String, dynamic> _$MachineModelToJson(MachineModel instance) =>
       'lastChangeTime': instance.lastChangeTime?.toIso8601String(),
       'currentStatus': _$MachineStatusEnumMap[instance.currentStatus],
       'previousStatus': _$MachineStatusEnumMap[instance.previousStatus],
+      'previousStatusActiveTime': instance.previousStatusActiveTime,
+      'lastAvailableTime': instance.lastAvailableTime?.toIso8601String(),
+      'claimId': instance.claimId,
+      'claim': instance.claim,
     };
 
 const _$MachineTypeEnumMap = {
@@ -73,4 +85,5 @@ const _$MachineStatusEnumMap = {
   MachineStatus.hasIssues: 'HAS_ISSUES',
   MachineStatus.unknown: 'UNKNOWN',
   MachineStatus.finishing: 'FINISHING',
+  MachineStatus.finished: 'FINISHED',
 };

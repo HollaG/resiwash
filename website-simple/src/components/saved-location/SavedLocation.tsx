@@ -2,24 +2,23 @@ import { Group, Stack, Text } from "@mantine/core";
 import { useLocationMachines } from "../../hooks/query/useLocationMachines";
 import { useLocationInfo } from "../../hooks/query/useLocationInfo";
 import React from "react";
-import { StatusIndicator } from "../mini/StatusIndicator";
+import { StatusIndicator } from "../status-indicator/StatusIndicator";
 import { MachineStatus } from "../../types/datatypes";
 import { MachineDetails } from "../machine-details/MachineDetails";
 
 type DetailViewProps = {
   areaId: number;
   roomId: number;
+  debug?: boolean;
 }
 const SavedLocation = (props: DetailViewProps) => {
-  const { areaId, roomId } = props;
+  const { areaId, roomId, debug = false } = props;
 
   const { data: machineData, isLoading } = useLocationMachines({ roomId });
   const { data: locationData } = useLocationInfo()
 
   const area = locationData?.find(location => location.areaId === areaId);
   const room = area?.rooms.find(r => r.roomId === roomId);
-
-  console.log({ machineData, area, room })
 
   if (isLoading || !machineData) {
     return <div>Loading...</div>;
@@ -45,7 +44,7 @@ const SavedLocation = (props: DetailViewProps) => {
 
     <Stack gap="sm">
       {machineData.map((machineOverview, index) => (
-        <MachineDetails key={index} machineOverview={machineOverview} />
+        <MachineDetails key={index} machineOverview={machineOverview} debug={debug} />
 
       ))}
     </Stack>

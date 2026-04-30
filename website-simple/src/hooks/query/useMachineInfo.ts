@@ -10,8 +10,8 @@ export const useMachineInfo = ({
   machineId,
   load = false,
 }: {
-  roomId: number;
   machineId: number;
+  roomId?: number;
   load?: boolean;
 }) => {
   const { data, isLoading, error } = useQuery<MachineWithRoomAndEvents>({

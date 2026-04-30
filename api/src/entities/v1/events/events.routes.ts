@@ -1,6 +1,6 @@
 /**
- * Route file: areas.routes.ts
- * Endpoint: /api/v{version}/areas
+ * Route file: events.routes.ts
+ * Endpoint: /api/v{version}/events
  */
 
 import express from "express";

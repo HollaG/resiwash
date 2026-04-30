@@ -70,7 +70,7 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(
         res,
         { message: "MAC address is required" },
-        400
+        400,
       );
     }
 
@@ -87,8 +87,6 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(res, { message: "Data is required" }, 400);
     }
 
-    // console.log("createMultipleEvents debug sensor", sensor);
-
     // get all SensorToMachine links for the sensor
     const sensorToMachineRepository =
       AppDataSource.getRepository(SensorToMachine);
@@ -101,7 +99,7 @@ export const createMultipleEvents = asyncHandler(
       return sendErrorResponse(
         res,
         { message: "No machine links found for the sensor" },
-        404
+        404,
       );
     }
 
@@ -111,7 +109,6 @@ export const createMultipleEvents = asyncHandler(
     const machineIds = sensorLinks.map((link) => link.machineId);
     const machineRepository = AppDataSource.getRepository(Machine);
 
-
     const latestEvents = await actualEventRepository
       .createQueryBuilder("event")
       .leftJoinAndSelect("event.machine", "machine")
@@ -120,8 +117,6 @@ export const createMultipleEvents = asyncHandler(
       .orderBy("event.machineId", "ASC")
       .addOrderBy("event.timestamp", "DESC")
       .getMany();
-
-    // console.log("createMultipleEvents debug latestEvents", latestEvents);
 
     const rawEvents: RawEvent[] = [];
     const actualEvents: UpdateEvent[] = [];
@@ -163,7 +158,7 @@ export const createMultipleEvents = asyncHandler(
 
           // find the latest event for this machine
           const latestEvent = latestEvents.find(
-            (event) => event.machine.machineId === machine.machineId
+            (event) => event.machine.machineId === machine.machineId,
           );
 
           if (!latestEvent || latestEvent.status !== status) {
@@ -189,7 +184,7 @@ export const createMultipleEvents = asyncHandler(
     // ------- raw events always get saved -------
     // for all raw events, update the machine's lastUpdated timestamp
     const machineIdsToUpdate = rawEvents.map(
-      (event) => event.machine.machineId
+      (event) => event.machine.machineId,
     );
 
     // machinesToUpdate contains all machines that were sent an event
@@ -210,7 +205,7 @@ export const createMultipleEvents = asyncHandler(
     // set the currentStatus to the new status
     actualEvents.forEach((event) => {
       const machine = machinesToUpdate.find(
-        (m) => m.machineId === event.machine.machineId
+        (m) => m.machineId === event.machine.machineId,
       );
       if (machine) {
         machine.lastChangeTime = new Date(); // update the lastChangeTime timestamp
@@ -238,7 +233,7 @@ export const createMultipleEvents = asyncHandler(
     // const events = await Promise.allSettled(
     //   // will never reject
     //   data.map((item) => saveEvent(item))
-  }
+  },
 );
 
 /**

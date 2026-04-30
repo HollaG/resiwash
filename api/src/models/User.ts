@@ -3,26 +3,23 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
 } from "typeorm";
 
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  userId: number;
 
   @Column()
-  firstName: string;
+  fcmToken: string;
 
   @Column()
-  lastName: string;
-
-  @Column()
-  age: number;
+  name: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createDate: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
+  // Other providers
+  @Column({ nullable: true })
+  telegramId?: string;
 }

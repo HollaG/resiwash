@@ -1,0 +1,483 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_alarm_clock/flutter_alarm_clock.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:live_activities/live_activities.dart';
+import 'package:resiwash/core/injections/area/area_service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/claimed_machine.dart';
+import 'package:resiwash/core/utils/datetime_utils.dart';
+import 'package:resiwash/core/utils/snackbar_helper.dart';
+import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:flutter_alarmkit/flutter_alarmkit.dart';
+import 'dart:async';
+
+import "package:resiwash/features/machine/data/models/machine_model.dart";
+
+import '../../main.dart'; // import your global flutterLocalNotificationsPlugin
+import 'package:resiwash/core/utils/snackbar_helper.dart';
+
+/// Service for managing local notifications
+///
+/// This service handles:
+/// - Creating and managing notification channels (Android) / categories (iOS)
+/// - Showing different types of notifications (subscribed, claimed, poke)
+/// - Managing persistent notifications (timers, countdowns)
+class LocalNotificationService {
+  // Channels
+  late AndroidNotificationChannel subscriptionChannel;
+  late AndroidNotificationChannel claimedChannel;
+  late AndroidNotificationChannel pokeChannel;
+  late AndroidNotificationChannel channelCountdown;
+
+  final _liveActivitiesPlugin = LiveActivities();
+
+  // iOS categories
+  late DarwinNotificationCategory subscriptionCategory;
+  late DarwinNotificationCategory claimedCategory;
+  late DarwinNotificationCategory pokeCategory;
+
+  // action IDs
+  static const String stopClaimActionId = 'stop_claim';
+  static const String acknowledgePokeActionId = 'acknowledge_poke';
+
+  // static Notification IDs
+  static const int claimedTimerNotificationId = 0;
+
+  // Map machine IDs to the Live Activity notification ID
+  static final Map<String, String> notificationIds = {};
+
+  static final Map<String, String> iosTimerIds = {};
+
+  // Initialize notification channels and categories
+  Future<void> initialize() async {
+    await _setupAndroidChannels();
+    await _setupIOSCategories();
+    if (Platform.isIOS) {
+      await _liveActivitiesPlugin.init(appGroupId: 'group.com.resiwash.app');
+    }
+  }
+
+  Future<void> _setupAndroidChannels() async {
+    subscriptionChannel = const AndroidNotificationChannel(
+      'subscriptions',
+      'Subscribed Machine Updates',
+      description: 'Notifications for machines you subscribed to.',
+      importance: Importance.defaultImportance,
+    );
+
+    claimedChannel = const AndroidNotificationChannel(
+      'claimed',
+      'Claimed Machine Updates',
+      description: 'High priority alerts for claimed machines.',
+      importance: Importance.max,
+    );
+
+    pokeChannel = const AndroidNotificationChannel(
+      'poke',
+      'Poke Reminders',
+      description: 'Reminders to clear your claimed machine.',
+      importance: Importance.high,
+    );
+
+    channelCountdown = const AndroidNotificationChannel(
+      'countdown_channel',
+      'Countdown Notifications',
+      description: 'Notifications for countdown timers.',
+      importance: Importance.high,
+    );
+
+    final androidPlugin = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+
+    await androidPlugin?.createNotificationChannel(subscriptionChannel);
+    await androidPlugin?.createNotificationChannel(claimedChannel);
+    await androidPlugin?.createNotificationChannel(pokeChannel);
+    await androidPlugin?.createNotificationChannel(channelCountdown);
+  }
+
+  Future<void> _setupIOSCategories() async {
+    subscriptionCategory = const DarwinNotificationCategory('subscriptions');
+    claimedCategory = const DarwinNotificationCategory('claimed');
+    pokeCategory = DarwinNotificationCategory(
+      'poke',
+      actions: [
+        DarwinNotificationAction.plain(
+          'stop_claim',
+          'Stop alerts',
+          options: {DarwinNotificationActionOption.foreground},
+        ),
+        DarwinNotificationAction.plain(
+          'acknowledge_poke',
+          'Acknowledge',
+          options: {DarwinNotificationActionOption.foreground},
+        ),
+      ],
+    );
+  }
+
+  // Called for setup in background handler
+  Future<void> ensureInitializedForBackground() async {
+    const initAndroid = AndroidInitializationSettings('@mipmap/launcher_icon');
+    const initIOS = DarwinInitializationSettings();
+
+    const initSettings = InitializationSettings(
+      android: initAndroid,
+      iOS: initIOS,
+    );
+
+    await flutterLocalNotificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: notificationTapBackground,
+    );
+
+    await initialize();
+  }
+
+  void showSubscribed(RemoteMessage msg) {
+    final n = msg.notification;
+    final a = msg.notification?.android;
+
+    flutterLocalNotificationsPlugin.show(
+      n.hashCode,
+      n?.title,
+      n?.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          subscriptionChannel.id,
+          subscriptionChannel.name,
+          icon: a?.smallIcon,
+          importance: Importance.max,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: subscriptionCategory.identifier,
+        ),
+      ),
+      payload: jsonEncode({
+        "machineId": msg.data['machineId'],
+        "channel": msg.data['channel'],
+      }),
+    );
+  }
+
+  void showPoke(RemoteMessage msg) {
+    final n = msg.data;
+
+    flutterLocalNotificationsPlugin.show(
+      n.hashCode,
+      n['title'],
+      n['body'],
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          pokeChannel.id,
+          pokeChannel.name,
+          importance: Importance.max,
+          priority: Priority.defaultPriority,
+          actions: [
+            AndroidNotificationAction(
+              stopClaimActionId,
+              'Stop alerts',
+              showsUserInterface: true,
+            ),
+            AndroidNotificationAction(
+              acknowledgePokeActionId,
+              'Acknowledge',
+              showsUserInterface: true,
+            ),
+          ],
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: pokeCategory.identifier,
+        ),
+      ),
+      payload: jsonEncode({
+        "machineId": n['machineId'],
+        "channel": n['channel'],
+      }),
+    );
+  }
+
+  void showClaimedMachineNowAvailableNotification(String title, String body) {
+    // 1. clear the timer notification
+    cancelClaimedNotification();
+
+    // 2. display a normal notification saying machine is available
+    flutterLocalNotificationsPlugin.show(
+      DateTime.now().hashCode,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          claimedChannel.id,
+          claimedChannel.name,
+          importance: Importance.max,
+          priority: Priority.max,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: claimedCategory.identifier,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+          presentAlert: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  // This method has two uses:
+  // 1. to show timer when claim machine when in use
+  // 2. to show timer when machine is available, before going in use
+  // Special: due to the need to have smaller notifications and customized text,
+  // only this method will require separate names to be passed in
+  Future<void> showNotificationAndStartTimer(
+    String title,
+    String body,
+    int secondsTillCompletion,
+    String machineId,
+    String machineName,
+    String roomName,
+    MachineType machineType,
+  ) async {
+    appLog.i("Showing claimed machine in use notification: $title");
+
+    // SnackbarHelper.showClaimedMachineIfNotShown(
+    //   title: title,
+    //   description: body,
+    //   status: MachineStatus.inUse,
+    //   secondsTillCompletion: secondsTillCompletion,
+    //   machineId: machineId,
+    // );
+
+    // startLocalPlatformTimer(
+    //   title,
+    //   secondsTillCompletion,
+    //   machineId,
+    //   machineName,
+    //   roomName,
+    //   machineType,
+    // );
+
+    // 2. Show a normal notification saying machine is in use
+    try {
+      appLog.i("Channels initialized: claimed=${claimedChannel.id}");
+
+      final notificationId = DateTime.now().hashCode;
+      appLog.i("Using notification ID: $notificationId");
+
+      flutterLocalNotificationsPlugin.show(
+        notificationId,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            claimedChannel.id,
+            claimedChannel.name,
+            importance: Importance.max,
+            priority: Priority.max,
+          ),
+          iOS: DarwinNotificationDetails(
+            categoryIdentifier: claimedCategory.identifier,
+            interruptionLevel: InterruptionLevel.timeSensitive,
+            presentAlert: true,
+            presentSound: true,
+          ),
+        ),
+      );
+
+      appLog.i('Notification shown successfully');
+    } catch (e, stackTrace) {
+      appLog.e("Error showing notification: $e");
+      appLog.e("Stack: $stackTrace");
+    }
+  }
+
+  Future<void> startLocalPlatformTimer(
+    String title,
+    int secondsTillCompletion,
+    String machineId,
+    String machineName,
+    String roomName,
+    MachineType machineType,
+  ) async {
+    // 1. start a system timer (TODO)
+    print(
+      'debug starting localPlatformTimer with title $title for machine $machineId with secondsTillCompletion $secondsTillCompletion',
+    );
+    if (Platform.isAndroid) {
+      bool skipUi = !sl<SharedPreferencesService>()
+          .shouldOpenTimerAfterClaiming();
+      FlutterAlarmClock.createTimer(
+        length: secondsTillCompletion,
+        title: title,
+        skipUi: skipUi,
+      );
+
+      if (skipUi) {
+        appLog.i("Timer started without opening UI");
+
+        SnackbarHelper.showInfo(
+          message: "Machine claimed. A system timer has been started for you.",
+        );
+      } else {
+        appLog.i("Timer started and UI opened");
+      }
+    } else {
+      try {
+        // first, check if iOS26
+        bool isIos26 = false;
+        try {
+          await FlutterAlarmkit().getPlatformVersion();
+          isIos26 = true;
+        } catch (e) {
+          isIos26 = false;
+        }
+
+        if (isIos26) {
+          startAlarm(machineId, title, secondsTillCompletion);
+        } else {
+          final startDate = DateTime.now();
+          final endDate = DateTime.now().add(
+            Duration(seconds: secondsTillCompletion),
+          );
+
+          // Ensure no stale activities are blocking the queue (Apple rate limits to max 5 around same time)
+          // await _liveActivitiesPlugin.endAllActivities();
+
+          print("debug machinetype is $machineType ${machineType.name}");
+
+          final activityId = await _liveActivitiesPlugin
+              .createActivity(machineId, {
+                'machineName': machineName,
+                'roomName': roomName,
+                'startDate': startDate.millisecondsSinceEpoch.toString(),
+                'endDate': endDate.millisecondsSinceEpoch.toString(),
+                'isFinished': false,
+                'machineType': machineType.name,
+              });
+
+          if (activityId == null) {
+            throw Exception("Live activity creation failed: $machineId");
+          }
+          appLog.i("Live activity created successfully: $activityId");
+
+          notificationIds[machineId] = activityId;
+
+          // Set a timer to update the activity to "finished" state when it completes
+          Timer(Duration(seconds: secondsTillCompletion), () {
+            appLog.i("Live activity finished: $machineId for id $activityId");
+            _liveActivitiesPlugin.updateActivity(activityId, {
+              'isFinished': true,
+            });
+          });
+        }
+        SnackbarHelper.showInfo(
+          message:
+              "Machine claimed. A timer has been started and will show up on your lock screen / dynamic island (if supported).",
+        );
+      } catch (e) {
+        appLog.e("Error creating live activity: $e");
+        // show a snackbar warning saying that machine was claimed but timer could not be shown
+        SnackbarHelper.showInfo(
+          message:
+              "Timer could not be shown as there are already 5 timers (max possible at once)",
+        );
+      }
+    }
+  }
+
+  void showClaimedMachineFinishingNotification(
+    String title,
+    String body,
+    int secondsTillCompletion,
+  ) {
+    // 1. Show a normal notification saying machine is finishing soon
+    flutterLocalNotificationsPlugin.show(
+      // random ID
+      DateTime.now().hashCode,
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          claimedChannel.id,
+          claimedChannel.name,
+          importance: Importance.max,
+          priority: Priority.max,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: claimedCategory.identifier,
+          interruptionLevel: InterruptionLevel.timeSensitive,
+          presentAlert: true,
+          presentSound: true,
+        ),
+      ),
+    );
+  }
+
+  /// Cancel a specific notification
+  Future<void> cancelNotification(int id) async {
+    await flutterLocalNotificationsPlugin.cancel(id);
+  }
+
+  Future<void> cancelClaimedNotification() async {
+    await flutterLocalNotificationsPlugin.cancel(claimedTimerNotificationId);
+  }
+
+  /// Cancel all notifications
+  Future<void> cancelAllNotifications() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  // Only for iOS!
+  Future<void> cancelLiveActivity(String machineId) async {
+    final activityId = notificationIds[machineId];
+    if (activityId != null) {
+      try {
+        await _liveActivitiesPlugin.endActivity(activityId);
+      } catch (e) {
+        appLog.i(e);
+      }
+    }
+  }
+
+  Future<void> startAlarm(
+    String machineId,
+    String title,
+    int secondsTillCompletion,
+  ) async {
+    try {
+      final isAuthorized = await FlutterAlarmkit().requestAuthorization();
+      if (isAuthorized) {
+        print('Alarm authorization granted');
+
+        final alarmId = await FlutterAlarmkit().setCountdownAlarm(
+          countdownDurationInSeconds: secondsTillCompletion,
+          repeatDurationInSeconds: 5 * 60,
+          label: title,
+          tintColor: '#515B92',
+        );
+
+        iosTimerIds[machineId] = alarmId;
+      } else {
+        print('Alarm authorization denied or not determined');
+      }
+    } catch (e) {
+      print('Error requesting authorization: $e');
+    }
+  }
+
+  Future<void> cancelAlarm(String machineId) async {
+    final alarmId = iosTimerIds[machineId];
+    if (alarmId != null) {
+      try {
+        await FlutterAlarmkit().cancelAlarm(alarmId: alarmId);
+      } catch (e) {
+        appLog.i(e);
+      }
+    }
+  }
+}

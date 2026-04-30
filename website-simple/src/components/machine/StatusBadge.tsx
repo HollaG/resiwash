@@ -9,6 +9,7 @@ const statusVariants = cva('box-border rounded-sm', {
       [MachineStatus.AVAILABLE]: 'bg-status-available',
       [MachineStatus.IN_USE]: 'bg-status-inUse',
       [MachineStatus.FINISHING]: 'bg-transparent border-2 border-dashed border-status-finishing',
+      [MachineStatus.FINISHED]: 'bg-transparent border-2 border-dashed border-status-available',
       [MachineStatus.HAS_ISSUES]: 'bg-status-issues',
       [MachineStatus.UNKNOWN]: 'bg-status-unknown',
     },
@@ -40,10 +41,10 @@ export function StatusBadge({ status, size, showPulse = false, className }: Stat
   const Component = showPulse ? motion.div : 'div';
   const animationProps = showPulse
     ? {
-        initial: { scale: 1 },
-        animate: { scale: [1, 1.2, 1] },
-        transition: { duration: 0.6 },
-      }
+      initial: { scale: 1 },
+      animate: { scale: [1, 1.2, 1] },
+      transition: { duration: 0.6 },
+    }
     : {};
 
   return (

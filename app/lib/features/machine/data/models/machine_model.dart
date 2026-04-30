@@ -1,5 +1,6 @@
 // Enums ----------------------------------------------------------------------
 
+import 'package:resiwash/features/machine/data/models/claim_model.dart';
 import 'package:resiwash/features/machine/data/models/event_model.dart';
 import 'package:resiwash/features/machine/domain/entities/event_entity.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
@@ -8,7 +9,14 @@ import 'package:resiwash/features/room/data/models/room_model.dart';
 
 part 'machine_model.g.dart';
 
-enum MachineType { unknown, washer, dryer }
+enum MachineType {
+  @JsonValue('unknown')
+  unknown,
+  @JsonValue('washer')
+  washer,
+  @JsonValue('dryer')
+  dryer,
+}
 
 enum MachineStatus {
   @JsonValue('AVAILABLE')
@@ -20,7 +28,9 @@ enum MachineStatus {
   @JsonValue('UNKNOWN')
   unknown('UNKNOWN'),
   @JsonValue('FINISHING')
-  finishing('FINISHING');
+  finishing('FINISHING'),
+  @JsonValue("FINISHED")
+  finished('FINISHED');
 
   final String value;
   const MachineStatus(this.value);
@@ -50,6 +60,12 @@ class MachineModel {
   final MachineStatus? currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
   final MachineStatus? previousStatus;
 
+  final int? previousStatusActiveTime;
+  final DateTime? lastAvailableTime;
+
+  final int? claimId;
+  final ClaimModel? claim;
+
   const MachineModel({
     required this.machineId,
     required this.name,
@@ -67,6 +83,10 @@ class MachineModel {
     this.lastChangeTime,
     this.currentStatus,
     this.previousStatus,
+    this.previousStatusActiveTime,
+    this.lastAvailableTime,
+    this.claimId,
+    this.claim,
   });
 
   factory MachineModel.fromJson(Map<String, dynamic> json) =>
@@ -91,5 +111,9 @@ class MachineModel {
     lastChangeTime: lastChangeTime,
     currentStatus: currentStatus,
     previousStatus: previousStatus,
+    previousStatusActiveTime: previousStatusActiveTime,
+    lastAvailableTime: lastAvailableTime,
+    claimId: claimId,
+    claim: claim?.toEntity(),
   );
 }

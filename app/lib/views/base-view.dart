@@ -1,59 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_cubit.dart';
+import 'package:resiwash/features/my-machines/presentation/cubit/claim_state.dart';
+import 'package:resiwash/features/my-machines/presentation/screens/scan_qr_screen.dart';
+import 'package:resiwash/features/my-machines/presentation/widgets/scan_qr_floating.dart';
+import 'package:resiwash/router.dart';
 
 class BaseView extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
-  const BaseView({super.key, required this.navigationShell});
+  final GoRouterState shellState;
+  const BaseView({
+    super.key,
+    required this.navigationShell,
+    required this.shellState,
+  });
 
   void _goBranch(int index) {
+    print('Navigating to branch index: $index');
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
     );
   }
 
+  void _onHelpClicked(BuildContext context) {
+    MobileScannerSimple.showHelpInfo(context);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          labelTextStyle: WidgetStateTextStyle.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return TextStyle(color: Theme.of(context).colorScheme.primary);
-            }
-            return TextStyle(color: Theme.of(context).colorScheme.tertiary);
-          }),
-        ),
-        child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
-          indicatorColor: Colors.transparent,
-          onDestinationSelected: _goBranch,
-          destinations: [
-            _menuItem(
-              context,
-              index: 0,
-              currentIndex: navigationShell.currentIndex,
-              icon: Icons.menu,
-              label: 'Home',
+    // Do NOT show FAB on the scan QR page, since it would be redundant and could cause issues if the user tries to open multiple scan QR pages. Instead, only show the FAB on the Home and My Machines pages.
+    final path = shellState.uri.path;
+
+    final isOnScanQrPage = path == AppRoutes.scanQr;
+    print(
+      "debug currentPage is now $path, isOnScanQrPage: $isOnScanQrPage, currentNavigationIndex is ${navigationShell.currentIndex}",
+    );
+    return BlocBuilder<ClaimCubit, ClaimState>(
+      builder: (context, state) {
+        int claimedMachinesCount = 0;
+        if (state is ClaimLoaded) {
+          // recalculate how many machines are claimed
+          claimedMachinesCount = state.claimedMachines?.length ?? 0;
+        }
+        return Scaffold(
+          body: Stack(
+            children: [
+              // ScanQrFloating(
+              //   currentBranchIndex: navigationShell.currentIndex,
+              //   scanQrBranchIndex: AppRoutes.scanQrBranchIndex,
+              // ),
+              navigationShell,
+            ],
+          ),
+          // floatingActionButton: shouldShowFAB
+          //     ? FloatingActionButton(
+          //         onPressed: () => context.push(AppRoutes.scanQr),
+          //         backgroundColor: Theme.of(context).colorScheme.primary,
+          //         child: Icon(
+          //           Icons.qr_code_scanner,
+          //           color: Theme.of(context).colorScheme.onPrimary,
+          //         ),
+          //       )
+          //     : null,
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.endContained,
+          bottomNavigationBar: NavigationBarTheme(
+            data: NavigationBarThemeData(
+              labelTextStyle: WidgetStateTextStyle.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  );
+                }
+                return TextStyle(color: Theme.of(context).colorScheme.tertiary);
+              }),
             ),
-            _menuItem(
-              context,
-              index: 1,
-              currentIndex: navigationShell.currentIndex,
-              icon: Icons.bookmark,
-              label: 'My Machines',
+            child: NavigationBar(
+              selectedIndex: navigationShell.currentIndex,
+              indicatorColor: Colors.transparent,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerLow,
+              onDestinationSelected: _goBranch,
+              labelBehavior: isOnScanQrPage
+                  ? NavigationDestinationLabelBehavior.alwaysHide
+                  : NavigationDestinationLabelBehavior.onlyShowSelected,
+
+              // height: 24,
+              destinations: [
+                _menuItem(
+                  context,
+                  index: 0,
+                  currentIndex: navigationShell.currentIndex,
+                  icon: Icons.home,
+                  label: 'Home',
+                ),
+                _menuItem(
+                  context,
+                  index: 1,
+                  currentIndex: navigationShell.currentIndex,
+                  icon: Icons.local_laundry_service,
+                  label: 'My Machines',
+                  showBadge: claimedMachinesCount > 0,
+                  claimedMachinesCount: claimedMachinesCount,
+                ),
+
+                _menuItem(
+                  context,
+                  index: 2,
+                  currentIndex: navigationShell.currentIndex,
+                  icon: Icons.settings,
+                  label: 'Settings',
+                ),
+                Center(
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      if (!isOnScanQrPage) {
+                        navigationShell.goBranch(
+                          AppRoutes.scanQrBranchIndex,
+                          initialLocation:
+                              AppRoutes.scanQrBranchIndex ==
+                              navigationShell.currentIndex,
+                        );
+                      } else {
+                        _onHelpClicked(context);
+                      }
+                    },
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Icon(
+                      isOnScanQrPage ? Icons.help : Icons.qr_code_scanner,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            _menuItem(
-              context,
-              index: 2,
-              currentIndex: navigationShell.currentIndex,
-              icon: Icons.person,
-              label: 'Profile',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -63,7 +150,25 @@ class BaseView extends StatelessWidget {
     required int currentIndex,
     required String label,
     required IconData icon,
+    bool showBadge = false,
+    int claimedMachinesCount = 0,
   }) {
+    if (showBadge) {
+      return NavigationDestination(
+        icon: Badge.count(
+          textStyle: Theme.of(context).textTheme.bodySmall,
+          count: claimedMachinesCount,
+          child: Icon(
+            icon,
+            color: currentIndex == index
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.tertiary,
+          ),
+        ),
+        label: label,
+      );
+    }
+
     return NavigationDestination(
       icon: Icon(
         icon,

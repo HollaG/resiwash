@@ -97,11 +97,11 @@ export default class SensorStabilizer {
       );
     }
 
-    console.log(
-      `History: ${this.history.join(", ")}. Current stable status: ${
-        this.currentStableStatus
-      }`
-    );
+    // console.log(
+    //   `History: ${this.history.join(", ")}. Current stable status: ${
+    //     this.currentStableStatus
+    //   }`
+    // );
 
     return this.currentStableStatus!;
   }

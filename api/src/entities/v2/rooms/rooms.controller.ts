@@ -4,6 +4,7 @@ import asyncHandler from "express-async-handler";
 import { Room } from "../../../models/Room";
 import { AppDataSource } from "../../../data-source";
 import { sendErrorResponse, sendOkResponse } from "../../../core/responses";
+import { GetQueryBoolean } from "../../../core/types";
 
 interface GetRoomsRequest {
   areaIds?: string[];
@@ -20,7 +21,7 @@ export const getRooms = asyncHandler(
     const roomRepository = AppDataSource.getRepository(Room);
     // only rooms with :areaId
     if (areaIds.length === 0) {
-      console.log("getRooms: areaIds is not valid", areaIds);
+      req.log.debug("getRooms: areaIds is not valid", areaIds);
       return sendErrorResponse(res, { message: "Area ID is required" }, 400);
     }
 
@@ -34,11 +35,11 @@ export const getRooms = asyncHandler(
       rooms =
         areaIds.length > 0
           ? rooms.andWhere("room.roomId IN (:...roomIds)", {
-              roomIds: roomIds.map(Number),
-            })
+            roomIds: roomIds.map(Number),
+          })
           : rooms.where("room.roomId IN (:...roomIds)", {
-              roomIds: roomIds.map(Number),
-            });
+            roomIds: roomIds.map(Number),
+          });
     }
 
     const roomList = await rooms.getMany();
@@ -48,12 +49,17 @@ export const getRooms = asyncHandler(
 
 export const getRoom = asyncHandler(async (req: Request, res: Response) => {
   const roomId = parseInt(req.params.roomId, 10);
+
+  const { extra = GetQueryBoolean.FALSE } = req.query;
   if (isNaN(roomId)) {
     return sendErrorResponse(res, { message: "Invalid room ID" }, 400);
   }
 
   const roomRepository = AppDataSource.getRepository(Room);
-  const room = await roomRepository.findOneBy({ roomId });
+  const room = await roomRepository.findOne({
+    where: { roomId },
+    relations: extra === GetQueryBoolean.TRUE ? ["area", "machines"] : undefined
+  });
 
   if (!room) {
     return sendErrorResponse(res, { message: "Room not found" }, 404);
@@ -68,7 +74,7 @@ export const createRoom = async (req: Request, res: Response) => {
 
   // todo: authentication and authorization
 
-  console.log("createRoom", req.body);
+  req.log.info("createRoom", req.body);
 
   const { areaId, room: roomToCreate } = req.body as {
     areaId: number;

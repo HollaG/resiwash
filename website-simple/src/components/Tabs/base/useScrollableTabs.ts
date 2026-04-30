@@ -1,3 +1,5 @@
+// DEPRECATED DUE TO BAD UX
+
 import { useEffect, useRef } from "react";
 import { rafThrottle } from "../../../utils/rafThrottle";
 

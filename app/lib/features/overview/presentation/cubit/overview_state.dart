@@ -1,5 +1,6 @@
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/machine/domain/entities/machine_entity.dart';
+import 'package:resiwash/features/machine/presentation/utils/machine_display_utils.dart';
 import 'package:equatable/equatable.dart';
 import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
@@ -18,6 +19,9 @@ class OverviewInitial extends OverviewState {}
 class OverviewLoading extends OverviewState {}
 
 class OverviewLoaded extends OverviewState {
+  // store the loaded time
+  final DateTime loadedTime;
+
   final List<MachineEntity> machines;
   final Map<String, List<MachineEntity>> machinesByRoom; // UI-specific grouping
   final List<AreaEntity> locations;
@@ -31,7 +35,9 @@ class OverviewLoaded extends OverviewState {
       CountKey.total: machines.where((m) => m.type == type).length,
       CountKey.available: machines
           .where(
-            (m) => m.type == type && m.currentStatus == MachineStatus.available,
+            (m) =>
+                m.type == type &&
+                MachineDisplayUtils.isAvailableLike(m.currentStatus),
           )
           .length,
     });
@@ -62,15 +68,19 @@ class OverviewLoaded extends OverviewState {
     );
   }
 
-  const OverviewLoaded({
+  OverviewLoaded({
     required this.machines,
     required this.machinesByRoom,
     required this.locations,
-  });
+    DateTime? loadedTime,
+  }) : loadedTime = loadedTime ?? DateTime.now();
+
+  @override
+  List<Object?> get props => [machines, machinesByRoom, locations];
 }
 
 class OverviewRefreshing extends OverviewLoaded {
-  const OverviewRefreshing({
+  OverviewRefreshing({
     required super.machines,
     required super.machinesByRoom,
     required super.locations,

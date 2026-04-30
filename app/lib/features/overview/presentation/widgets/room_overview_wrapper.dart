@@ -1,16 +1,23 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:resiwash/core/injections/service_locator.dart';
+import 'package:resiwash/core/logging/logger.dart';
+import 'package:resiwash/core/navigation/app_shell_page_controller.dart';
 import 'package:resiwash/core/services/shared_preferences_service.dart';
+import 'package:resiwash/core/utils/datetime_utils.dart';
 import 'package:resiwash/core/utils/saved_locations.dart';
+import 'package:resiwash/core/widgets/machine_status_indicator.dart';
 import 'package:resiwash/features/area/domain/entities/area_entity.dart';
+import 'package:resiwash/features/machine/data/models/machine_model.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_cubit.dart';
 import 'package:resiwash/features/overview/presentation/cubit/overview_state.dart';
 import 'package:resiwash/features/preferences/presentation/widgets/location_tree_select.dart';
 import 'package:resiwash/features/overview/presentation/widgets/room_overview.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:resiwash/theme.dart';
 
 class RoomOverviewWrapper extends StatefulWidget {
   final List<String> roomIds;
@@ -21,13 +28,18 @@ class RoomOverviewWrapper extends StatefulWidget {
   State<RoomOverviewWrapper> createState() => _RoomOverviewWrapperState();
 }
 
-class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
+class _RoomOverviewWrapperState extends State<RoomOverviewWrapper>
+    with WidgetsBindingObserver {
   SavedLocations loadedLocations = SavedLocations({});
+  Timer? _refreshTimer;
 
   // on init,
   @override
   void initState() {
     super.initState();
+    // Add this widget as a lifecycle observer
+    WidgetsBinding.instance.addObserver(this);
+
     // Load saved locations
     // set the current room ids
     SavedLocations savedLocations = sl<SharedPreferencesService>()
@@ -36,6 +48,47 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
     setState(() {
       loadedLocations = savedLocations;
     });
+
+    // TODO: fix this: it's not working atm
+    // Set up a timer to refresh the UI every minute to update relative time
+    _refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        // refresh the context using current state (loadedLocations, not savedLocations)
+        context.read<OverviewCubit>().load(
+          roomIds: loadedLocations.getAllRoomIds(),
+        );
+
+        appLog.d("Refreshing RoomOverviewWrapper to update relative time");
+        setState(() {
+          // This will trigger a rebuild to update the relative time display
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Trigger a refresh when the app comes back to the foreground
+    if (state == AppLifecycleState.resumed && mounted) {
+      appLog.d("App resumed, refreshing RoomOverviewWrapper");
+
+      // Use current state (loadedLocations) instead of reloading from SharedPreferences
+      context.read<OverviewCubit>().load(
+        roomIds: loadedLocations.getAllRoomIds(),
+      );
+      setState(() {
+        // This will trigger a rebuild to update the relative time display
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -61,6 +114,10 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
 
           final numberOfRooms = loadedLocations.getAllRoomIds().length;
 
+          // just the time in HH:mm a format
+          final formattedLastUpdateTime = DateTimeUtils.formatReadableTime(
+            (state as dynamic).loadedTime,
+          );
           return Container(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
 
@@ -69,65 +126,226 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10.0,
               children: [
+                if (numberOfRooms > 0)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 4,
+                    children: [
+                      // Text(
+                      //   "Legend",
+                      //   style: Theme.of(context).textTheme.headlineSmall
+                      //       ?.copyWith(
+                      //         color: Theme.of(
+                      //           context,
+                      //         ).colorScheme.onSurfaceVariant,
+                      //       ),
+                      // ),
+                      Row(
+                        spacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.available,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Available",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.available,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.finished,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Finished (waiting for pickup)",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.finished,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Row(
+                        spacing: 8,
+                        children: [
+                          SizedBox(
+                            width: 90,
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.inUse,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "In Use",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.inUse,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                MachineStatusIndicator(
+                                  status: MachineStatus.finishing,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Finishing (~10mins left)",
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color:
+                                              MachineStatusIndicator.getTextColor(
+                                                context,
+                                                MachineStatus.finishing,
+                                              ),
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
                 Row(
                   children: [
                     Text(
                       "Rooms ($numberOfRooms)",
-                      style: Theme.of(context).textTheme.headlineSmall,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                     ),
                     Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        showChangeRoomSheet(context, locations);
-                      },
-                      label: Text("Edit"),
-                      icon: Icon(Icons.edit),
-                    ),
+                    if (numberOfRooms == 0)
+                      FilledButton.icon(
+                        onPressed: () {
+                          showChangeRoomSheet(context, locations);
+                        },
+                        label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
+                        icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
+                      )
+                    else
+                      TextButton.icon(
+                        onPressed: () {
+                          showChangeRoomSheet(context, locations);
+                        },
+                        label: Text(numberOfRooms == 0 ? "Add" : "Edit"),
+                        icon: Icon(numberOfRooms == 0 ? Icons.add : Icons.edit),
+                      ),
                   ],
                 ),
-                RefreshIndicator(
-                  onRefresh: () async {
-                    // wait for 1s first
+                if (numberOfRooms == 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
 
-                    // Create a completer to wait for the loading to complete
-                    final completer = Completer<void>();
-
-                    // Listen for state changes
-                    late StreamSubscription subscription;
-                    subscription = context.read<OverviewCubit>().stream.listen((
-                      state,
-                    ) {
-                      if (state is OverviewLoaded || state is OverviewError) {
-                        subscription.cancel();
-                        completer.complete();
-                      }
-                    });
-
-                    // Trigger the refresh
-                    context.read<OverviewCubit>().load(
-                      roomIds: loadedLocations.getAllRoomIds(),
-                    );
-
-                    // Wait for completion
-                    return completer.future;
+                    child: Column(
+                      spacing: 8,
+                      children: [
+                        Text(
+                          textAlign: TextAlign.center,
+                          "You have not added any rooms.",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Text(
+                          textAlign: TextAlign.center,
+                          "Click the Add button to select rooms to display here.",
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(0),
+                  shrinkWrap: true,
+                  itemCount: loadedLocations.getAllRoomIds().length,
+                  scrollDirection: Axis.vertical,
+                  itemBuilder: (context, index) {
+                    String roomId = loadedLocations.getAllRoomIds()[index];
+                    return RoomOverview(roomId: roomId);
                   },
-                  child: ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(0),
-                    shrinkWrap: true,
-                    itemCount: loadedLocations.getAllRoomIds().length,
-                    scrollDirection: Axis.vertical,
-                    itemBuilder: (context, index) {
-                      String roomId = loadedLocations.getAllRoomIds()[index];
-                      return RoomOverview(roomId: roomId);
+                ),
+
+                if (numberOfRooms > 0) Divider(),
+                if (numberOfRooms > 0)
+                  Center(
+                    child: Text(
+                      // can be OverviewLoaded or OverviewRefreshing
+                      "Last updated at $formattedLastUpdateTime",
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      AppShellPageController.instance.showTutorial();
                     },
+                    child: Text("Need help? Visit the tutorial"),
                   ),
                 ),
-                // Column(
-                //   children: loadedLocations.getAllRoomIds().map((roomId) {
-                //     return RoomOverview(roomId: roomId);
-                //   }).toList(),
-                // ),
               ],
             ),
           );
@@ -150,14 +368,26 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
       builder: (context) {
         return SizedBox(
           width: double.infinity,
-          height: 375,
+          height: max(MediaQuery.of(context).size.height / 2, 375),
           child: Container(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: <Widget>[
-                Text(
-                  'Select rooms',
-                  style: Theme.of(context).textTheme.headlineSmall,
+                Row(
+                  children: [
+                    Text(
+                      'Select rooms',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    Spacer(),
+                    FilledButton(
+                      onPressed: () {
+                        // simply close sheet
+                        Navigator.of(context).pop();
+                      },
+                      child: Text("Done"),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 16),
                 Expanded(
@@ -181,11 +411,17 @@ class _RoomOverviewWrapperState extends State<RoomOverviewWrapper> {
           ),
         );
       },
-    ).then(
-      (result) => {
-        // save the selectedRoomIds to SharedPrefs
-        sl<SharedPreferencesService>().setSavedLocations(loadedLocations),
-      },
-    );
+    ).then((result) {
+      // save the selectedRoomIds to SharedPrefs
+      sl<SharedPreferencesService>().setSavedLocations(loadedLocations);
+
+      // Check if widget is still mounted before using context
+      if (mounted) {
+        // reload the overview cubit with new room ids
+        context.read<OverviewCubit>().load(
+          roomIds: loadedLocations.getAllRoomIds(),
+        );
+      }
+    });
   }
 }

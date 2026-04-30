@@ -1,4 +1,5 @@
 import 'package:resiwash/features/machine/data/models/machine_model.dart';
+import 'package:resiwash/features/machine/domain/entities/claim_entity.dart';
 import 'package:resiwash/features/machine/domain/entities/event_entity.dart';
 import 'package:resiwash/features/room/domain/entities/room_entity.dart';
 
@@ -24,6 +25,12 @@ class MachineEntity {
   final MachineStatus? currentStatus; // "AVAILABLE" | "IN_USE" | "HAS_ISSUES"
   final MachineStatus? previousStatus;
 
+  final int? previousStatusActiveTime;
+  final DateTime? lastAvailableTime;
+
+  final int? claimId;
+  final ClaimEntity? claim;
+
   MachineEntity({
     required this.machineId,
     required this.name,
@@ -41,5 +48,18 @@ class MachineEntity {
     required this.lastChangeTime,
     this.currentStatus,
     this.previousStatus,
+    this.previousStatusActiveTime,
+    this.lastAvailableTime,
+    this.claimId,
+    this.claim,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MachineEntity &&
+          runtimeType == other.runtimeType &&
+          machineId == other.machineId &&
+          lastChangeTime == other.lastChangeTime &&
+          claimId == other.claimId;
 }

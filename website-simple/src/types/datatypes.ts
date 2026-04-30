@@ -14,6 +14,11 @@ export type Area = {
   updatedAt: string; // or Date
 };
 
+export type Reading = {
+  value: number;
+  threshold: number;
+};
+
 export type MachineEvent = {
   eventId: number;
   timestamp: string; // or `Date` if you parse it
@@ -23,7 +28,7 @@ export type MachineEvent = {
   // use status instead
   statusCode: number;
 
-  reading: number;
+  readings: Reading[];
 };
 
 export type Machine = {
@@ -37,6 +42,12 @@ export type Machine = {
   lastUpdated: string; // or `Date`
   lastChangeTime: string; // when the machine last changed status
   roomId: number; // ID of the room this machine is in
+  currentStatus?: MachineStatus;
+  previousStatus?: MachineStatus;
+  previousStatusActiveTime?: number;
+  lastAvailableTime?: Date;
+  isManualEntry: boolean;
+  currentCycleTime?: number;
 };
 
 export type Room = {
@@ -118,6 +129,7 @@ export enum MachineStatus {
   AVAILABLE = "AVAILABLE",
   IN_USE = "IN_USE",
   FINISHING = "FINISHING",
+  FINISHED = "FINISHED",
   HAS_ISSUES = "HAS_ISSUES",
   UNKNOWN = "UNKNOWN",
 }
@@ -134,6 +146,8 @@ export const convertMachineStatusToString = (status: MachineStatus): string => {
       return "Unknown";
     case MachineStatus.FINISHING:
       return "Finishing";
+    case MachineStatus.FINISHED:
+      return "Finished";
     default:
       return "Unknown Status";
   }

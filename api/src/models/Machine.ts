@@ -14,6 +14,7 @@ import { UpdateEvent } from "./UpdateEvent";
 import { MachineStatus, MachineType } from "../core/types";
 import { RawEvent } from "./RawEvent";
 import { SensorToMachine } from "./SensorToMachine";
+import { Claim } from "./Claim";
 
 @Entity()
 export class Machine {
@@ -60,14 +61,35 @@ export class Machine {
   @Column({ type: "timestamp", nullable: true })
   lastUpdated: Date; // Last time that there was an update from the sensor
 
-  // processed fields
+  // processed fields for easy access
   @Column({ type: "timestamp", nullable: true })
   lastChangeTime: Date; // Last time that the machine changed state (e.g., from in use to available)
 
-  // for easy access
   @Column({ nullable: true })
   currentStatus: MachineStatus; // Current status of the machine
 
   @Column({ nullable: true })
   previousStatus: MachineStatus; // Previous status of the machine
+  @Column({ nullable: true })
+  previousStatusActiveTime: number; // How long the machine was in the previous status (in seconds)
+
+  /**
+   * The last time the machine was available-like
+   * (i.e. matching AVAILABLE or FINISHED)
+   * So,
+   *   if machineStatus is available-like, lastAvailableTime is updated to now (same as lastChangeTime)
+   *   else lastAvailableTime remains unchanged
+   */
+  @Column({ type: "timestamp", nullable: true })
+  lastAvailableTime: Date;
+
+  @Column({ default: true })
+  isManualEntry: boolean; // Whether this machine can be manually updated e.g. by QR code
+
+  @OneToOne(() => Claim, (claim) => claim.machine)
+  @JoinColumn({ name: "claimId" })
+  claim: Claim;
+
+  @Column({ nullable: true })
+  claimId: number; // Foreign key to Claim
 }
